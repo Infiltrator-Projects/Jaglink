@@ -1,0 +1,63 @@
+name: Bootstrap JAGLINK from MBLINK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/bootstrap-jaglink.yml
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out JAGLINK
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Import pinned MBLINK source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_dir="${RUNNER_TEMP}/mblink-source"
+          rm -rf "$source_dir"
+          git clone --recurse-submodules https://github.com/The-First-Infiltrator/MBLINK.git "$source_dir"
+          git -C "$source_dir" checkout e760b6ec05897c87e3531d68649b121403fcdec8
+          git -C "$source_dir" submodule update --init --recursive
+
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf -- {} +
+          rsync -a --exclude=.git "$source_dir"/ ./
+
+          cat > README.md <<'EOF'
+          <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
+          # JAGLINK
+
+          JAGLINK is an open-source Jaguar diagnostics platform derived from MBLINK 0.7.12 (`e760b6ec05897c87e3531d68649b121403fcdec8`). The imported snapshot preserves MBLINK's portable C core, generic OBD-II, ELM327, telemetry, ISO-TP/UDS, iPhone/Linux front ends, tests and pinned Infiltratr Common dependency as the starting point for Jaguar-specific development.
+
+          Initial vehicle target: **Jaguar X-Type (X400), 2001–2009**, based on the Ford CD132/Mondeo platform.
+
+          Development policy: `main` only.
+
+          Copyright (C) 2026 Shannon Smith.
+
+          Licensed under GPL-3.0-or-later.
+          EOF
+          sed -i 's/^          //' README.md
+
+          rm -f .github/workflows/bootstrap-jaglink.yml
+
+          git config user.name "Shannon Smith"
+          git config user.email "infiltratr@yandex.com"
+          git status --short
+
+          while IFS= read -r -d '' path; do
+            git add -- "$path"
+          done < <(git ls-files -m -d -o --exclude-standard -z)
+
+          git diff --cached --stat
+          git commit -m "Import MBLINK 0.7.12 source snapshot for JAGLINK"
+          git push origin HEAD:main

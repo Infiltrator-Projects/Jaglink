@@ -17,7 +17,7 @@ Jaguar's 2002 `Introduction to X-TYPE` service-training material gives the follo
 
 The Jaguar X-TYPE 2002 Electrical Guide independently describes CAN for high-speed powertrain communications, SCP for slower body systems, D2B optical audio, and technician access through the Data Link Connector. The training material also identifies the Audio Unit as the D2B network gateway.
 
-These facts are represented in `mblink_jaguar_x400_profile()` as **source-corroborated**. They are topology and speed evidence only. They do not establish Jaguar module addresses, proprietary service identifiers, data formulas or security procedures.
+These facts are represented in `jaglink_jaguar_x400_profile()` as **source-corroborated**. They are topology and speed evidence only. They do not establish Jaguar module addresses, proprietary service identifiers, data formulas or security procedures.
 
 Reference publications:
 
@@ -31,4 +31,4 @@ Reference publications:
 
 ## Current boundary
 
-0.1.0 does not send Jaguar-specific module requests. Generic OBD-II remains available through the inherited portable engine. The next manufacturer work is read-only network/module discovery with evidence preserved before any proprietary decoding is promoted.
+0.1.0 does not send Jaguar-specific module requests. Generic OBD-II remains available through JAGLINK's portable engine. The next manufacturer work is read-only network/module discovery with evidence preserved before any proprietary decoding is promoted.

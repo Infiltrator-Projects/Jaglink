@@ -5,9 +5,8 @@
 ## 0.1 — X400 foundation
 
 - establish JAGLINK identity and main-only development;
-- pin MBLINK 0.7.12 as the reusable generic diagnostic base;
-- exclude the Mercedes manufacturer layer from the JAGLINK target;
-- retain generic ELM327, OBD-II, telemetry, scheduler, ISO-TP and UDS coverage;
+- own the complete generic diagnostic source tree and Jaguar-branded public API;
+- retain generic ELM327, OBD-II, telemetry, scheduler, ISO-TP and UDS coverage without an upstream diagnostics dependency;
 - add X400 CAN/SCP/ISO-9141/D2B topology and provenance contracts;
 - add Jaguar-specific regression tests and Linux shell identity.
 

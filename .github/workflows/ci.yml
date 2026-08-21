@@ -11,6 +11,37 @@ permissions:
   contents: read
 
 jobs:
+  standalone-audit:
+    name: Standalone / Jaguar identity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Verify standalone Jaguar source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t gitlinks < <(git ls-files --stage | awk '$1 == "160000" { print $4 }')
+          if [[ "${#gitlinks[@]}" -ne 1 || "${gitlinks[0]}" != "src/infiltratr-common" ]]; then
+            printf 'Unexpected gitlink dependency set:\n%s\n' "${gitlinks[*]:-<none>}" >&2
+            exit 1
+          fi
+
+          if git ls-files | grep -Eiq '(^|/)(upstream|mblink)(/|$)|mblink|mb-link'; then
+            echo 'A tracked path still carries an upstream or MBLINK identity.' >&2
+            exit 1
+          fi
+
+          if git grep -n -I -i -E 'mblink|mb-link|mercedes|mercedes-benz' -- . ':(exclude).github/workflows/ci.yml' ':(exclude)README.md' ':(exclude)docs/ORIGIN.md'; then
+            echo 'A non-provenance file still carries an MBLINK or Mercedes identity.' >&2
+            exit 1
+          fi
+
+          git grep -q 'JAGLINK_VERSION' -- CMakeLists.txt include/jaglink src/core
+          git grep -q 'JagLinkBLETransport' -- platform/apple app/ios
+
   portable-core:
     name: ${{ matrix.os }} / C11
     strategy:
@@ -141,7 +172,7 @@ jobs:
 
   release:
     name: Publish GitHub Release
-    needs: [portable-core, sanitizers, linux-shell, ios-simulator, iphone-device-ipa]
+    needs: [standalone-audit, portable-core, sanitizers, linux-shell, ios-simulator, iphone-device-ipa]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

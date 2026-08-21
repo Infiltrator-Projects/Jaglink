@@ -1,27 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include "mblink/jaguar.h"
+#include "jaglink/jaguar.h"
 
 #include <string.h>
 
 static const char x400_network_provenance[] =
     "Jaguar Introduction to X-TYPE Service Training (2002) and Jaguar X-TYPE 2002 Electrical Guide";
 
-static const MblinkJaguarNetworkDefinition x400_networks[] = {
-    { "x400-powertrain-can", "Powertrain CAN", MBLINK_JAGUAR_NETWORK_CAN,
-      MBLINK_JAGUAR_NETWORK_ROLE_POWERTRAIN, 500000U,
-      MBLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_network_provenance },
-    { "x400-body-scp", "Body SCP", MBLINK_JAGUAR_NETWORK_SCP,
-      MBLINK_JAGUAR_NETWORK_ROLE_BODY, 41600U,
-      MBLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_network_provenance },
-    { "x400-serial-iso9141", "Serial Data Link (ISO 9141)", MBLINK_JAGUAR_NETWORK_ISO9141,
-      MBLINK_JAGUAR_NETWORK_ROLE_SERIAL_DIAGNOSTIC, 10400U,
-      MBLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_network_provenance },
-    { "x400-audio-d2b", "D2B Optical", MBLINK_JAGUAR_NETWORK_D2B,
-      MBLINK_JAGUAR_NETWORK_ROLE_INFOTAINMENT, 5600000U,
-      MBLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_network_provenance }
+static const JaglinkJaguarNetworkDefinition x400_networks[] = {
+    { "x400-powertrain-can", "Powertrain CAN", JAGLINK_JAGUAR_NETWORK_CAN,
+      JAGLINK_JAGUAR_NETWORK_ROLE_POWERTRAIN, 500000U,
+      JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_network_provenance },
+    { "x400-body-scp", "Body SCP", JAGLINK_JAGUAR_NETWORK_SCP,
+      JAGLINK_JAGUAR_NETWORK_ROLE_BODY, 41600U,
+      JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_network_provenance },
+    { "x400-serial-iso9141", "Serial Data Link (ISO 9141)", JAGLINK_JAGUAR_NETWORK_ISO9141,
+      JAGLINK_JAGUAR_NETWORK_ROLE_SERIAL_DIAGNOSTIC, 10400U,
+      JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_network_provenance },
+    { "x400-audio-d2b", "D2B Optical", JAGLINK_JAGUAR_NETWORK_D2B,
+      JAGLINK_JAGUAR_NETWORK_ROLE_INFOTAINMENT, 5600000U,
+      JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_network_provenance }
 };
 
-static const MblinkJaguarVehicleProfile x400_profile = {
+static const JaglinkJaguarVehicleProfile x400_profile = {
     .platform_code = "X400",
     .platform_family = "Jaguar X400 / Ford CD132",
     .display_name = "Jaguar X-Type (X400), 2001-2009",
@@ -31,39 +31,39 @@ static const MblinkJaguarVehicleProfile x400_profile = {
     .network_count = sizeof(x400_networks) / sizeof(x400_networks[0])
 };
 
-const char *mblink_jaguar_definition_status_name(MblinkJaguarDefinitionStatus status)
+const char *jaglink_jaguar_definition_status_name(JaglinkJaguarDefinitionStatus status)
 {
     switch (status) {
-    case MBLINK_JAGUAR_DEFINITION_CANDIDATE: return "candidate";
-    case MBLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED: return "source-corroborated";
-    case MBLINK_JAGUAR_DEFINITION_VEHICLE_VERIFIED: return "vehicle-verified";
+    case JAGLINK_JAGUAR_DEFINITION_CANDIDATE: return "candidate";
+    case JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED: return "source-corroborated";
+    case JAGLINK_JAGUAR_DEFINITION_VEHICLE_VERIFIED: return "vehicle-verified";
     }
     return "unknown";
 }
 
-const char *mblink_jaguar_network_kind_name(MblinkJaguarNetworkKind kind)
+const char *jaglink_jaguar_network_kind_name(JaglinkJaguarNetworkKind kind)
 {
     switch (kind) {
-    case MBLINK_JAGUAR_NETWORK_CAN: return "can";
-    case MBLINK_JAGUAR_NETWORK_SCP: return "scp";
-    case MBLINK_JAGUAR_NETWORK_ISO9141: return "iso9141";
-    case MBLINK_JAGUAR_NETWORK_D2B: return "d2b";
+    case JAGLINK_JAGUAR_NETWORK_CAN: return "can";
+    case JAGLINK_JAGUAR_NETWORK_SCP: return "scp";
+    case JAGLINK_JAGUAR_NETWORK_ISO9141: return "iso9141";
+    case JAGLINK_JAGUAR_NETWORK_D2B: return "d2b";
     }
     return "unknown";
 }
 
-const char *mblink_jaguar_network_role_name(MblinkJaguarNetworkRole role)
+const char *jaglink_jaguar_network_role_name(JaglinkJaguarNetworkRole role)
 {
     switch (role) {
-    case MBLINK_JAGUAR_NETWORK_ROLE_POWERTRAIN: return "powertrain";
-    case MBLINK_JAGUAR_NETWORK_ROLE_BODY: return "body";
-    case MBLINK_JAGUAR_NETWORK_ROLE_SERIAL_DIAGNOSTIC: return "serial-diagnostic";
-    case MBLINK_JAGUAR_NETWORK_ROLE_INFOTAINMENT: return "infotainment";
+    case JAGLINK_JAGUAR_NETWORK_ROLE_POWERTRAIN: return "powertrain";
+    case JAGLINK_JAGUAR_NETWORK_ROLE_BODY: return "body";
+    case JAGLINK_JAGUAR_NETWORK_ROLE_SERIAL_DIAGNOSTIC: return "serial-diagnostic";
+    case JAGLINK_JAGUAR_NETWORK_ROLE_INFOTAINMENT: return "infotainment";
     }
     return "unknown";
 }
 
-bool mblink_jaguar_network_definition_is_valid(const MblinkJaguarNetworkDefinition *definition)
+bool jaglink_jaguar_network_definition_is_valid(const JaglinkJaguarNetworkDefinition *definition)
 {
     if (definition == NULL || definition->key == NULL || definition->key[0] == '\0' ||
         definition->name == NULL || definition->name[0] == '\0' ||
@@ -71,13 +71,13 @@ bool mblink_jaguar_network_definition_is_valid(const MblinkJaguarNetworkDefiniti
         definition->provenance[0] == '\0') {
         return false;
     }
-    if (definition->kind < MBLINK_JAGUAR_NETWORK_CAN || definition->kind > MBLINK_JAGUAR_NETWORK_D2B) return false;
-    if (definition->role < MBLINK_JAGUAR_NETWORK_ROLE_POWERTRAIN || definition->role > MBLINK_JAGUAR_NETWORK_ROLE_INFOTAINMENT) return false;
-    if (definition->status < MBLINK_JAGUAR_DEFINITION_CANDIDATE || definition->status > MBLINK_JAGUAR_DEFINITION_VEHICLE_VERIFIED) return false;
+    if (definition->kind < JAGLINK_JAGUAR_NETWORK_CAN || definition->kind > JAGLINK_JAGUAR_NETWORK_D2B) return false;
+    if (definition->role < JAGLINK_JAGUAR_NETWORK_ROLE_POWERTRAIN || definition->role > JAGLINK_JAGUAR_NETWORK_ROLE_INFOTAINMENT) return false;
+    if (definition->status < JAGLINK_JAGUAR_DEFINITION_CANDIDATE || definition->status > JAGLINK_JAGUAR_DEFINITION_VEHICLE_VERIFIED) return false;
     return true;
 }
 
-bool mblink_jaguar_vehicle_profile_is_valid(const MblinkJaguarVehicleProfile *profile)
+bool jaglink_jaguar_vehicle_profile_is_valid(const JaglinkJaguarVehicleProfile *profile)
 {
     size_t index;
     if (profile == NULL || profile->platform_code == NULL || profile->platform_code[0] == '\0' ||
@@ -87,7 +87,7 @@ bool mblink_jaguar_vehicle_profile_is_valid(const MblinkJaguarVehicleProfile *pr
         profile->networks == NULL || profile->network_count == 0U) return false;
     for (index = 0U; index < profile->network_count; ++index) {
         size_t earlier;
-        if (!mblink_jaguar_network_definition_is_valid(&profile->networks[index])) return false;
+        if (!jaglink_jaguar_network_definition_is_valid(&profile->networks[index])) return false;
         for (earlier = 0U; earlier < index; ++earlier) {
             if (strcmp(profile->networks[index].key, profile->networks[earlier].key) == 0) return false;
         }
@@ -95,17 +95,17 @@ bool mblink_jaguar_vehicle_profile_is_valid(const MblinkJaguarVehicleProfile *pr
     return true;
 }
 
-const MblinkJaguarNetworkDefinition *mblink_jaguar_profile_find_network(const MblinkJaguarVehicleProfile *profile, const char *key)
+const JaglinkJaguarNetworkDefinition *jaglink_jaguar_profile_find_network(const JaglinkJaguarVehicleProfile *profile, const char *key)
 {
     size_t index;
-    if (!mblink_jaguar_vehicle_profile_is_valid(profile) || key == NULL || key[0] == '\0') return NULL;
+    if (!jaglink_jaguar_vehicle_profile_is_valid(profile) || key == NULL || key[0] == '\0') return NULL;
     for (index = 0U; index < profile->network_count; ++index) {
         if (strcmp(profile->networks[index].key, key) == 0) return &profile->networks[index];
     }
     return NULL;
 }
 
-const MblinkJaguarVehicleProfile *mblink_jaguar_x400_profile(void)
+const JaglinkJaguarVehicleProfile *jaglink_jaguar_x400_profile(void)
 {
     return &x400_profile;
 }

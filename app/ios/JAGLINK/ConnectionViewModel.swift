@@ -51,7 +51,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, JagLinkDiagnosticsC
         super.init()
         controller.delegate = self
         loadJaguarProfile()
-        if let value = mblink_version() { versionText = String(cString: value) }
+        if let value = jaglink_version() { versionText = String(cString: value) }
         refresh()
     }
 
@@ -60,7 +60,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, JagLinkDiagnosticsC
 
     func toggleFavourite(stableKey: String) {
         let pid: UInt8? = stableKey.withCString { key in
-            guard let definition = mblink_parameter_obd2_definition_for_stable_key(key) else { return nil }
+            guard let definition = jaglink_parameter_obd2_definition_for_stable_key(key) else { return nil }
             return UInt8(exactly: definition.pointee.key.identifier)
         }
         guard let pid else { return }
@@ -88,7 +88,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, JagLinkDiagnosticsC
     }
 
     private func loadJaguarProfile() {
-        guard let profile = mblink_jaguar_x400_profile() else { return }
+        guard let profile = jaglink_jaguar_x400_profile() else { return }
         profileDisplayName = string(from: profile.pointee.display_name)
         guard let networks = profile.pointee.networks else { return }
         var result = [JaguarNetworkInfo]()
@@ -99,19 +99,19 @@ final class ConnectionViewModel: NSObject, ObservableObject, JagLinkDiagnosticsC
             result.append(JaguarNetworkInfo(
                 id: key,
                 name: string(from: network.name),
-                kind: string(from: mblink_jaguar_network_kind_name(network.kind)),
-                role: string(from: mblink_jaguar_network_role_name(network.role)),
+                kind: string(from: jaglink_jaguar_network_kind_name(network.kind)),
+                role: string(from: jaglink_jaguar_network_role_name(network.role)),
                 nominalBaud: network.nominal_baud,
-                status: string(from: mblink_jaguar_definition_status_name(network.status)),
+                status: string(from: jaglink_jaguar_definition_status_name(network.status)),
                 provenance: string(from: network.provenance)))
         }
         jaguarNetworks = result
     }
 
-    private func formattedValue(definition: UnsafePointer<MblinkParameterDefinition>, value: Double?) -> String {
+    private func formattedValue(definition: UnsafePointer<JaglinkParameterDefinition>, value: Double?) -> String {
         var buffer = [CChar](repeating: 0, count: 96)
         let success = buffer.withUnsafeMutableBufferPointer { storage in
-            mblink_parameter_format_value(definition, value != nil, value ?? 0.0, storage.baseAddress, storage.count)
+            jaglink_parameter_format_value(definition, value != nil, value ?? 0.0, storage.baseAddress, storage.count)
         }
         guard success else { return "N/A" }
         return buffer.withUnsafeBufferPointer { storage in
@@ -121,12 +121,12 @@ final class ConnectionViewModel: NSObject, ObservableObject, JagLinkDiagnosticsC
     }
 
     private func loadDiagnosticParameters() -> [DiagnosticParameter] {
-        let count = mblink_parameter_obd2_definition_count()
+        let count = jaglink_parameter_obd2_definition_count()
         guard count > 0 else { return [] }
         var result = [DiagnosticParameter]()
         result.reserveCapacity(count)
         for index in 0..<count {
-            guard let definition = mblink_parameter_obd2_definition_at(index) else { continue }
+            guard let definition = jaglink_parameter_obd2_definition_at(index) else { continue }
             let metadata = definition.pointee
             guard let pid = UInt8(exactly: metadata.key.identifier) else { continue }
             let history = controller.recentValues(forPID: pid, limit: 60).map(\.doubleValue)
@@ -135,7 +135,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, JagLinkDiagnosticsC
             guard !stableKey.isEmpty else { continue }
             result.append(DiagnosticParameter(
                 id: stableKey,
-                protocolName: string(from: mblink_parameter_protocol_name(metadata.key.protocol)),
+                protocolName: string(from: jaglink_parameter_protocol_name(metadata.key.protocol)),
                 moduleIdentifier: metadata.key.module,
                 parameterIdentifier: metadata.key.identifier,
                 shortName: string(from: metadata.short_name),

@@ -27,15 +27,10 @@ endif()
 
 include(CTest)
 
-set(JAGLINK_MBLINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/upstream/mblink")
-set(JAGLINK_MBLINK_COMMIT "e760b6ec05897c87e3531d68649b121403fcdec8")
-set(JAGLINK_COMMON_DIR "${JAGLINK_MBLINK_DIR}/src/infiltratr-common")
+set(JAGLINK_COMMON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/infiltratr-common")
 set(JAGLINK_COMMON_VERSION "1.10.0")
 set(JAGLINK_COMMON_COMMIT "182e64cb8b8992879e443b941565058166fe0161")
 
-if(NOT EXISTS "${JAGLINK_MBLINK_DIR}/include/mblink/mblink.h")
-    message(FATAL_ERROR "Pinned MBLINK source is required. Run git submodule update --init --recursive.")
-endif()
 if(NOT EXISTS "${JAGLINK_COMMON_DIR}/VERSION")
     message(FATAL_ERROR "Infiltratr Common ${JAGLINK_COMMON_VERSION} is required. Run git submodule update --init --recursive.")
 endif()
@@ -48,11 +43,6 @@ endif()
 
 find_program(JAGLINK_GIT_EXECUTABLE git)
 if(JAGLINK_GIT_EXECUTABLE)
-    execute_process(COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${JAGLINK_MBLINK_DIR}" rev-parse HEAD
-        OUTPUT_VARIABLE JAGLINK_MBLINK_FOUND_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET RESULT_VARIABLE JAGLINK_MBLINK_COMMIT_RESULT)
-    if(JAGLINK_MBLINK_COMMIT_RESULT EQUAL 0 AND NOT JAGLINK_MBLINK_FOUND_COMMIT STREQUAL JAGLINK_MBLINK_COMMIT)
-        message(FATAL_ERROR "MBLINK must be pinned to ${JAGLINK_MBLINK_COMMIT}; found ${JAGLINK_MBLINK_FOUND_COMMIT}.")
-    endif()
     execute_process(COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${JAGLINK_COMMON_DIR}" rev-parse HEAD
         OUTPUT_VARIABLE JAGLINK_COMMON_FOUND_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET RESULT_VARIABLE JAGLINK_COMMON_COMMIT_RESULT)
     if(JAGLINK_COMMON_COMMIT_RESULT EQUAL 0 AND NOT JAGLINK_COMMON_FOUND_COMMIT STREQUAL JAGLINK_COMMON_COMMIT)
@@ -65,24 +55,23 @@ set(INFILTRATR_COMMON_WARNINGS_AS_ERRORS ON CACHE BOOL "Treat Infiltratr Common 
 add_subdirectory("${JAGLINK_COMMON_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/infiltratr-common" EXCLUDE_FROM_ALL)
 
 add_library(jaglink STATIC
-    src/core/mblink.c
-    src/jaguar/jaguar.c
-    ${JAGLINK_MBLINK_DIR}/src/core/parameter.c
-    ${JAGLINK_MBLINK_DIR}/src/core/scheduler.c
-    ${JAGLINK_MBLINK_DIR}/src/core/telemetry_store.c
-    ${JAGLINK_MBLINK_DIR}/src/core/telemetry_csv.c
-    ${JAGLINK_MBLINK_DIR}/src/core/isotp.c
-    ${JAGLINK_MBLINK_DIR}/src/elm327/elm327.c
-    ${JAGLINK_MBLINK_DIR}/src/elm327/can.c
-    ${JAGLINK_MBLINK_DIR}/src/elm327/session.c
-    ${JAGLINK_MBLINK_DIR}/src/elm327/probe.c
-    ${JAGLINK_MBLINK_DIR}/src/obd2/obd2.c
-    ${JAGLINK_MBLINK_DIR}/src/uds/uds.c)
+    src/core/jaglink.c
+    src/core/parameter.c
+    src/core/scheduler.c
+    src/core/telemetry_store.c
+    src/core/telemetry_csv.c
+    src/core/isotp.c
+    src/elm327/elm327.c
+    src/elm327/can.c
+    src/elm327/session.c
+    src/elm327/probe.c
+    src/obd2/obd2.c
+    src/uds/uds.c
+    src/jaguar/jaguar.c)
 
-target_include_directories(jaglink PUBLIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-    "${JAGLINK_MBLINK_DIR}/include")
-target_compile_definitions(jaglink PRIVATE MBLINK_VERSION="${PROJECT_VERSION}")
+add_library(JAGLINK::Core ALIAS jaglink)
+target_include_directories(jaglink PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_definitions(jaglink PRIVATE JAGLINK_VERSION="${PROJECT_VERSION}")
 target_link_libraries(jaglink PUBLIC InfiltratrCommon::Portable)
 
 set(JAGLINK_WARNING_FLAGS -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wstrict-prototypes -Wmissing-prototypes)
@@ -113,21 +102,21 @@ function(jaglink_add_test target source)
 endfunction()
 
 if(BUILD_TESTING)
-    jaglink_add_test(jaglink-test-core ${JAGLINK_MBLINK_DIR}/tests/test_core.c)
-    target_compile_definitions(jaglink-test-core PRIVATE MBLINK_TEST_EXPECTED_VERSION="${PROJECT_VERSION}")
-    jaglink_add_test(jaglink-test-elm327 ${JAGLINK_MBLINK_DIR}/tests/test_elm327.c)
-    jaglink_add_test(jaglink-test-elm327-can ${JAGLINK_MBLINK_DIR}/tests/test_elm327_can.c)
-    jaglink_add_test(jaglink-test-elm327-session ${JAGLINK_MBLINK_DIR}/tests/test_elm327_session.c)
-    jaglink_add_test(jaglink-test-elm327-probe ${JAGLINK_MBLINK_DIR}/tests/test_elm327_probe.c)
-    jaglink_add_test(jaglink-test-obd2 ${JAGLINK_MBLINK_DIR}/tests/test_obd2.c)
-    jaglink_add_test(jaglink-test-runtime ${JAGLINK_MBLINK_DIR}/tests/test_runtime.c)
-    jaglink_add_test(jaglink-test-parameter ${JAGLINK_MBLINK_DIR}/tests/test_parameter.c)
-    jaglink_add_test(jaglink-test-parameter-store ${JAGLINK_MBLINK_DIR}/tests/test_parameter_store.c)
-    jaglink_add_test(jaglink-test-scheduler-parameters ${JAGLINK_MBLINK_DIR}/tests/test_scheduler_parameters.c)
-    jaglink_add_test(jaglink-test-isotp ${JAGLINK_MBLINK_DIR}/tests/test_isotp.c)
-    jaglink_add_test(jaglink-test-isotp-failed-state ${JAGLINK_MBLINK_DIR}/tests/test_isotp_failed_state.c)
-    jaglink_add_test(jaglink-test-isotp-functional-response ${JAGLINK_MBLINK_DIR}/tests/test_isotp_functional_response.c)
-    jaglink_add_test(jaglink-test-uds ${JAGLINK_MBLINK_DIR}/tests/test_uds.c)
-    jaglink_add_test(jaglink-test-uds-dtc ${JAGLINK_MBLINK_DIR}/tests/test_uds_dtc.c)
+    jaglink_add_test(jaglink-test-core tests/test_core.c)
+    target_compile_definitions(jaglink-test-core PRIVATE JAGLINK_TEST_EXPECTED_VERSION="${PROJECT_VERSION}")
+    jaglink_add_test(jaglink-test-elm327 tests/test_elm327.c)
+    jaglink_add_test(jaglink-test-elm327-can tests/test_elm327_can.c)
+    jaglink_add_test(jaglink-test-elm327-session tests/test_elm327_session.c)
+    jaglink_add_test(jaglink-test-elm327-probe tests/test_elm327_probe.c)
+    jaglink_add_test(jaglink-test-obd2 tests/test_obd2.c)
+    jaglink_add_test(jaglink-test-runtime tests/test_runtime.c)
+    jaglink_add_test(jaglink-test-parameter tests/test_parameter.c)
+    jaglink_add_test(jaglink-test-parameter-store tests/test_parameter_store.c)
+    jaglink_add_test(jaglink-test-scheduler-parameters tests/test_scheduler_parameters.c)
+    jaglink_add_test(jaglink-test-isotp tests/test_isotp.c)
+    jaglink_add_test(jaglink-test-isotp-failed-state tests/test_isotp_failed_state.c)
+    jaglink_add_test(jaglink-test-isotp-functional-response tests/test_isotp_functional_response.c)
+    jaglink_add_test(jaglink-test-uds tests/test_uds.c)
+    jaglink_add_test(jaglink-test-uds-dtc tests/test_uds_dtc.c)
     jaglink_add_test(jaglink-test-jaguar tests/test_jaguar.c)
 endif()

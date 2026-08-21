@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include "mblink/mblink.h"
-#include "mblink/jaguar.h"
+#include "jaglink/jaglink.h"
+#include "jaglink/jaguar.h"
 
 #include <gtk/gtk.h>
 #include <stddef.h>
@@ -39,7 +39,9 @@ static void set_margins(GtkWidget *widget, int margin)
 static void apply_jaglink_css(void)
 {
     GtkCssProvider *provider = gtk_css_provider_new();
+    G_GNUC_BEGIN_IGNORE_DEPRECATIONS
     gtk_css_provider_load_from_data(provider, jaglink_css, -1);
+    G_GNUC_END_IGNORE_DEPRECATIONS
     gtk_style_context_add_provider_for_display(
         gdk_display_get_default(),
         GTK_STYLE_PROVIDER(provider),
@@ -47,7 +49,7 @@ static void apply_jaglink_css(void)
     g_object_unref(provider);
 }
 
-static GtkWidget *workspace_row(const MblinkWorkspaceSectionDescriptor *descriptor)
+static GtkWidget *workspace_row(const JaglinkWorkspaceSectionDescriptor *descriptor)
 {
     GtkWidget *row = gtk_list_box_row_new();
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
@@ -69,10 +71,10 @@ static GtkWidget *workspace_row(const MblinkWorkspaceSectionDescriptor *descript
     return row;
 }
 
-static void update_content(JaglinkLinuxApp *app, MblinkWorkspaceSection section)
+static void update_content(JaglinkLinuxApp *app, JaglinkWorkspaceSection section)
 {
-    const MblinkWorkspaceSectionDescriptor *descriptor =
-        mblink_workspace_section(section);
+    const JaglinkWorkspaceSectionDescriptor *descriptor =
+        jaglink_workspace_section(section);
     if (descriptor == NULL) {
         return;
     }
@@ -91,7 +93,7 @@ static void row_selected(GtkListBox *list_box,
         return;
     }
     value = g_object_get_data(G_OBJECT(row), "jaglink-section");
-    update_content(app, (MblinkWorkspaceSection)GPOINTER_TO_INT(value));
+    update_content(app, (JaglinkWorkspaceSection)GPOINTER_TO_INT(value));
 }
 
 static GtkWidget *build_badge(void)
@@ -113,7 +115,7 @@ static GtkWidget *build_sidebar(JaglinkLinuxApp *app)
     GtkWidget *brand = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
     GtkWidget *badge = build_badge();
     GtkWidget *subtitle = gtk_label_new("X400  ·  JAGUAR DIAGNOSTICS");
-    GtkWidget *version = gtk_label_new(mblink_version());
+    GtkWidget *version = gtk_label_new(jaglink_version());
     GtkWidget *list = gtk_list_box_new();
     size_t index;
 
@@ -135,9 +137,9 @@ static GtkWidget *build_sidebar(JaglinkLinuxApp *app)
     gtk_list_box_set_selection_mode(GTK_LIST_BOX(list), GTK_SELECTION_SINGLE);
     g_signal_connect(list, "row-selected", G_CALLBACK(row_selected), app);
 
-    for (index = 0U; index < mblink_workspace_section_count(); ++index) {
-        const MblinkWorkspaceSectionDescriptor *descriptor =
-            mblink_workspace_section_at(index);
+    for (index = 0U; index < jaglink_workspace_section_count(); ++index) {
+        const JaglinkWorkspaceSectionDescriptor *descriptor =
+            jaglink_workspace_section_at(index);
         if (descriptor != NULL) {
             gtk_list_box_append(GTK_LIST_BOX(list), workspace_row(descriptor));
         }
@@ -149,7 +151,7 @@ static GtkWidget *build_sidebar(JaglinkLinuxApp *app)
 
 static GtkWidget *build_content(JaglinkLinuxApp *app)
 {
-    const MblinkJaguarVehicleProfile *profile = mblink_jaguar_x400_profile();
+    const JaglinkJaguarVehicleProfile *profile = jaglink_jaguar_x400_profile();
     GtkWidget *outer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     GtkWidget *content = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
     GtkWidget *eyebrow = gtk_label_new("JAGUAR X-TYPE  ·  X400");

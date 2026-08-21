@@ -2,13 +2,13 @@
 
 # JAGLINK
 
-JAGLINK is a C-first, open-source Jaguar diagnostics platform derived from MBLINK. The initial vehicle family is the **Jaguar X-Type (X400), 2001–2009**, the Jaguar/Ford CD132 platform related to the Mondeo.
+JAGLINK is a standalone, C-first, open-source Jaguar diagnostics platform for the **Jaguar X-Type (X400), 2001–2009**, the Jaguar/Ford CD132 platform related to the contemporary Mondeo.
 
-**Current development release: 0.1.0 — X400 foundation.**
+**Current release: 0.1.0 — X400 foundation.**
 
-JAGLINK pins the known-good MBLINK 0.7.12 source snapshot at `e760b6ec05897c87e3531d68649b121403fcdec8` under `upstream/mblink`. The JAGLINK builds deliberately select only MBLINK's reusable protocol-neutral and generic diagnostic layers: ELM327, standard OBD-II, telemetry, scheduling, ISO-TP and UDS. Mercedes-Benz manufacturer sources and tests are not part of JAGLINK.
+The repository contains its own Jaguar-branded public C API, portable protocol implementation, native iPhone application, and native Linux application. It has no MBLINK source, submodule, build-time dependency, runtime dependency, API namespace, or user-facing identity. Infiltratr Common 1.10.0 is the only directly pinned shared-library submodule.
 
-JAGLINK adds its own Jaguar manufacturer layer under `src/jaguar`, its own iPhone diagnostic controller/UI, and a Jaguar-branded Linux shell. It currently models the source-corroborated X400 network topology without inventing module addresses, proprietary PIDs or request formats that have not been verified.
+JAGLINK includes ELM327 transport/session handling, standard OBD-II, telemetry, scheduling, ISO-TP and UDS foundations together with its Jaguar manufacturer layer under `src/jaguar`. It models the source-corroborated X400 network topology without inventing module addresses, proprietary PIDs or request formats that have not been verified.
 
 ## X400 network foundation
 
@@ -37,11 +37,11 @@ If cloned without submodules:
 git submodule update --init --recursive
 ```
 
-The pinned MBLINK snapshot recursively pins Infiltratr Common 1.10.0 at `182e64cb8b8992879e443b941565058166fe0161`.
+Infiltratr Common 1.10.0 is pinned directly at `src/infiltratr-common`, commit `182e64cb8b8992879e443b941565058166fe0161`.
 
 ## iPhone
 
-The native project is `app/ios/JAGLINK.xcodeproj`. It reuses the generic MBLINK CoreBluetooth provider but uses JAGLINK's own controller and does not compile the Mercedes manufacturer layer. The 0.1.0 app provides adapter connection, generic OBD-II capability discovery, generic fault scans, live parameters, X400 network provenance and CSV export.
+The native project is `app/ios/JAGLINK.xcodeproj`. Its Jaguar-branded CoreBluetooth provider and diagnostics controller are maintained in this repository. The 0.1.0 app provides adapter connection, generic OBD-II capability discovery, generic fault scans, live parameters, X400 network provenance and CSV export.
 
 ## Linux
 
@@ -57,9 +57,9 @@ cmake --build build-linux --target jaglink-linux
 - Generic diagnostic behaviour stays portable C.
 - Jaguar definitions live in JAGLINK, not in the ELM/BLE provider.
 - Manufacturer-specific requests remain unimplemented until source evidence and/or reproducible vehicle captures establish their meaning.
-- MBLINK remains untouched by JAGLINK development.
+- The source, public API, Apple classes, build targets and user interfaces use the JAGLINK/JagLink namespace.
 
-See `docs/JAGUAR.md`, `docs/APPLE.md`, `docs/UPSTREAM.md` and `docs/ROADMAP.md`.
+See `docs/JAGUAR.md`, `docs/APPLE.md`, `docs/ORIGIN.md` and `docs/ROADMAP.md`.
 
 ## Licence
 

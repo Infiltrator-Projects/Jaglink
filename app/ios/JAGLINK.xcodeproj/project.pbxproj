@@ -1,29 +1,30 @@
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
-	classes = { };
+	classes = {
+	};
 	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A00000000000000000000001 /* JAGLINKApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000001 /* JAGLINKApp.swift */; };
-		A00000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000002 /* ContentView.swift */; };
-		A00000000000000000000003 /* ConnectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000003 /* ConnectionViewModel.swift */; };
-		A00000000000000000000004 /* MBLinkBLETransport.m in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000007 /* MBLinkBLETransport.m */; };
-		A00000000000000000000005 /* JagLinkDiagnosticsController.m in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000009 /* JagLinkDiagnosticsController.m */; };
-		A00000000000000000000010 /* mblink.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000010 /* mblink.c */; };
-		A00000000000000000000011 /* jaguar.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000011 /* jaguar.c */; };
-		A00000000000000000000012 /* parameter.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000012 /* parameter.c */; };
-		A00000000000000000000013 /* scheduler.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000013 /* scheduler.c */; };
-		A00000000000000000000014 /* telemetry_store.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000014 /* telemetry_store.c */; };
-		A00000000000000000000015 /* telemetry_csv.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000015 /* telemetry_csv.c */; };
-		A00000000000000000000016 /* isotp.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000016 /* isotp.c */; };
-		A00000000000000000000017 /* uds.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000017 /* uds.c */; };
-		A00000000000000000000018 /* elm327.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000018 /* elm327.c */; };
-		A00000000000000000000019 /* can.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000019 /* can.c */; };
-		A00000000000000000000020 /* session.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000020 /* session.c */; };
-		A00000000000000000000021 /* probe.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000021 /* probe.c */; };
-		A00000000000000000000022 /* obd2.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000022 /* obd2.c */; };
+		A00000000000000000000001 /* JAGLINK/JAGLINKApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000001 /* JAGLINK/JAGLINKApp.swift */; };
+		A00000000000000000000002 /* JAGLINK/ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000002 /* JAGLINK/ContentView.swift */; };
+		A00000000000000000000003 /* JAGLINK/ConnectionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000003 /* JAGLINK/ConnectionViewModel.swift */; };
+		A00000000000000000000004 /* ../../platform/apple/JagLinkBLETransport.m in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000007 /* ../../platform/apple/JagLinkBLETransport.m */; };
+		A00000000000000000000005 /* ../../platform/apple/JagLinkDiagnosticsController.m in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000009 /* ../../platform/apple/JagLinkDiagnosticsController.m */; };
+		A00000000000000000000010 /* ../../src/core/jaglink.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000010 /* ../../src/core/jaglink.c */; };
+		A00000000000000000000011 /* ../../src/jaguar/jaguar.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000011 /* ../../src/jaguar/jaguar.c */; };
+		A00000000000000000000012 /* ../../src/core/parameter.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000012 /* ../../src/core/parameter.c */; };
+		A00000000000000000000013 /* ../../src/core/scheduler.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000013 /* ../../src/core/scheduler.c */; };
+		A00000000000000000000014 /* ../../src/core/telemetry_store.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000014 /* ../../src/core/telemetry_store.c */; };
+		A00000000000000000000015 /* ../../src/core/telemetry_csv.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000015 /* ../../src/core/telemetry_csv.c */; };
+		A00000000000000000000016 /* ../../src/core/isotp.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000016 /* ../../src/core/isotp.c */; };
+		A00000000000000000000017 /* ../../src/uds/uds.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000017 /* ../../src/uds/uds.c */; };
+		A00000000000000000000018 /* ../../src/elm327/elm327.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000018 /* ../../src/elm327/elm327.c */; };
+		A00000000000000000000019 /* ../../src/elm327/can.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000019 /* ../../src/elm327/can.c */; };
+		A00000000000000000000020 /* ../../src/elm327/session.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000020 /* ../../src/elm327/session.c */; };
+		A00000000000000000000021 /* ../../src/elm327/probe.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000021 /* ../../src/elm327/probe.c */; };
+		A00000000000000000000022 /* ../../src/obd2/obd2.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000022 /* ../../src/obd2/obd2.c */; };
 		A00000000000000000000030 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B00000000000000000000030 /* CoreBluetooth.framework */; };
 		A00000000000000000000031 /* libInfiltratrCommonPortable.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C0A110000000000000000005 /* libInfiltratrCommonPortable.a */; };
 /* End PBXBuildFile section */
@@ -46,31 +47,31 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		B00000000000000000000001 /* JAGLINKApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JAGLINK/JAGLINKApp.swift; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JAGLINK/ContentView.swift; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000003 /* ConnectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JAGLINK/ConnectionViewModel.swift; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000004 /* JAGLINK-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JAGLINK/JAGLINK-Bridging-Header.h; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000005 /* MBLinkBLETransport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ../../upstream/mblink/platform/apple/MBLinkBLETransport.h; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000006 /* MBLinkBLETransport+MBLINK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ../../upstream/mblink/platform/apple/MBLinkBLETransport+MBLINK.h; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000007 /* MBLinkBLETransport.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ../../upstream/mblink/platform/apple/MBLinkBLETransport.m; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000008 /* JagLinkDiagnosticsController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ../../platform/apple/JagLinkDiagnosticsController.h; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000009 /* JagLinkDiagnosticsController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ../../platform/apple/JagLinkDiagnosticsController.m; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000010 /* mblink.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/mblink.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000011 /* jaguar.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/jaguar/jaguar.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000012 /* parameter.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../upstream/mblink/src/core/parameter.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000013 /* scheduler.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../upstream/mblink/src/core/scheduler.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000014 /* telemetry_store.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../upstream/mblink/src/core/telemetry_store.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000015 /* telemetry_csv.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../upstream/mblink/src/core/telemetry_csv.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000016 /* isotp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../upstream/mblink/src/core/isotp.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000017 /* uds.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../upstream/mblink/src/uds/uds.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000018 /* elm327.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../upstream/mblink/src/elm327/elm327.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000019 /* can.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../upstream/mblink/src/elm327/can.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000020 /* session.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../upstream/mblink/src/elm327/session.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000021 /* probe.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../upstream/mblink/src/elm327/probe.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000022 /* obd2.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../upstream/mblink/src/obd2/obd2.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000001 /* JAGLINK/JAGLINKApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JAGLINK/JAGLINKApp.swift; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000002 /* JAGLINK/ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JAGLINK/ContentView.swift; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000003 /* JAGLINK/ConnectionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JAGLINK/ConnectionViewModel.swift; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000004 /* JAGLINK/JAGLINK-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "JAGLINK/JAGLINK-Bridging-Header.h"; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000005 /* ../../platform/apple/JagLinkBLETransport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ../../platform/apple/JagLinkBLETransport.h; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000006 /* ../../platform/apple/JagLinkBLETransport+JAGLINK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "../../platform/apple/JagLinkBLETransport+JAGLINK.h"; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000007 /* ../../platform/apple/JagLinkBLETransport.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ../../platform/apple/JagLinkBLETransport.m; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000008 /* ../../platform/apple/JagLinkDiagnosticsController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ../../platform/apple/JagLinkDiagnosticsController.h; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000009 /* ../../platform/apple/JagLinkDiagnosticsController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ../../platform/apple/JagLinkDiagnosticsController.m; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000010 /* ../../src/core/jaglink.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/jaglink.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000011 /* ../../src/jaguar/jaguar.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/jaguar/jaguar.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000012 /* ../../src/core/parameter.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/parameter.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000013 /* ../../src/core/scheduler.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/scheduler.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000014 /* ../../src/core/telemetry_store.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/telemetry_store.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000015 /* ../../src/core/telemetry_csv.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/telemetry_csv.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000016 /* ../../src/core/isotp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/isotp.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000017 /* ../../src/uds/uds.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/uds/uds.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000018 /* ../../src/elm327/elm327.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/elm327/elm327.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000019 /* ../../src/elm327/can.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/elm327/can.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000020 /* ../../src/elm327/session.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/elm327/session.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000021 /* ../../src/elm327/probe.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/elm327/probe.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000022 /* ../../src/obd2/obd2.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/obd2/obd2.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000030 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		B00000000000000000000040 /* JAGLINK.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JAGLINK.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C0A110000000000000000004 /* InfiltratrCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = wrapper.pb-project; name = InfiltratrCommon.xcodeproj; path = ../../upstream/mblink/src/infiltratr-common/apple/InfiltratrCommon.xcodeproj; sourceTree = SOURCE_ROOT; };
+		C0A110000000000000000004 /* InfiltratrCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = InfiltratrCommon.xcodeproj; path = "../../src/infiltratr-common/apple/InfiltratrCommon.xcodeproj"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,10 +102,10 @@
 		E00000000000000000000002 /* App */ = {
 			isa = PBXGroup;
 			children = (
-				B00000000000000000000001 /* JAGLINKApp.swift */,
-				B00000000000000000000002 /* ContentView.swift */,
-				B00000000000000000000003 /* ConnectionViewModel.swift */,
-				B00000000000000000000004 /* JAGLINK-Bridging-Header.h */,
+				B00000000000000000000001 /* JAGLINK/JAGLINKApp.swift */,
+				B00000000000000000000002 /* JAGLINK/ContentView.swift */,
+				B00000000000000000000003 /* JAGLINK/ConnectionViewModel.swift */,
+				B00000000000000000000004 /* JAGLINK/JAGLINK-Bridging-Header.h */,
 			);
 			name = App;
 			sourceTree = "<group>";
@@ -112,11 +113,11 @@
 		E00000000000000000000003 /* Apple Platform */ = {
 			isa = PBXGroup;
 			children = (
-				B00000000000000000000005 /* MBLinkBLETransport.h */,
-				B00000000000000000000006 /* MBLinkBLETransport+MBLINK.h */,
-				B00000000000000000000007 /* MBLinkBLETransport.m */,
-				B00000000000000000000008 /* JagLinkDiagnosticsController.h */,
-				B00000000000000000000009 /* JagLinkDiagnosticsController.m */,
+				B00000000000000000000005 /* ../../platform/apple/JagLinkBLETransport.h */,
+				B00000000000000000000006 /* ../../platform/apple/JagLinkBLETransport+JAGLINK.h */,
+				B00000000000000000000007 /* ../../platform/apple/JagLinkBLETransport.m */,
+				B00000000000000000000008 /* ../../platform/apple/JagLinkDiagnosticsController.h */,
+				B00000000000000000000009 /* ../../platform/apple/JagLinkDiagnosticsController.m */,
 			);
 			name = "Apple Platform";
 			sourceTree = "<group>";
@@ -124,19 +125,19 @@
 		E00000000000000000000004 /* Portable Core */ = {
 			isa = PBXGroup;
 			children = (
-				B00000000000000000000010 /* mblink.c */,
-				B00000000000000000000011 /* jaguar.c */,
-				B00000000000000000000012 /* parameter.c */,
-				B00000000000000000000013 /* scheduler.c */,
-				B00000000000000000000014 /* telemetry_store.c */,
-				B00000000000000000000015 /* telemetry_csv.c */,
-				B00000000000000000000016 /* isotp.c */,
-				B00000000000000000000017 /* uds.c */,
-				B00000000000000000000018 /* elm327.c */,
-				B00000000000000000000019 /* can.c */,
-				B00000000000000000000020 /* session.c */,
-				B00000000000000000000021 /* probe.c */,
-				B00000000000000000000022 /* obd2.c */,
+				B00000000000000000000010 /* ../../src/core/jaglink.c */,
+				B00000000000000000000011 /* ../../src/jaguar/jaguar.c */,
+				B00000000000000000000012 /* ../../src/core/parameter.c */,
+				B00000000000000000000013 /* ../../src/core/scheduler.c */,
+				B00000000000000000000014 /* ../../src/core/telemetry_store.c */,
+				B00000000000000000000015 /* ../../src/core/telemetry_csv.c */,
+				B00000000000000000000016 /* ../../src/core/isotp.c */,
+				B00000000000000000000017 /* ../../src/uds/uds.c */,
+				B00000000000000000000018 /* ../../src/elm327/elm327.c */,
+				B00000000000000000000019 /* ../../src/elm327/can.c */,
+				B00000000000000000000020 /* ../../src/elm327/session.c */,
+				B00000000000000000000021 /* ../../src/elm327/probe.c */,
+				B00000000000000000000022 /* ../../src/obd2/obd2.c */,
 			);
 			name = "Portable Core";
 			sourceTree = "<group>";
@@ -149,23 +150,27 @@
 			name = "Infiltratr Common";
 			sourceTree = "<group>";
 		};
-		E00000000000000000000008 /* Common Products */ = {
-			isa = PBXGroup;
-			children = (
-				C0A110000000000000000005 /* libInfiltratrCommonPortable.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		E00000000000000000000006 /* Frameworks */ = {
 			isa = PBXGroup;
-			children = ( B00000000000000000000030 /* CoreBluetooth.framework */, );
+			children = (
+				B00000000000000000000030 /* CoreBluetooth.framework */,
+			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		E00000000000000000000007 /* Products */ = {
 			isa = PBXGroup;
-			children = ( B00000000000000000000040 /* JAGLINK.app */, );
+			children = (
+				B00000000000000000000040 /* JAGLINK.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E00000000000000000000008 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C0A110000000000000000005 /* libInfiltratrCommonPortable.a */,
+			);
 			name = Products;
 			sourceTree = "<group>";
 		};
@@ -174,14 +179,17 @@
 /* Begin PBXNativeTarget section */
 		C13732C8E715C9BEE4FA51C9 /* JAGLINK */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = L00000000000000000000002 /* Build configuration list for PBXNativeTarget JAGLINK */;
+			buildConfigurationList = L00000000000000000000002;
 			buildPhases = (
-				S00000000000000000000001 /* Sources */,
+				S00000000000000000000001,
 				F00000000000000000000001 /* Frameworks */,
-				R00000000000000000000001 /* Resources */,
+				R00000000000000000000001,
 			);
-			buildRules = ( );
-			dependencies = ( C0A110000000000000000007 /* PBXTargetDependency */, );
+			buildRules = (
+			);
+			dependencies = (
+				C0A110000000000000000007 /* PBXTargetDependency */,
+			);
 			name = JAGLINK;
 			productName = JAGLINK;
 			productReference = B00000000000000000000040 /* JAGLINK.app */;
@@ -190,27 +198,39 @@
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		P00000000000000000000001 /* Project object */ = {
+		'P00000000000000000000001' = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
-				TargetAttributes = { C13732C8E715C9BEE4FA51C9 = { CreatedOnToolsVersion = 16.0; }; };
+				TargetAttributes = {
+					C13732C8E715C9BEE4FA51C9 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
 			};
-			buildConfigurationList = L00000000000000000000001 /* Build configuration list for PBXProject JAGLINK */;
+			buildConfigurationList = L00000000000000000000001;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
-			knownRegions = ( en, Base, );
+			knownRegions = (
+				en,
+				Base,
+			);
 			mainGroup = E00000000000000000000001;
 			productRefGroup = E00000000000000000000007 /* Products */;
 			projectDirPath = "";
 			projectReferences = (
-				{ ProductGroup = E00000000000000000000008 /* Common Products */; ProjectRef = C0A110000000000000000004 /* InfiltratrCommon.xcodeproj */; },
+				{
+					ProductGroup = E00000000000000000000008 /* Products */;
+					ProjectRef = C0A110000000000000000004 /* InfiltratrCommon.xcodeproj */;
+				},
 			);
 			projectRoot = "";
-			targets = ( C13732C8E715C9BEE4FA51C9 /* JAGLINK */, );
+			targets = (
+				C13732C8E715C9BEE4FA51C9 /* JAGLINK */,
+			);
 		};
 /* End PBXProject section */
 
@@ -225,32 +245,38 @@
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
-		R00000000000000000000001 /* Resources */ = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ( ); runOnlyForDeploymentPostprocessing = 0; };
+		'R00000000000000000000001' = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		S00000000000000000000001 /* Sources */ = {
+		'S00000000000000000000001' = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A00000000000000000000001 /* JAGLINKApp.swift in Sources */,
-				A00000000000000000000002 /* ContentView.swift in Sources */,
-				A00000000000000000000003 /* ConnectionViewModel.swift in Sources */,
-				A00000000000000000000004 /* MBLinkBLETransport.m in Sources */,
-				A00000000000000000000005 /* JagLinkDiagnosticsController.m in Sources */,
-				A00000000000000000000010 /* mblink.c in Sources */,
-				A00000000000000000000011 /* jaguar.c in Sources */,
-				A00000000000000000000012 /* parameter.c in Sources */,
-				A00000000000000000000013 /* scheduler.c in Sources */,
-				A00000000000000000000014 /* telemetry_store.c in Sources */,
-				A00000000000000000000015 /* telemetry_csv.c in Sources */,
-				A00000000000000000000016 /* isotp.c in Sources */,
-				A00000000000000000000017 /* uds.c in Sources */,
-				A00000000000000000000018 /* elm327.c in Sources */,
-				A00000000000000000000019 /* can.c in Sources */,
-				A00000000000000000000020 /* session.c in Sources */,
-				A00000000000000000000021 /* probe.c in Sources */,
-				A00000000000000000000022 /* obd2.c in Sources */,
+				A00000000000000000000001 /* JAGLINK/JAGLINKApp.swift in Sources */,
+				A00000000000000000000002 /* JAGLINK/ContentView.swift in Sources */,
+				A00000000000000000000003 /* JAGLINK/ConnectionViewModel.swift in Sources */,
+				A00000000000000000000004 /* ../../platform/apple/JagLinkBLETransport.m in Sources */,
+				A00000000000000000000005 /* ../../platform/apple/JagLinkDiagnosticsController.m in Sources */,
+				A00000000000000000000010 /* ../../src/core/jaglink.c in Sources */,
+				A00000000000000000000011 /* ../../src/jaguar/jaguar.c in Sources */,
+				A00000000000000000000012 /* ../../src/core/parameter.c in Sources */,
+				A00000000000000000000013 /* ../../src/core/scheduler.c in Sources */,
+				A00000000000000000000014 /* ../../src/core/telemetry_store.c in Sources */,
+				A00000000000000000000015 /* ../../src/core/telemetry_csv.c in Sources */,
+				A00000000000000000000016 /* ../../src/core/isotp.c in Sources */,
+				A00000000000000000000017 /* ../../src/uds/uds.c in Sources */,
+				A00000000000000000000018 /* ../../src/elm327/elm327.c in Sources */,
+				A00000000000000000000019 /* ../../src/elm327/can.c in Sources */,
+				A00000000000000000000020 /* ../../src/elm327/session.c in Sources */,
+				A00000000000000000000021 /* ../../src/elm327/probe.c in Sources */,
+				A00000000000000000000022 /* ../../src/obd2/obd2.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,32 +322,36 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				GENERATE_INFOPLIST_FILE = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
-				GCC_PREPROCESSOR_DEFINITIONS = ( "$(inherited)", "MBLINK_VERSION=\\\"$(MARKETING_VERSION)\\\"", );
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"JAGLINK_VERSION=\\\"$(MARKETING_VERSION)\\\"",
+				);
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../include",
-					"$(SRCROOT)/../../upstream/mblink/include",
-					"$(SRCROOT)/../../upstream/mblink/src/infiltratr-common/include",
-					"$(SRCROOT)/../../upstream/mblink/platform/apple",
+					"$(SRCROOT)/../../src/infiltratr-common/include",
 					"$(SRCROOT)/../../platform/apple",
 				);
 				INFOPLIST_KEY_CFBundleDisplayName = JAGLINK;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Shannon Smith";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "JAGLINK uses Bluetooth to communicate with your OBD-II diagnostic adapter.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Shannon Smith";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/Frameworks", );
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 0.1.0;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.The-First-Infiltrator.Jaglink";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "JAGLINK/JAGLINK-Bridging-Header.h";
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
 				SWIFT_VERSION = 5.0;
-				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -332,31 +362,35 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				GENERATE_INFOPLIST_FILE = YES;
 				GCC_C_LANGUAGE_STANDARD = c11;
-				GCC_PREPROCESSOR_DEFINITIONS = ( "$(inherited)", "MBLINK_VERSION=\\\"$(MARKETING_VERSION)\\\"", );
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"JAGLINK_VERSION=\\\"$(MARKETING_VERSION)\\\"",
+				);
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../include",
-					"$(SRCROOT)/../../upstream/mblink/include",
-					"$(SRCROOT)/../../upstream/mblink/src/infiltratr-common/include",
-					"$(SRCROOT)/../../upstream/mblink/platform/apple",
+					"$(SRCROOT)/../../src/infiltratr-common/include",
 					"$(SRCROOT)/../../platform/apple",
 				);
 				INFOPLIST_KEY_CFBundleDisplayName = JAGLINK;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Shannon Smith";
 				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "JAGLINK uses Bluetooth to communicate with your OBD-II diagnostic adapter.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Shannon Smith";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = ( "$(inherited)", "@executable_path/Frameworks", );
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
 				MARKETING_VERSION = 0.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.The-First-Infiltrator.Jaglink";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_OBJC_BRIDGING_HEADER = "JAGLINK/JAGLINK-Bridging-Header.h";
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
 				SWIFT_VERSION = 5.0;
-				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
@@ -364,19 +398,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		L00000000000000000000001 /* Build configuration list for PBXProject JAGLINK */ = {
+		'L00000000000000000000001' = {
 			isa = XCConfigurationList;
-			buildConfigurations = ( D00000000000000000000001 /* Debug */, D00000000000000000000002 /* Release */, );
+			buildConfigurations = (
+				D00000000000000000000001 /* Debug */,
+				D00000000000000000000002 /* Release */,
+			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		L00000000000000000000002 /* Build configuration list for PBXNativeTarget JAGLINK */ = {
+		'L00000000000000000000002' = {
 			isa = XCConfigurationList;
-			buildConfigurations = ( D00000000000000000000003 /* Debug */, D00000000000000000000004 /* Release */, );
+			buildConfigurations = (
+				D00000000000000000000003 /* Debug */,
+				D00000000000000000000004 /* Release */,
+			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = P00000000000000000000001 /* Project object */;
+	rootObject = P00000000000000000000001;
 }

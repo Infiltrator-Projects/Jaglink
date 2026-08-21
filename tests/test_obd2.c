@@ -1,0 +1,465 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+#include "jaglink/elm327.h"
+#include "jaglink/obd2.h"
+
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+
+static int failures = 0;
+
+static void check(bool condition, const char *message)
+{
+    if (!condition) {
+        fprintf(stderr, "FAIL: %s\n", message);
+        failures++;
+    }
+}
+
+static JaglinkElm327Response parse_response(const char *command, const char *wire)
+{
+    JaglinkElm327Parser parser;
+    JaglinkElm327Response response;
+    size_t consumed = 0U;
+    JaglinkElm327Result result;
+
+    memset(&response, 0, sizeof(response));
+    result = jaglink_elm327_parser_begin(&parser, command);
+    check(result == JAGLINK_ELM327_RESULT_OK, "ELM parser begins");
+    result = jaglink_elm327_parser_feed(
+        &parser, (const uint8_t *)wire, strlen(wire), &consumed);
+    check(result == JAGLINK_ELM327_RESULT_OK, "ELM parser reaches prompt");
+    result = jaglink_elm327_parser_finish(&parser, &response);
+    check(result == JAGLINK_ELM327_RESULT_OK, "ELM response normalises");
+    return response;
+}
+
+static bool near_value(double value, double expected, double tolerance)
+{
+    double difference = value - expected;
+    if (difference < 0.0) {
+        difference = -difference;
+    }
+    return difference <= tolerance;
+}
+
+static void test_request_builders(void)
+{
+    char command[16];
+    JaglinkObd2ClearAuthorization authorization =
+        JAGLINK_OBD2_CLEAR_AUTHORIZATION_INIT;
+
+    check(jaglink_obd2_build_live_pid_request(
+              0x0cU, command, sizeof(command)) == JAGLINK_OBD2_RESULT_OK &&
+              strcmp(command, "010C") == 0,
+          "live PID command");
+    check(jaglink_obd2_build_freeze_pid_request(
+              0x0cU, 0x00U, command, sizeof(command)) ==
+              JAGLINK_OBD2_RESULT_OK && strcmp(command, "020C00") == 0,
+          "freeze-frame PID command");
+    check(jaglink_obd2_build_supported_pid_request(
+              0x20U, command, sizeof(command)) == JAGLINK_OBD2_RESULT_OK &&
+              strcmp(command, "0120") == 0,
+          "supported PID block command");
+    check(jaglink_obd2_build_supported_pid_request(
+              0x21U, command, sizeof(command)) ==
+              JAGLINK_OBD2_RESULT_INVALID_ARGUMENT,
+          "misaligned supported PID block rejected");
+    check(jaglink_obd2_build_vin_request(command, sizeof(command)) ==
+              JAGLINK_OBD2_RESULT_OK && strcmp(command, "0902") == 0,
+          "VIN command");
+    check(jaglink_obd2_build_dtc_request(
+              JAGLINK_OBD2_DTC_STORED, command, sizeof(command)) ==
+              JAGLINK_OBD2_RESULT_OK && strcmp(command, "03") == 0,
+          "stored DTC command");
+    check(jaglink_obd2_build_dtc_request(
+              JAGLINK_OBD2_DTC_PENDING, command, sizeof(command)) ==
+              JAGLINK_OBD2_RESULT_OK && strcmp(command, "07") == 0,
+          "pending DTC command");
+    check(jaglink_obd2_build_dtc_request(
+              JAGLINK_OBD2_DTC_PERMANENT, command, sizeof(command)) ==
+              JAGLINK_OBD2_RESULT_OK && strcmp(command, "0A") == 0,
+          "permanent DTC command");
+
+    strcpy(command, "sentinel");
+    check(jaglink_obd2_build_clear_dtc_request(
+              &authorization, command, sizeof(command)) ==
+              JAGLINK_OBD2_RESULT_NOT_AUTHORIZED && command[0] == '\0',
+          "clear DTC command is gated");
+    authorization.confirmed = true;
+    check(jaglink_obd2_build_clear_dtc_request(
+              &authorization, command, sizeof(command)) ==
+              JAGLINK_OBD2_RESULT_NOT_AUTHORIZED,
+          "clear requires readiness-reset acknowledgement");
+    authorization.acknowledge_readiness_reset = true;
+    check(jaglink_obd2_build_clear_dtc_request(
+              &authorization, command, sizeof(command)) ==
+              JAGLINK_OBD2_RESULT_OK && strcmp(command, "04") == 0,
+          "clear command requires both acknowledgements");
+}
+
+static void test_supported_pid_discovery(void)
+{
+    JaglinkObd2PidSet set;
+    JaglinkElm327Response response;
+    bool has_more = false;
+
+    jaglink_obd2_pid_set_clear(&set);
+    response = parse_response("0100", "0100\r410080000001\r>");
+    check(jaglink_obd2_accept_supported_pids(
+              &response, 0x00U, &set, &has_more) == JAGLINK_OBD2_RESULT_OK,
+          "first supported PID block decodes");
+    check(jaglink_obd2_pid_set_contains(&set, 0x01U),
+          "PID 01 marked supported");
+    check(jaglink_obd2_pid_set_contains(&set, 0x20U),
+          "continuation PID marked supported");
+    check(has_more, "continuation block requested");
+
+    response = parse_response("0120", "412080000001\r>");
+    check(jaglink_obd2_accept_supported_pids(
+              &response, 0x20U, &set, &has_more) == JAGLINK_OBD2_RESULT_OK,
+          "second supported PID block decodes");
+    check(jaglink_obd2_pid_set_contains(&set, 0x21U),
+          "PID 21 marked supported");
+    check(jaglink_obd2_pid_set_contains(&set, 0x40U),
+          "PID 40 continuation marked supported");
+    check(has_more, "third PID block requested");
+
+    response = parse_response("0140", "414000000001\r>");
+    check(jaglink_obd2_accept_supported_pids(
+              &response, 0x40U, &set, &has_more) == JAGLINK_OBD2_RESULT_OK,
+          "third supported PID block decodes");
+    check(jaglink_obd2_pid_set_contains(&set, 0x60U),
+          "PID 60 continuation marked supported");
+    check(has_more, "fourth PID block requested");
+
+    response = parse_response("0160", "416000000001\r>");
+    check(jaglink_obd2_accept_supported_pids(
+              &response, 0x60U, &set, &has_more) == JAGLINK_OBD2_RESULT_OK,
+          "fourth supported PID block decodes");
+    check(jaglink_obd2_pid_set_contains(&set, 0x80U),
+          "PID 80 continuation marked supported");
+    check(has_more, "fifth PID block requested");
+
+    response = parse_response("0180", "418080000000\r>");
+    check(jaglink_obd2_accept_supported_pids(
+              &response, 0x80U, &set, &has_more) == JAGLINK_OBD2_RESULT_OK,
+          "fifth supported PID block decodes");
+    check(jaglink_obd2_pid_set_contains(&set, 0x81U),
+          "PID 81 marked supported");
+    check(!has_more, "enumeration stops without continuation bit");
+
+    {
+        JaglinkObd2PidSet transaction_set;
+        JaglinkObd2PidSet snapshot;
+        jaglink_obd2_pid_set_clear(&transaction_set);
+        snapshot = transaction_set;
+        has_more = true;
+        response = parse_response(
+            "0100", "410080000001\rZZ\r>");
+        check(jaglink_obd2_accept_supported_pids(
+                  &response, 0x00U, &transaction_set, &has_more) ==
+                  JAGLINK_OBD2_RESULT_MALFORMED_RESPONSE,
+              "malformed supported PID response is rejected");
+        check(memcmp(&transaction_set, &snapshot,
+                     sizeof(transaction_set)) == 0 && !has_more,
+              "failed supported PID decode leaves output unchanged");
+    }
+}
+
+static void test_live_pid_decoding(void)
+{
+    struct {
+        uint8_t pid;
+        const char *command;
+        const char *wire;
+        double expected;
+        double tolerance;
+        JaglinkObd2Unit unit;
+    } cases[] = {
+        {0x04U, "0104", "410480\r>", 50.196, 0.01, JAGLINK_OBD2_UNIT_PERCENT},
+        {0x05U, "0105", "41057B\r>", 83.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS},
+        {0x0bU, "010B", "410B64\r>", 100.0, 0.001, JAGLINK_OBD2_UNIT_KPA},
+        {0x0cU, "010C", "410C1AF8\r>", 1726.0, 0.001, JAGLINK_OBD2_UNIT_RPM},
+        {0x0dU, "010D", "410D64\r>", 100.0, 0.001, JAGLINK_OBD2_UNIT_KMH},
+        {0x0fU, "010F", "410F50\r>", 40.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS},
+        {0x10U, "0110", "41101388\r>", 50.0, 0.001,
+         JAGLINK_OBD2_UNIT_GRAMS_PER_SECOND},
+        {0x11U, "0111", "411180\r>", 50.196, 0.01, JAGLINK_OBD2_UNIT_PERCENT},
+        {0x23U, "0123", "41230064\r>", 1000.0, 0.001, JAGLINK_OBD2_UNIT_KPA},
+        {0x2cU, "012C", "412C80\r>", 50.196, 0.01, JAGLINK_OBD2_UNIT_PERCENT},
+        {0x2dU, "012D", "412D80\r>", 0.0, 0.001, JAGLINK_OBD2_UNIT_PERCENT},
+        {0x33U, "0133", "413364\r>", 100.0, 0.001, JAGLINK_OBD2_UNIT_KPA},
+        {0x3cU, "013C", "413C0FA0\r>", 360.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS},
+        {0x42U, "0142", "414236B0\r>", 14.0, 0.001, JAGLINK_OBD2_UNIT_VOLTS},
+        {0x46U, "0146", "414650\r>", 40.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS},
+        {0x5cU, "015C", "415C50\r>", 40.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS},
+        {0x5eU, "015E", "415E03E8\r>", 50.0, 0.001, JAGLINK_OBD2_UNIT_LITRES_PER_HOUR},
+        {0x78U, "0178", "4178010FA00000000000\r>", 360.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS},
+        {0x7aU, "017A", "417A0103E800000000\r>", 10.0, 0.001, JAGLINK_OBD2_UNIT_KPA},
+        {0x7cU, "017C", "417C010FA0000000000000\r>", 360.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS}
+    };
+    size_t index;
+
+    for (index = 0U; index < sizeof(cases) / sizeof(cases[0]); ++index) {
+        JaglinkElm327Response response =
+            parse_response(cases[index].command, cases[index].wire);
+        JaglinkObd2Sample sample;
+        check(jaglink_obd2_decode_live_pid(
+                  &response, cases[index].pid, &sample) ==
+                  JAGLINK_OBD2_RESULT_OK,
+              "live PID decodes");
+        check(sample.pid == cases[index].pid, "sample keeps PID");
+        check(sample.unit == cases[index].unit, "sample unit matches");
+        check(near_value(sample.value, cases[index].expected,
+                         cases[index].tolerance),
+              "sample formula matches");
+    }
+
+    {
+        JaglinkElm327Response response =
+            parse_response("017A", "417A0003E800000000\r>");
+        JaglinkObd2Sample sample = {
+            .pid = 0xa5U,
+            .value = 12345.5,
+            .unit = JAGLINK_OBD2_UNIT_KMH
+        };
+        JaglinkObd2Sample snapshot = sample;
+        check(jaglink_obd2_decode_live_pid(
+                  &response, 0x7aU, &sample) ==
+                  JAGLINK_OBD2_RESULT_UNSUPPORTED_PID,
+              "unadvertised DPF sub-field is not decoded");
+        check(memcmp(&sample, &snapshot, sizeof(sample)) == 0,
+              "unsupported DPF sub-field leaves output unchanged");
+    }
+
+    {
+        JaglinkElm327Response response =
+            parse_response("010C", "410C1A\r>");
+        JaglinkObd2Sample sample = {
+            .pid = 0xa5U,
+            .value = 12345.5,
+            .unit = JAGLINK_OBD2_UNIT_KMH
+        };
+        JaglinkObd2Sample snapshot = sample;
+        check(jaglink_obd2_decode_live_pid(
+                  &response, 0x0cU, &sample) ==
+                  JAGLINK_OBD2_RESULT_MALFORMED_RESPONSE,
+              "truncated live sample is rejected");
+        check(memcmp(&sample, &snapshot, sizeof(sample)) == 0,
+              "failed live sample decode leaves output unchanged");
+    }
+}
+
+static void test_freeze_frame_and_readiness(void)
+{
+    JaglinkElm327Response response;
+    JaglinkObd2Sample sample;
+    JaglinkObd2Readiness readiness;
+
+    response = parse_response("020C00", "420C001AF8\r>");
+    check(jaglink_obd2_decode_freeze_pid(
+              &response, 0x0cU, 0x00U, &sample) == JAGLINK_OBD2_RESULT_OK,
+          "freeze-frame RPM decodes");
+    check(near_value(sample.value, 1726.0, 0.001),
+          "freeze-frame formula matches live formula");
+
+    sample.pid = 0x5aU;
+    sample.value = -77.0;
+    sample.unit = JAGLINK_OBD2_UNIT_PERCENT;
+    {
+        JaglinkObd2Sample snapshot = sample;
+        response = parse_response("020C00", "420C001A\r>");
+        check(jaglink_obd2_decode_freeze_pid(
+                  &response, 0x0cU, 0x00U, &sample) ==
+                  JAGLINK_OBD2_RESULT_MALFORMED_RESPONSE,
+              "truncated freeze-frame sample is rejected");
+        check(memcmp(&sample, &snapshot, sizeof(sample)) == 0,
+              "failed freeze-frame decode leaves output unchanged");
+    }
+
+    response = parse_response("0101", "410181070000\r>");
+    check(jaglink_obd2_decode_readiness(
+              &response, &readiness) == JAGLINK_OBD2_RESULT_OK,
+          "readiness decodes");
+    check(readiness.mil_on, "MIL bit decodes");
+    check(readiness.confirmed_dtc_count == 1U, "DTC count decodes");
+    check(!readiness.compression_ignition, "spark ignition bit decodes");
+    check(readiness.continuous_supported == 0x07U,
+          "continuous support mask decodes");
+
+    response = parse_response("0101", "4101000F8040\r>");
+    check(jaglink_obd2_decode_readiness(
+              &response, &readiness) == JAGLINK_OBD2_RESULT_OK,
+          "compression readiness decodes");
+    check(readiness.compression_ignition,
+          "compression ignition bit decodes");
+    check(readiness.noncontinuous_supported == 0x80U &&
+              readiness.noncontinuous_incomplete == 0x40U,
+          "compression monitor masks retained");
+}
+
+static void test_vin(void)
+{
+    JaglinkElm327Response response;
+    char vin[JAGLINK_OBD2_VIN_LENGTH + 1U];
+
+    response = parse_response(
+        "0902", "4902015744443230373030303030303030303030\r>");
+    check(jaglink_obd2_decode_vin(&response, vin) == JAGLINK_OBD2_RESULT_OK,
+          "single-line VIN decodes");
+    check(strcmp(vin, "WDD20700000000000") == 0,
+          "single-line VIN text matches");
+
+    response = parse_response(
+        "0902",
+        "014\r0:490201574444\r1:32303730303030\r2:30303030303030\r>");
+    check(jaglink_obd2_decode_vin(&response, vin) == JAGLINK_OBD2_RESULT_OK,
+          "ELM indexed multi-line VIN decodes");
+    check(strcmp(vin, "WDD20700000000000") == 0,
+          "ELM indexed VIN text matches");
+
+    response = parse_response(
+        "0902",
+        "014\r0:490201574444\r2:32303730303030\r>");
+    check(jaglink_obd2_decode_vin(&response, vin) ==
+              JAGLINK_OBD2_RESULT_MALFORMED_RESPONSE,
+          "missing ELM indexed frame is rejected");
+
+    strcpy(vin, "sentinel");
+    response = parse_response(
+        "0902", "014\r0:490201574444\r1:32303730303030\r>");
+    check(jaglink_obd2_decode_vin(&response, vin) ==
+              JAGLINK_OBD2_RESULT_MALFORMED_RESPONSE && vin[0] == '\0',
+          "truncated indexed VIN length is rejected transactionally");
+
+    strcpy(vin, "sentinel");
+    response = parse_response(
+        "0902", "490201574444\r490202ZZ\r>");
+    check(jaglink_obd2_decode_vin(&response, vin) ==
+              JAGLINK_OBD2_RESULT_MALFORMED_RESPONSE && vin[0] == '\0',
+          "malformed multi-line VIN leaves output empty");
+
+    strcpy(vin, "sentinel");
+    response = parse_response(
+        "0902", "4902015744443230373030303030303030303021\r>");
+    check(jaglink_obd2_decode_vin(&response, vin) ==
+              JAGLINK_OBD2_RESULT_MALFORMED_RESPONSE && vin[0] == '\0',
+          "printable punctuation is rejected in VIN");
+
+    strcpy(vin, "sentinel");
+    response = parse_response(
+        "0902", "4902015744443230373030303030303030303069\r>");
+    check(jaglink_obd2_decode_vin(&response, vin) ==
+              JAGLINK_OBD2_RESULT_MALFORMED_RESPONSE && vin[0] == '\0',
+          "lowercase character is rejected in VIN");
+}
+
+static void test_dtcs(void)
+{
+    JaglinkElm327Response response;
+    JaglinkObd2DtcList list;
+    char code[JAGLINK_OBD2_DTC_TEXT_LENGTH];
+
+    check(jaglink_obd2_decode_dtc_pair(
+              0x01U, 0x33U, code) == JAGLINK_OBD2_RESULT_OK &&
+              strcmp(code, "P0133") == 0,
+          "raw DTC pair decodes");
+
+    response = parse_response("03", "430133C1230000\r>");
+    check(jaglink_obd2_decode_dtcs(
+              &response, JAGLINK_OBD2_DTC_STORED, &list) ==
+              JAGLINK_OBD2_RESULT_OK,
+          "stored DTC response decodes");
+    check(list.count == 2U, "stored DTC count");
+    check(strcmp(list.entries[0].code, "P0133") == 0,
+          "first stored DTC");
+    check(strcmp(list.entries[1].code, "U0123") == 0,
+          "second stored DTC");
+
+    response = parse_response("07", "470200\r>");
+    check(jaglink_obd2_decode_dtcs(
+              &response, JAGLINK_OBD2_DTC_PENDING, &list) ==
+              JAGLINK_OBD2_RESULT_OK && list.count == 1U &&
+              strcmp(list.entries[0].code, "P0200") == 0,
+          "pending DTC response decodes");
+
+    response = parse_response("0A", "4A0300\r>");
+    check(jaglink_obd2_decode_dtcs(
+              &response, JAGLINK_OBD2_DTC_PERMANENT, &list) ==
+              JAGLINK_OBD2_RESULT_OK && list.count == 1U &&
+              strcmp(list.entries[0].code, "P0300") == 0,
+          "permanent DTC response decodes");
+
+    response = parse_response(
+        "03", "00B\r0:430133C1230000\r1:02000300\r>");
+    check(jaglink_obd2_decode_dtcs(
+              &response, JAGLINK_OBD2_DTC_STORED, &list) ==
+              JAGLINK_OBD2_RESULT_OK,
+          "ELM indexed long DTC response decodes");
+    check(list.count == 4U, "ELM indexed long DTC count");
+    check(strcmp(list.entries[0].code, "P0133") == 0 &&
+              strcmp(list.entries[1].code, "U0123") == 0 &&
+              strcmp(list.entries[2].code, "P0200") == 0 &&
+              strcmp(list.entries[3].code, "P0300") == 0,
+          "ELM indexed DTC values match");
+
+    response = parse_response(
+        "03", "00B\r0:430133C1230000\r>");
+    check(jaglink_obd2_decode_dtcs(
+              &response, JAGLINK_OBD2_DTC_STORED, &list) ==
+              JAGLINK_OBD2_RESULT_MALFORMED_RESPONSE,
+          "truncated indexed DTC length is rejected");
+
+    {
+        JaglinkObd2DtcList snapshot;
+        memset(&list, 0, sizeof(list));
+        list.count = 1U;
+        list.entries[0].kind = JAGLINK_OBD2_DTC_STORED;
+        strcpy(list.entries[0].code, "P9999");
+        snapshot = list;
+        response = parse_response("03", "430133\rZZ\r>");
+        check(jaglink_obd2_decode_dtcs(
+                  &response, JAGLINK_OBD2_DTC_STORED, &list) ==
+                  JAGLINK_OBD2_RESULT_MALFORMED_RESPONSE,
+              "malformed DTC response is rejected");
+        check(memcmp(&list, &snapshot, sizeof(list)) == 0,
+              "failed DTC decode leaves output unchanged");
+    }
+}
+
+static void test_malformed_and_elm_errors(void)
+{
+    JaglinkElm327Response response;
+    JaglinkObd2Sample sample;
+
+    response = parse_response("010C", "410CXYZ\r>");
+    check(jaglink_obd2_decode_live_pid(
+              &response, 0x0cU, &sample) ==
+              JAGLINK_OBD2_RESULT_MALFORMED_RESPONSE,
+          "non-hex payload rejected");
+
+    memset(&response, 0, sizeof(response));
+    response.result = JAGLINK_ELM327_RESULT_NO_DATA;
+    check(jaglink_obd2_decode_live_pid(
+              &response, 0x0cU, &sample) == JAGLINK_OBD2_RESULT_ELM_ERROR,
+          "ELM error is not reinterpreted as OBD data");
+}
+
+int main(void)
+{
+    test_request_builders();
+    test_supported_pid_discovery();
+    test_live_pid_decoding();
+    test_freeze_frame_and_readiness();
+    test_vin();
+    test_dtcs();
+    test_malformed_and_elm_errors();
+
+    if (failures != 0) {
+        fprintf(stderr, "%d OBD-II test(s) failed\n", failures);
+        return 1;
+    }
+    puts("OBD-II tests passed");
+    return 0;
+}

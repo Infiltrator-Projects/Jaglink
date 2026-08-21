@@ -61,3 +61,5 @@ jobs:
           git diff --cached --stat
           git commit -m "Import MBLINK 0.7.12 source snapshot for JAGLINK"
           git push origin HEAD:main
+
+# Second push after activation deliberately triggers this one-shot workflow.

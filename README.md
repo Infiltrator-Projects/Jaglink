@@ -2,12 +2,63 @@
 
 # JAGLINK
 
-JAGLINK is an open-source Jaguar diagnostics platform derived from MBLINK 0.7.12 (`e760b6ec05897c87e3531d68649b121403fcdec8`). It retains MBLINK's portable C diagnostic core, generic OBD-II, ELM327 transport, telemetry, ISO-TP/UDS infrastructure, iPhone/Linux front ends, and Infiltratr Common integration while replacing Mercedes-Benz-specific vehicle logic with Jaguar/Ford-era diagnostics.
+JAGLINK is a C-first, open-source Jaguar diagnostics platform derived from MBLINK. The initial vehicle family is the **Jaguar X-Type (X400), 2001–2009**, the Jaguar/Ford CD132 platform related to the Mondeo.
 
-Initial vehicle target: **Jaguar X-Type (X400), 2001–2009**, based on the Ford CD132/Mondeo platform.
+**Current development release: 0.1.0 — X400 foundation.**
 
-Development policy: `main` only.
+JAGLINK pins the known-good MBLINK 0.7.12 source snapshot at `e760b6ec05897c87e3531d68649b121403fcdec8` under `upstream/mblink`. The JAGLINK build deliberately selects only MBLINK's reusable protocol-neutral and generic diagnostic layers: ELM327, standard OBD-II, telemetry, scheduling, ISO-TP and UDS. Mercedes-Benz manufacturer sources and tests are not part of the JAGLINK target.
+
+JAGLINK adds its own Jaguar manufacturer layer under `src/jaguar` and currently models the source-corroborated X400 network topology without inventing module addresses, proprietary PIDs or request formats that have not been verified.
+
+## X400 network foundation
+
+Jaguar service training and the 2002 X-Type Electrical Guide describe four relevant vehicle networks:
+
+- CAN — 500 kbit/s — engine, transmission and braking systems;
+- SCP — 41.6 kbit/s — lower-speed body systems;
+- ISO 9141 serial data link — 10.4 kbit/s — diagnostic link/ECM and diagnostic-capable modules outside CAN/SCP;
+- D2B optical — 5.6 Mbit/s — in-car entertainment, with the audio unit acting as a network gateway.
+
+These are represented as network definitions and provenance, not as claims that every network is already implemented by the adapter/provider layer.
+
+## Build
+
+```sh
+git clone --recurse-submodules https://github.com/The-First-Infiltrator/Jaglink.git
+cd Jaglink
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+If cloned without submodules:
+
+```sh
+git submodule update --init --recursive
+```
+
+The pinned MBLINK snapshot recursively pins Infiltratr Common 1.10.0 at `182e64cb8b8992879e443b941565058166fe0161`.
+
+## Linux shell
+
+```sh
+cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release -DJAGLINK_BUILD_LINUX_APP=ON
+cmake --build build-linux --target jaglink-linux
+./build-linux/jaglink-linux
+```
+
+## Engineering policy
+
+- `main` is the development branch.
+- Generic diagnostic behaviour stays portable C.
+- Jaguar definitions live in JAGLINK, not in the ELM/BLE provider.
+- Manufacturer-specific requests remain unimplemented until source evidence and/or reproducible vehicle captures establish their meaning.
+- MBLINK remains untouched by JAGLINK development.
+
+See `docs/JAGUAR.md` for X400 provenance and `docs/ROADMAP.md` for the staged manufacturer-diagnostics plan.
+
+## Licence
 
 Copyright (C) 2026 Shannon Smith.
 
-Licensed under GPL-3.0-or-later.
+JAGLINK is licensed under `GPL-3.0-or-later`.

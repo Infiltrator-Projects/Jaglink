@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+[submodule "upstream/mblink"]
+    path = upstream/mblink
+    url = https://github.com/The-First-Infiltrator/MBLINK.git

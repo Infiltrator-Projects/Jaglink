@@ -253,3 +253,5 @@ jobs:
           git status --short
           git commit -m 'JAGLINK 0.1.0: make repository standalone'
           git push origin HEAD:main
+
+# Explicit second push so this already-active workflow receives a push event.

@@ -45,3 +45,18 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev
       - run: cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release -DJAGLINK_BUILD_LINUX_APP=ON
       - run: cmake --build build-linux --target jaglink-linux --parallel
+
+  ios-simulator:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build iOS Simulator
+        run: |
+          xcodebuild -project app/ios/JAGLINK.xcodeproj \
+            -scheme JAGLINK \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build

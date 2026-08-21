@@ -3,7 +3,7 @@
 
 #include <string.h>
 
-static const char *x400_network_provenance =
+static const char x400_network_provenance[] =
     "Jaguar Introduction to X-TYPE Service Training (2002) and Jaguar X-TYPE 2002 Electrical Guide";
 
 static const MblinkJaguarNetworkDefinition x400_networks[] = {

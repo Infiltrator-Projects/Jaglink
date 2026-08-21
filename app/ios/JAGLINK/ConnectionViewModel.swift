@@ -28,7 +28,7 @@ struct JaguarNetworkInfo: Identifiable {
 }
 
 @MainActor
-final class ConnectionViewModel: NSObject, ObservableObject, JagLinkDiagnosticsControllerDelegate {
+final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency JagLinkDiagnosticsControllerDelegate {
     @Published private(set) var statusText = "Idle"
     @Published private(set) var peripheralName = "No adapter"
     @Published private(set) var adapterIdentifier = "Unknown"

@@ -61,6 +61,30 @@ set(INFILTRATR_COMMON_BUILD_TESTS OFF CACHE BOOL "Build Infiltratr Common tests"
 set(INFILTRATR_COMMON_WARNINGS_AS_ERRORS ON CACHE BOOL "Treat Infiltratr Common warnings as errors" FORCE)
 add_subdirectory("${JAGLINK_COMMON_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/infiltratr-common" EXCLUDE_FROM_ALL)
 
+set(JAGLINK_LINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/link")
+set(JAGLINK_LINK_VERSION "0.1.0")
+set(JAGLINK_LINK_COMMIT "8df05f3c5a1e7239a3841a4e028e2b6849f7ad31")
+
+if(NOT EXISTS "${JAGLINK_LINK_DIR}/VERSION")
+    message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required. Run git submodule update --init --recursive.")
+endif()
+
+file(READ "${JAGLINK_LINK_DIR}/VERSION" JAGLINK_LINK_FOUND_VERSION)
+string(STRIP "${JAGLINK_LINK_FOUND_VERSION}" JAGLINK_LINK_FOUND_VERSION)
+if(NOT JAGLINK_LINK_FOUND_VERSION STREQUAL JAGLINK_LINK_VERSION)
+    message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required; found ${JAGLINK_LINK_FOUND_VERSION}.")
+endif()
+
+if(JAGLINK_GIT_EXECUTABLE)
+    execute_process(COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${JAGLINK_LINK_DIR}" rev-parse HEAD
+        OUTPUT_VARIABLE JAGLINK_LINK_FOUND_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET RESULT_VARIABLE JAGLINK_LINK_COMMIT_RESULT)
+    if(JAGLINK_LINK_COMMIT_RESULT EQUAL 0 AND NOT JAGLINK_LINK_FOUND_COMMIT STREQUAL JAGLINK_LINK_COMMIT)
+        message(FATAL_ERROR "LINK must be pinned to ${JAGLINK_LINK_COMMIT}; found ${JAGLINK_LINK_FOUND_COMMIT}.")
+    endif()
+endif()
+
+add_subdirectory("${JAGLINK_LINK_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/link" EXCLUDE_FROM_ALL)
+
 add_library(jaglink STATIC
     src/core/jaglink.c
     src/core/parameter.c
@@ -74,14 +98,12 @@ add_library(jaglink STATIC
     src/elm327/probe.c
     src/obd2/obd2.c
     src/uds/uds.c
-    src/jaguar/jaguar.c
-    src/discover/safety.c
-    src/discover/evidence.c)
+    src/jaguar/jaguar.c)
 
 add_library(JAGLINK::Core ALIAS jaglink)
 target_include_directories(jaglink PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_definitions(jaglink PRIVATE JAGLINK_VERSION="${PROJECT_VERSION}")
-target_link_libraries(jaglink PUBLIC InfiltratrCommon::Portable)
+target_link_libraries(jaglink PUBLIC InfiltratrCommon::Portable LINK::Core)
 
 set(JAGLINK_WARNING_FLAGS -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wstrict-prototypes -Wmissing-prototypes)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")

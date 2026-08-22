@@ -22,8 +22,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t gitlinks < <(git ls-files --stage | awk '$1 == "160000" { print $4 }')
-          if [[ "${#gitlinks[@]}" -ne 1 || "${gitlinks[0]}" != "src/infiltratr-common" ]]; then
+          mapfile -t gitlinks < <(git ls-files --stage | awk '$1 == "160000" { print $4 }' | sort)
+          expected_gitlinks=("src/infiltratr-common" "src/link")
+          if [[ "${gitlinks[*]}" != "${expected_gitlinks[*]}" ]]; then
             printf 'Unexpected gitlink dependency set:\n%s\n' "${gitlinks[*]:-<none>}" >&2
             exit 1
           fi

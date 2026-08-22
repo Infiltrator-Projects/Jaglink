@@ -17,9 +17,9 @@ Infiltratr Common
  Jaguar/X400 face
 ```
 
-JAGLINK pins LINK 0.7.1 at `src/link`. LINK in turn pins Infiltratr Common 1.10.0, so JAGLINK carries no second top-level Common dependency. Native iPhone references to Common resolve through LINK's nested dependency checkout.
+JAGLINK pins LINK 0.7.2 at `src/link`. LINK in turn pins Infiltratr Common 1.10.0, so JAGLINK carries no second top-level Common dependency. Native iPhone references to Common resolve through LINK's nested dependency checkout.
 
-LINK owns the shared workspace, ISO-TP, byte-stream transport ABI, ELM327 framing/parser/initialisation, ELM-managed CAN, ELM session/probe, parameter/store/scheduler/telemetry runtime, Discover safety/evidence and the Windows OpenPort 2.0/J2534 scanner. JAGLINK retains compatibility façades for shared APIs plus Jaguar identity, Jaguar/X400 definitions and genuinely Jaguar-specific behaviour.
+LINK owns the shared workspace, ISO-TP, byte-stream transport ABI, ELM327 framing/parser/initialisation, ELM-managed CAN, ELM session/probe, parameter/store/scheduler/telemetry runtime, Discover safety/evidence and the native Windows OpenPort 2.0/J2534 scanner shell. JAGLINK retains compatibility façades for shared APIs plus Jaguar identity, Jaguar/X400 definitions and genuinely Jaguar-specific behaviour.
 
 The next shared-code migrations are standard OBD-II and UDS.
 
@@ -56,7 +56,7 @@ The Linux shell is C/GTK4. Its canonical Jaguar+OBD emblem is embedded as a GRes
 
 ### Windows OpenPort/J2534 Discover
 
-`jaglink-discover` is the Jaguar face of LINK's shared read-only scanner. It supports passive 500 kbit/s CAN capture, a bounded standard OBD inventory, JSON Lines evidence/annotations and deny-by-default blocking of unsafe or unknown diagnostic services.
+`jaglink-discover` is the Jaguar face of LINK's shared read-only scanner. LINK 0.7.2 supplies the same native Windows interaction model used by MBLINK: File/Help menu, About dialog, responsive product header, status area, evidence log and annotation controls. JAGLINK supplies its Jaguar icon, X400 subtitle, release version and Xavier Wheaton/Shannon Smith attribution.
 
 ### iPhone
 

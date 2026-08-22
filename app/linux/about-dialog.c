@@ -12,7 +12,8 @@ static gboolean destroy_about_on_close(GtkWindow *window, gpointer user_data)
 void jaglink_linux_show_about(GtkWindow *parent)
 {
     static const char *authors[] = {
-        "Shannon Smith — Author and project maintainer",
+        "Xavier Wheaton",
+        "Shannon Smith",
         NULL
     };
     static const char license_text[] =

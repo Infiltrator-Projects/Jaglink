@@ -20,35 +20,12 @@ private struct JaguarBadge: View {
     var size: CGFloat = 62
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: size * 0.24, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [JagPalette.panelRaised, JagPalette.deepGreen],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: size * 0.24, style: .continuous)
-                        .stroke(JagPalette.warmMetal.opacity(0.95), lineWidth: 1.6)
-                )
-
-            VStack(spacing: -1) {
-                Image(systemName: "cat.fill")
-                    .font(.system(size: size * 0.42, weight: .semibold))
-                    .foregroundStyle(JagPalette.ivory)
-                HStack(spacing: size * 0.07) {
-                    Circle().fill(JagPalette.warmMetal)
-                    Circle().fill(JagPalette.chrome)
-                    Circle().fill(JagPalette.warmMetal)
-                }
-                .frame(width: size * 0.40, height: size * 0.07)
-            }
-        }
-        .frame(width: size, height: size)
-        .shadow(color: .black.opacity(0.32), radius: 8, x: 0, y: 5)
-        .accessibilityHidden(true)
+        Image("JAGLINKEmblem")
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .shadow(color: .black.opacity(0.32), radius: 8, x: 0, y: 5)
+            .accessibilityHidden(true)
     }
 }
 
@@ -153,8 +130,11 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     HStack(spacing: 7) {
-                        Image(systemName: "cat.fill")
-                            .foregroundStyle(JagPalette.warmMetal)
+                        Image("JAGLINKEmblem")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 24, height: 24)
+                            .accessibilityHidden(true)
                         Text("JAGLINK")
                             .font(.system(size: 15, weight: .semibold, design: .serif))
                             .tracking(3)
@@ -378,7 +358,7 @@ struct ContentView: View {
 
     private var aboutPanel: some View {
         JagPanel(title: "About JAGLINK", systemImage: "info.circle.fill") {
-            jagValueRow("Application", "JAGLINK", icon: "cat.fill")
+            jagBrandedValueRow("Application", "JAGLINK")
             jagDivider
             jagValueRow("Version", model.versionText, icon: "tag")
             jagDivider
@@ -403,6 +383,23 @@ struct ContentView: View {
             Image(systemName: icon)
                 .frame(width: 21)
                 .foregroundStyle(JagPalette.warmMetal)
+            Text(label)
+                .font(.subheadline)
+                .foregroundStyle(JagPalette.mutedIvory)
+            Spacer()
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .multilineTextAlignment(.trailing)
+                .foregroundStyle(JagPalette.ivory)
+        }
+    }
+
+    private func jagBrandedValueRow(_ label: String, _ value: String) -> some View {
+        HStack(spacing: 10) {
+            Image("JAGLINKEmblem")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 21, height: 21)
             Text(label)
                 .font(.subheadline)
                 .foregroundStyle(JagPalette.mutedIvory)

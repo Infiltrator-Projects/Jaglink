@@ -4,7 +4,7 @@
 
 JAGLINK is the Jaguar X-Type X400 product face built on the shared LINK vehicle-diagnostics engine.
 
-**Current release: 0.2.6.**
+**Current release: 0.2.7.**
 
 ## Dependency hierarchy
 
@@ -52,7 +52,7 @@ cmake --build build-linux --target jaglink-linux
 ./build-linux/jaglink
 ```
 
-The Linux shell is C/GTK4, uses the canonical Jaguar+OBD emblem in-app and in the desktop launcher, and includes the standard About dialog with version, authors, website and GPL information.
+The Linux shell is C/GTK4. Its canonical Jaguar+OBD emblem is embedded as a GResource and explicitly registered before GTK constructs either the main-window badge or About dialog, so installed and development launches use the same branding asset deterministically.
 
 ### Windows OpenPort/J2534 Discover
 
@@ -66,7 +66,16 @@ On macOS, `bash ./scripts/build-ios-ipa.sh` builds the unsigned physical-device 
 
 ## Release assets
 
-A successful `main` release publishes the unsigned physical-device IPA and SHA-256 checksum, Linux `.deb`, native self-compiling Linux `.run`, branded Win32 `jaglink-discover.exe`, and package checksums. The release workflow refuses stale runs or conflicting version tags rather than reporting a false green.
+A successful release must publish the following top-level assets before CI can report success:
+
+- `JAGLINK-X.Y.Z-unsigned.ipa`
+- `JAGLINK-X.Y.Z-linux-amd64.deb`
+- `JAGLINK-X.Y.Z-linux-native.run`
+- `JAGLINK-X.Y.Z-windows-discover.exe`
+- `JAGLINK-X.Y.Z-source.zip`
+- `SHA256SUMS.txt`
+
+The release workflow refuses stale runs, conflicting version tags or incomplete asset sets rather than reporting a false green.
 
 ## Engineering policy
 

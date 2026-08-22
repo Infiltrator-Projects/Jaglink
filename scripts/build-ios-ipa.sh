@@ -17,6 +17,7 @@ command -v zip >/dev/null
 command -v shasum >/dev/null
 
 mkdir -p "$out_dir"
+out_dir="$(cd "$out_dir" && pwd)"
 derived="$(mktemp -d "${TMPDIR:-/tmp}/jaglink-ipa.XXXXXX")"
 package="$(mktemp -d "${TMPDIR:-/tmp}/jaglink-payload.XXXXXX")"
 trap 'rm -rf "$derived" "$package"' EXIT

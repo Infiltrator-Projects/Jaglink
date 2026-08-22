@@ -12,13 +12,13 @@ permissions:
 
 jobs:
   standalone-audit:
-    name: Standalone / Jaguar identity
+    name: Product face / shared LINK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Verify standalone Jaguar source tree
+      - name: Verify Jaguar face over shared LINK
         shell: bash
         run: |
           set -euo pipefail
@@ -28,14 +28,24 @@ jobs:
             printf 'Unexpected gitlink dependency set:\n%s\n' "${gitlinks[*]:-<none>}" >&2
             exit 1
           fi
-          if git ls-files | grep -Eiq '(^|/)(upstream|mblink)(/|$)|mblink|mb-link'; then
-            echo 'A tracked path still carries an upstream or MBLINK identity.' >&2
+
+          test ! -e platform/windows/jaglink-discover.c
+          test ! -d src/discover
+          grep -Fq '#include "link/discover.h"' include/jaglink/discover.h
+          grep -q 'LINK::Core' CMakeLists.txt
+          grep -q 'link_add_windows_discover(jaglink-discover' CMakeLists.txt
+          grep -q 'set(JAGLINK_LINK_VERSION "0.4.0")' CMakeLists.txt
+          grep -q 'set(JAGLINK_LINK_COMMIT "64779f2847f7a7262941d18889d1ffa663c20077")' CMakeLists.txt
+          test "$(git -C src/link rev-parse HEAD)" = "64779f2847f7a7262941d18889d1ffa663c20077"
+
+          if git grep -n -I -i -E 'mercedes|mercedes-benz' -- . \
+            ':(exclude).github/workflows/ci.yml' \
+            ':(exclude)README.md' \
+            ':(exclude)docs/**'; then
+            echo 'Jaguar product source carries Mercedes-specific identity.' >&2
             exit 1
           fi
-          if git grep -n -I -i -E 'mblink|mb-link|mercedes|mercedes-benz' -- . ':(exclude).github/workflows/ci.yml' ':(exclude)README.md' ':(exclude)docs/ORIGIN.md'; then
-            echo 'A non-provenance file still carries an MBLINK or Mercedes identity.' >&2
-            exit 1
-          fi
+
           git grep -q 'JAGLINK_VERSION' -- CMakeLists.txt include/jaglink src/core
           git grep -q 'JagLinkBLETransport' -- platform/apple app/ios
 

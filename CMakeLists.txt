@@ -62,8 +62,8 @@ set(INFILTRATR_COMMON_WARNINGS_AS_ERRORS ON CACHE BOOL "Treat Infiltratr Common 
 add_subdirectory("${JAGLINK_COMMON_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/infiltratr-common" EXCLUDE_FROM_ALL)
 
 set(JAGLINK_LINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/link")
-set(JAGLINK_LINK_VERSION "0.1.0")
-set(JAGLINK_LINK_COMMIT "8df05f3c5a1e7239a3841a4e028e2b6849f7ad31")
+set(JAGLINK_LINK_VERSION "0.3.0")
+set(JAGLINK_LINK_COMMIT "23bc4c98dffc32990df1bf3803c15157244f3305")
 
 if(NOT EXISTS "${JAGLINK_LINK_DIR}/VERSION")
     message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required. Run git submodule update --init --recursive.")
@@ -131,9 +131,7 @@ if(JAGLINK_BUILD_WINDOWS_DISCOVER)
     if(NOT WIN32)
         message(FATAL_ERROR "JAGLINK_BUILD_WINDOWS_DISCOVER is supported on Windows only.")
     endif()
-    add_executable(jaglink-discover WIN32 platform/windows/jaglink-discover.c)
-    target_link_libraries(jaglink-discover PRIVATE jaglink comdlg32 advapi32)
-    target_compile_definitions(jaglink-discover PRIVATE _CRT_SECURE_NO_WARNINGS)
+    link_add_windows_discover(jaglink-discover "JAGLINK" "jaglink" "JAGLINKDiscoverWindow")
 endif()
 
 function(jaglink_add_test target source)

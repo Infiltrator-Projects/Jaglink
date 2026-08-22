@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+#include "about-dialog.h"
 #include "jaglink/jaglink.h"
 #include "jaglink/jaguar.h"
 
@@ -6,6 +7,7 @@
 #include <stddef.h>
 
 typedef struct JaglinkLinuxApp {
+    GtkWindow *window;
     GtkWidget *content_title;
     GtkWidget *content_summary;
 } JaglinkLinuxApp;
@@ -20,6 +22,8 @@ static const char *jaglink_css =
     ".jag-title { color: #eee8da; font-family: serif; font-size: 30px; font-weight: 700; }"
     ".jag-summary { color: #c8c2b3; font-size: 15px; }"
     ".jag-accent { color: #b79a62; font-weight: 700; }"
+    ".jag-about-button { margin: 10px 0 0 0; padding: 8px 12px; border: 1px solid rgba(183,154,98,0.45); border-radius: 10px; background: #0d3829; color: #eee8da; font-weight: 700; }"
+    ".jag-about-button:hover { background: #0f4634; }"
     "list { background: transparent; }"
     "row { background: transparent; border-radius: 10px; margin: 2px 0; }"
     "row:hover { background: rgba(15,59,46,0.65); }"
@@ -96,6 +100,13 @@ static void row_selected(GtkListBox *list_box,
     update_content(app, (JaglinkWorkspaceSection)GPOINTER_TO_INT(value));
 }
 
+static void about_clicked(GtkButton *button, gpointer user_data)
+{
+    JaglinkLinuxApp *app = user_data;
+    (void)button;
+    jaglink_linux_show_about(app->window);
+}
+
 static GtkWidget *build_badge(void)
 {
     GtkWidget *badge = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
@@ -117,9 +128,9 @@ static GtkWidget *build_sidebar(JaglinkLinuxApp *app)
     GtkWidget *subtitle = gtk_label_new("X400  ·  JAGUAR DIAGNOSTICS");
     GtkWidget *version = gtk_label_new(jaglink_version());
     GtkWidget *list = gtk_list_box_new();
+    GtkWidget *about_button = gtk_button_new_with_label("About JAGLINK");
     size_t index;
 
-    (void)app;
     gtk_widget_set_size_request(sidebar, 320, -1);
     gtk_widget_add_css_class(sidebar, "jag-sidebar");
     set_margins(sidebar, 16);
@@ -135,6 +146,7 @@ static GtkWidget *build_sidebar(JaglinkLinuxApp *app)
     gtk_box_append(GTK_BOX(sidebar), brand);
 
     gtk_list_box_set_selection_mode(GTK_LIST_BOX(list), GTK_SELECTION_SINGLE);
+    gtk_widget_set_vexpand(list, TRUE);
     g_signal_connect(list, "row-selected", G_CALLBACK(row_selected), app);
 
     for (index = 0U; index < jaglink_workspace_section_count(); ++index) {
@@ -145,7 +157,11 @@ static GtkWidget *build_sidebar(JaglinkLinuxApp *app)
         }
     }
 
+    gtk_widget_add_css_class(about_button, "jag-about-button");
+    g_signal_connect(about_button, "clicked", G_CALLBACK(about_clicked), app);
+
     gtk_box_append(GTK_BOX(sidebar), list);
+    gtk_box_append(GTK_BOX(sidebar), about_button);
     return sidebar;
 }
 
@@ -194,9 +210,11 @@ static void activate(GtkApplication *application, gpointer user_data)
     GtkWidget *sidebar;
     GtkWidget *content;
 
+    app->window = GTK_WINDOW(window);
     apply_jaglink_css();
     gtk_window_set_title(GTK_WINDOW(window), "JAGLINK · Jaguar X400 Diagnostics");
     gtk_window_set_default_size(GTK_WINDOW(window), 1120, 740);
+    gtk_window_set_icon_name(GTK_WINDOW(window), "jaglink");
 
     sidebar = build_sidebar(app);
     content = build_content(app);

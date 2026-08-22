@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "jaglink/jaglink.h"
+#include "jaglink/project_info.h"
 #include "jaglink/transport.h"
+
+#include "infiltratr/core.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -102,6 +105,7 @@ int main(void)
 {
     bool passed = true;
     JaglinkTransport transport = JAGLINK_TRANSPORT_INIT;
+    const InfiltratrProjectInfo *project_info = jaglink_project_info();
     static const uint8_t probe[] = { 'A', 'T', 'I', '\r' };
 
     if (!check(strcmp(jaglink_version(), JAGLINK_TEST_EXPECTED_VERSION) == 0,
@@ -109,6 +113,19 @@ int main(void)
         passed = false;
     }
     if (!check(jaglink_self_check(), "project identity validation failed")) {
+        passed = false;
+    }
+    if (!check(project_info != NULL &&
+               infiltratr_project_info_is_valid(project_info),
+               "project info record is invalid") ||
+        !check(strcmp(project_info->program_name, "JAGLINK") == 0,
+               "project info program name mismatch") ||
+        !check(strcmp(project_info->version, JAGLINK_TEST_EXPECTED_VERSION) == 0,
+               "project info version mismatch") ||
+        !check(strcmp(project_info->license_id, "GPL-3.0-or-later") == 0,
+               "project info licence mismatch") ||
+        !check(strcmp(project_info->icon_name, "jaglink") == 0,
+               "project info icon mismatch")) {
         passed = false;
     }
     if (!check_workspace()) {

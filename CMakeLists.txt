@@ -115,7 +115,9 @@ if(JAGLINK_BUILD_LINUX_APP)
     endif()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4>=4.6)
-    add_executable(jaglink-linux app/linux/main.c)
+    add_executable(jaglink-linux
+        app/linux/main.c
+        app/linux/about-dialog.c)
     set_target_properties(jaglink-linux PROPERTIES OUTPUT_NAME jaglink)
     target_link_libraries(jaglink-linux PRIVATE jaglink PkgConfig::GTK4)
     if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")

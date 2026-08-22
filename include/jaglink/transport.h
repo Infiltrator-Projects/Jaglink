@@ -1,74 +1,37 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * @file transport.h
- * @brief Platform-neutral transport boundary for libjaglink.
+ * @brief JAGLINK compatibility facade for LINK's byte-stream transport ABI.
  *
- * Platform providers implement this interface without exposing native
- * framework types to the portable diagnostics core.
+ * LINK owns the transport contract.  JAGLINK retains its historical public
+ * type and function names so Jaguar-specific callers remain source and ABI
+ * compatible while the shared implementation lives below the product layer.
  */
 #ifndef JAGLINK_TRANSPORT_H
 #define JAGLINK_TRANSPORT_H
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include "link/transport.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define JAGLINK_TRANSPORT_ABI 1U
+#define JAGLINK_TRANSPORT_ABI LINK_TRANSPORT_ABI
+#define JAGLINK_TRANSPORT_OK LINK_TRANSPORT_OK
+#define JAGLINK_TRANSPORT_NOT_CONNECTED LINK_TRANSPORT_NOT_CONNECTED
+#define JAGLINK_TRANSPORT_BUSY LINK_TRANSPORT_BUSY
+#define JAGLINK_TRANSPORT_TIMEOUT LINK_TRANSPORT_TIMEOUT
+#define JAGLINK_TRANSPORT_IO_ERROR LINK_TRANSPORT_IO_ERROR
+#define JAGLINK_TRANSPORT_UNSUPPORTED LINK_TRANSPORT_UNSUPPORTED
+#define JAGLINK_TRANSPORT_INVALID_ARGUMENT LINK_TRANSPORT_INVALID_ARGUMENT
 
-typedef enum {
-    JAGLINK_TRANSPORT_OK = 0,
-    JAGLINK_TRANSPORT_NOT_CONNECTED,
-    JAGLINK_TRANSPORT_BUSY,
-    JAGLINK_TRANSPORT_TIMEOUT,
-    JAGLINK_TRANSPORT_IO_ERROR,
-    JAGLINK_TRANSPORT_UNSUPPORTED,
-    JAGLINK_TRANSPORT_INVALID_ARGUMENT
-} JaglinkTransportStatus;
+typedef LinkTransportStatus JaglinkTransportStatus;
+typedef LinkTransportReceiveFn JaglinkTransportReceiveFn;
+typedef LinkTransport JaglinkTransport;
 
-/**
- * Receive callback installed by the protocol layer.
- *
- * Providers must serialize delivery for one transport instance. `data` is
- * borrowed and only valid for the duration of the callback.
- */
-typedef void (*JaglinkTransportReceiveFn)(void *context,
-                                         const uint8_t *data,
-                                         size_t size);
+#define JAGLINK_TRANSPORT_INIT LINK_TRANSPORT_INIT
 
-/**
- * Platform-neutral byte-stream provider contract.
- *
- * `context` and all provider-owned resources must outlive every transport copy
- * using them. `write()` must consume or copy the supplied bytes before it
- * returns. `set_receiver(context, NULL, NULL)` detaches any previously
- * installed receiver and must be supported by every provider.
- */
-typedef struct {
-    size_t struct_size;
-    uint32_t abi_version;
-    void *context;
-    JaglinkTransportStatus (*connect)(void *context);
-    void (*disconnect)(void *context);
-    bool (*is_connected)(void *context);
-    JaglinkTransportStatus (*write)(void *context,
-                                   const uint8_t *data,
-                                   size_t size);
-    void (*set_receiver)(void *context,
-                         JaglinkTransportReceiveFn receiver,
-                         void *receiver_context);
-} JaglinkTransport;
-
-#define JAGLINK_TRANSPORT_INIT \
-    { .struct_size = sizeof(JaglinkTransport), \
-      .abi_version = JAGLINK_TRANSPORT_ABI, \
-      .context = NULL, .connect = NULL, .disconnect = NULL, \
-      .is_connected = NULL, .write = NULL, .set_receiver = NULL }
-
-/** Validate ABI metadata and all mandatory operations. */
+/** Forward ABI validation to the single implementation owned by LINK. */
 bool jaglink_transport_is_valid(const JaglinkTransport *transport);
 
 #ifdef __cplusplus

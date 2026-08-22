@@ -34,12 +34,11 @@ endif()
 include(CTest)
 include(GNUInstallDirs)
 
-# LINK is JAGLINK's only top-level implementation dependency.  LINK owns and
-# validates its own Infiltratr Common dependency, preserving Common -> LINK ->
-# product rather than maintaining a second Common pin in each product.
+# LINK is JAGLINK's only top-level implementation dependency. LINK owns and
+# validates Infiltratr Common, preserving Common -> LINK -> product.
 set(JAGLINK_LINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/link")
-set(JAGLINK_LINK_VERSION "0.6.0")
-set(JAGLINK_LINK_COMMIT "9c1437e5d48181807863b98af04c0153ec4eff16")
+set(JAGLINK_LINK_VERSION "0.7.1")
+set(JAGLINK_LINK_COMMIT "4c75618da2085ecd09e8110f2883decf9b2162f9")
 
 if(NOT EXISTS "${JAGLINK_LINK_DIR}/VERSION")
     message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required. Clone with --recurse-submodules or run git submodule update --init --recursive.")

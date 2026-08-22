@@ -4,7 +4,7 @@
 
 JAGLINK is the Jaguar X-Type X400 product face built on the shared LINK vehicle-diagnostics engine.
 
-**Current release: 0.2.5.**
+**Current release: 0.2.6.**
 
 ## Dependency hierarchy
 
@@ -17,11 +17,11 @@ Infiltratr Common
  Jaguar/X400 face
 ```
 
-JAGLINK pins LINK 0.6.0 at `src/link`. LINK in turn pins Infiltratr Common 1.10.0, so JAGLINK no longer carries a second top-level Common submodule. Native iPhone project references to Common resolve through LINK's nested dependency checkout.
+JAGLINK pins LINK 0.7.1 at `src/link`. LINK in turn pins Infiltratr Common 1.10.0, so JAGLINK carries no second top-level Common dependency. Native iPhone references to Common resolve through LINK's nested dependency checkout.
 
-LINK owns the shared workspace, ISO-TP, parameter/store/scheduler/telemetry runtime, Discover safety/evidence and the Windows OpenPort 2.0/J2534 scanner. JAGLINK retains only compatibility adaptors for those APIs plus Jaguar identity, Jaguar/X400 definitions and genuinely Jaguar-specific behaviour.
+LINK owns the shared workspace, ISO-TP, byte-stream transport ABI, ELM327 framing/parser/initialisation, ELM-managed CAN, ELM session/probe, parameter/store/scheduler/telemetry runtime, Discover safety/evidence and the Windows OpenPort 2.0/J2534 scanner. JAGLINK retains compatibility façades for shared APIs plus Jaguar identity, Jaguar/X400 definitions and genuinely Jaguar-specific behaviour.
 
-The next shared-code migrations are ELM327, standard OBD-II and UDS.
+The next shared-code migrations are standard OBD-II and UDS.
 
 ## X400 foundation
 
@@ -60,21 +60,13 @@ The Linux shell is C/GTK4, uses the canonical Jaguar+OBD emblem in-app and in th
 
 ### iPhone
 
-The native project is `app/ios/JAGLINK.xcodeproj`. SwiftUI is confined to the native presentation edge; the portable diagnostic implementation remains C-first. The iPhone About experience follows the same structure as MBLINK while retaining Jaguar styling and the canonical Jaguar+OBD emblem.
+The native project is `app/ios/JAGLINK.xcodeproj`. SwiftUI is confined to the native presentation edge; portable diagnostic behaviour remains C-first. The About experience follows the same dedicated modal structure as MBLINK while retaining Jaguar styling and the canonical Jaguar+OBD emblem.
 
 On macOS, `bash ./scripts/build-ios-ipa.sh` builds the unsigned physical-device IPA and checksum.
 
 ## Release assets
 
-A successful `main` release publishes:
-
-- unsigned physical-device IPA and SHA-256 checksum;
-- Linux `.deb` package;
-- native self-compiling Linux `.run` package;
-- branded Win32 `jaglink-discover.exe`;
-- package checksums.
-
-The release workflow fails, rather than reporting a false green, if the requested release tag already belongs to another commit.
+A successful `main` release publishes the unsigned physical-device IPA and SHA-256 checksum, Linux `.deb`, native self-compiling Linux `.run`, branded Win32 `jaglink-discover.exe`, and package checksums. The release workflow refuses stale runs or conflicting version tags rather than reporting a false green.
 
 ## Engineering policy
 
@@ -82,7 +74,7 @@ The release workflow fails, rather than reporting a false green, if the requeste
 - Platform-required languages stay at narrow UI/interop boundaries.
 - Shared automotive behaviour belongs in LINK; broadly reusable primitives belong in Infiltratr Common.
 - Jaguar-only definitions and behaviour stay in JAGLINK.
-- Public APIs and non-obvious implementation decisions require contract/rationale documentation without narrating obvious syntax.
+- Public APIs and non-obvious implementation decisions document contracts, ownership, lifetime, invariants, failure behaviour and rationale without narrating obvious syntax.
 - Unknown or unsafe diagnostic services are denied before transport transmission.
 
 See `docs/JAGUAR.md`, `docs/APPLE.md`, `docs/DISCOVER.md`, `docs/ORIGIN.md` and `docs/ROADMAP.md`.

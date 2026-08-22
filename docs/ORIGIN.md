@@ -1,23 +1,11 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-# Fork origin and dependency ownership
+# Origin and ownership
 
-JAGLINK began from the generic diagnostic foundations in MBLINK 0.7.12 at commit `e760b6ec05897c87e3531d68649b121403fcdec8`. That commit records provenance only; JAGLINK does not depend on or load MBLINK.
+JAGLINK is a thin Jaguar/X400 product face over LINK. The dependency hierarchy is Infiltratr Common → LINK → JAGLINK.
 
-Shared automotive functionality is progressively being promoted into LINK instead of remaining as parallel product implementations.
+LINK owns the shared workspace, ISO-TP, byte-stream transport ABI, ELM327 framing/parser/initialisation, ELM-managed CAN, ELM session/probe, parameter/store/scheduler/telemetry runtime, Discover safety/evidence and the shared Windows OpenPort/J2534 scanner.
 
-As of JAGLINK 0.2.5 / LINK 0.6.0, LINK is the source of truth for:
+JAGLINK owns Jaguar identity, X400-specific definitions, evidence-gated Jaguar behaviour, branding and product presentation. Product compatibility façades preserve the historical `jaglink_*` API while delegating shared runtime behaviour to LINK.
 
-- workspace structure;
-- Classical-CAN ISO-TP;
-- parameter definitions, storage/history and formatting;
-- parameter scheduling;
-- telemetry storage/CSV;
-- Discover safety/evidence;
-- the Windows OpenPort 2.0/J2534 scanner.
-
-JAGLINK retains product-prefixed compatibility adaptors where its existing public API delegates into those LINK contracts. ELM327, standard OBD-II and UDS remain product-local migration candidates at this release.
-
-The repository pins only LINK at top level. LINK pins Infiltratr Common 1.10.0 beneath it, preserving the dependency hierarchy `Common -> LINK -> JAGLINK`.
-
-Jaguar/X400 definitions and genuinely Jaguar-specific diagnostic behaviour remain owned by JAGLINK.
+As of JAGLINK 0.2.6, standard OBD-II and UDS remain the next major shared-code migration candidates.

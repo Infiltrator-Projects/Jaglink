@@ -1,4 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+/**
+ * @file jaglink.c
+ * @brief JAGLINK project metadata and compatibility boundary for shared LINK code.
+ */
 #include "jaglink/jaglink.h"
 #include "jaglink/project_info.h"
 #include "jaglink/transport.h"
@@ -15,13 +19,22 @@
 #error "JAGLINK_VERSION must be supplied by the build system"
 #endif
 
-/* Normal CMake builds use LINK::Core; native iOS compiles the exact pinned
- * LINK sources directly into the app core. */
+/*
+ * Normal CMake builds consume shared engines through LINK::Core.  The native
+ * iPhone target compiles portable C sources directly, so include the exact
+ * sources from the pinned LINK checkout rather than maintaining product-owned
+ * copies of workspace, runtime, transport or ELM327 logic.
+ */
 #if defined(__APPLE__) && TARGET_OS_IOS
 #include "../link/src/core/workspace.c"
 #include "../link/src/core/parameter.c"
 #include "../link/src/core/scheduler.c"
 #include "../link/src/core/telemetry.c"
+#include "../link/src/core/transport.c"
+#include "../link/src/elm327/elm327.c"
+#include "../link/src/elm327/can.c"
+#include "../link/src/elm327/probe.c"
+#include "../link/src/elm327/session.c"
 #endif
 
 static const InfiltratrProjectInfo jaglink_project_info_record = {
@@ -60,14 +73,5 @@ bool jaglink_self_check(void)
 
 bool jaglink_transport_is_valid(const JaglinkTransport *transport)
 {
-    if (transport == NULL || transport->struct_size < sizeof(*transport) ||
-        transport->abi_version != JAGLINK_TRANSPORT_ABI) {
-        return false;
-    }
-
-    return transport->connect != NULL &&
-           transport->disconnect != NULL &&
-           transport->is_connected != NULL &&
-           transport->write != NULL &&
-           transport->set_receiver != NULL;
+    return link_transport_is_valid(transport);
 }

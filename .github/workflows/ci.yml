@@ -100,7 +100,7 @@ jobs:
           deb_src="$(find "$RUNNER_TEMP/cpack" -maxdepth 1 -type f -name '*.deb' -print -quit)"
           test -n "$deb_src"
           install -m 0644 "$deb_src" "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-amd64.deb"
-          bash scripts/build-linux-run.sh "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-native.run"
+          bash scripts/build-linux-run.sh "$RUNNER_TEMP/release"
           "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-native.run" --help >/dev/null
           test -s "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-amd64.deb"
           test -s "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-native.run"
@@ -147,7 +147,12 @@ jobs:
       - name: Reject dynamic Visual C++ runtime dependencies
         shell: pwsh
         run: |
-          $deps = (& dumpbin /DEPENDENTS build-win32/Release/jaglink-discover.exe | Out-String)
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) { throw 'vswhere.exe is unavailable' }
+          $dumpbin = (& $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -find 'VC\Tools\MSVC\**\bin\Hostx64\x86\dumpbin.exe' | Select-Object -First 1)
+          if (-not $dumpbin -or -not (Test-Path $dumpbin)) { throw 'Unable to locate dumpbin.exe' }
+          $deps = (& $dumpbin /DEPENDENTS build-win32/Release/jaglink-discover.exe | Out-String)
+          Write-Host $deps
           foreach ($dll in @('VCRUNTIME140.dll','VCRUNTIME140_1.dll','MSVCP140.dll','ucrtbased.dll')) {
             if ($deps -match [regex]::Escape($dll)) { throw "Unexpected dynamic runtime dependency: $dll" }
           }
@@ -227,8 +232,8 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          ipa="$(find build -type f -name '*.ipa' -print -quit)"
-          test -n "$ipa"
+          ipa="dist/JAGLINK-${VERSION}-unsigned.ipa"
+          test -s "$ipa"
           cp "$ipa" "$RUNNER_TEMP/JAGLINK-${VERSION}-unsigned.ipa"
           unzip -tq "$RUNNER_TEMP/JAGLINK-${VERSION}-unsigned.ipa"
       - uses: actions/upload-artifact@v4

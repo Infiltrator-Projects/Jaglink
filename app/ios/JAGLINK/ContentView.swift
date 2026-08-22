@@ -117,7 +117,6 @@ struct ContentView: View {
                         faultPanel
                         liveDataPanel
                         logPanel
-                        aboutPanel
                     }
                     .padding(.horizontal, 14)
                     .padding(.bottom, 30)
@@ -356,22 +355,6 @@ struct ContentView: View {
         }
     }
 
-    private var aboutPanel: some View {
-        JagPanel(title: "About JAGLINK", systemImage: "info.circle.fill") {
-            jagBrandedValueRow("Application", "JAGLINK")
-            jagDivider
-            jagValueRow("Version", model.versionText, icon: "tag")
-            jagDivider
-            jagValueRow("Licence", "GPL-3.0-or-later", icon: "doc.badge.gearshape")
-            jagDivider
-            jagValueRow("Author", "Shannon Smith", icon: "person.crop.circle")
-            Text("Jaguar-specific module requests remain disabled until their protocol behaviour is source-corroborated or vehicle-verified.")
-                .font(.caption)
-                .foregroundStyle(JagPalette.chrome.opacity(0.72))
-                .padding(.top, 4)
-        }
-    }
-
     private var jagDivider: some View {
         Rectangle()
             .fill(JagPalette.warmMetal.opacity(0.24))
@@ -383,23 +366,6 @@ struct ContentView: View {
             Image(systemName: icon)
                 .frame(width: 21)
                 .foregroundStyle(JagPalette.warmMetal)
-            Text(label)
-                .font(.subheadline)
-                .foregroundStyle(JagPalette.mutedIvory)
-            Spacer()
-            Text(value)
-                .font(.subheadline.weight(.semibold))
-                .multilineTextAlignment(.trailing)
-                .foregroundStyle(JagPalette.ivory)
-        }
-    }
-
-    private func jagBrandedValueRow(_ label: String, _ value: String) -> some View {
-        HStack(spacing: 10) {
-            Image("JAGLINKEmblem")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 21, height: 21)
             Text(label)
                 .font(.subheadline)
                 .foregroundStyle(JagPalette.mutedIvory)

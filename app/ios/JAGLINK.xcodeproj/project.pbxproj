@@ -18,7 +18,7 @@
 		A00000000000000000000013 /* ../../src/core/scheduler.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000013 /* ../../src/core/scheduler.c */; };
 		A00000000000000000000014 /* ../../src/core/telemetry_store.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000014 /* ../../src/core/telemetry_store.c */; };
 		A00000000000000000000015 /* ../../src/core/telemetry_csv.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000015 /* ../../src/core/telemetry_csv.c */; };
-		A00000000000000000000016 /* ../../src/core/isotp.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000016 /* ../../src/core/isotp.c */; };
+		A00000000000000000000016 /* ../../src/link/src/core/isotp.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000016 /* ../../src/link/src/core/isotp.c */; };
 		A00000000000000000000017 /* ../../src/uds/uds.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000017 /* ../../src/uds/uds.c */; };
 		A00000000000000000000018 /* ../../src/elm327/elm327.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000018 /* ../../src/elm327/elm327.c */; };
 		A00000000000000000000019 /* ../../src/elm327/can.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000019 /* ../../src/elm327/can.c */; };
@@ -63,7 +63,7 @@
 		B00000000000000000000013 /* ../../src/core/scheduler.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/scheduler.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000014 /* ../../src/core/telemetry_store.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/telemetry_store.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000015 /* ../../src/core/telemetry_csv.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/telemetry_csv.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000016 /* ../../src/core/isotp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/isotp.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000016 /* ../../src/link/src/core/isotp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/link/src/core/isotp.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000017 /* ../../src/uds/uds.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/uds/uds.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000018 /* ../../src/elm327/elm327.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/elm327/elm327.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000019 /* ../../src/elm327/can.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/elm327/can.c; sourceTree = SOURCE_ROOT; };
@@ -134,7 +134,7 @@
 				B00000000000000000000013 /* ../../src/core/scheduler.c */,
 				B00000000000000000000014 /* ../../src/core/telemetry_store.c */,
 				B00000000000000000000015 /* ../../src/core/telemetry_csv.c */,
-				B00000000000000000000016 /* ../../src/core/isotp.c */,
+				B00000000000000000000016 /* ../../src/link/src/core/isotp.c */,
 				B00000000000000000000017 /* ../../src/uds/uds.c */,
 				B00000000000000000000018 /* ../../src/elm327/elm327.c */,
 				B00000000000000000000019 /* ../../src/elm327/can.c */,
@@ -274,7 +274,7 @@
 				A00000000000000000000013 /* ../../src/core/scheduler.c in Sources */,
 				A00000000000000000000014 /* ../../src/core/telemetry_store.c in Sources */,
 				A00000000000000000000015 /* ../../src/core/telemetry_csv.c in Sources */,
-				A00000000000000000000016 /* ../../src/core/isotp.c in Sources */,
+				A00000000000000000000016 /* ../../src/link/src/core/isotp.c in Sources */,
 				A00000000000000000000017 /* ../../src/uds/uds.c in Sources */,
 				A00000000000000000000018 /* ../../src/elm327/elm327.c in Sources */,
 				A00000000000000000000019 /* ../../src/elm327/can.c in Sources */,
@@ -348,7 +348,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
+				MARKETING_VERSION = 0.2.2;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.The-First-Infiltrator.Jaglink";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -389,7 +389,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.1;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.The-First-Infiltrator.Jaglink";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

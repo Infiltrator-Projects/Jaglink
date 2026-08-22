@@ -62,8 +62,8 @@ set(INFILTRATR_COMMON_WARNINGS_AS_ERRORS ON CACHE BOOL "Treat Infiltratr Common 
 add_subdirectory("${JAGLINK_COMMON_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/infiltratr-common" EXCLUDE_FROM_ALL)
 
 set(JAGLINK_LINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/link")
-set(JAGLINK_LINK_VERSION "0.4.0")
-set(JAGLINK_LINK_COMMIT "64779f2847f7a7262941d18889d1ffa663c20077")
+set(JAGLINK_LINK_VERSION "0.5.0")
+set(JAGLINK_LINK_COMMIT "560a9864a93b71488ce0e71fc3757469cb512d9d")
 
 if(NOT EXISTS "${JAGLINK_LINK_DIR}/VERSION")
     message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required. Run git submodule update --init --recursive.")
@@ -91,7 +91,6 @@ add_library(jaglink STATIC
     src/core/scheduler.c
     src/core/telemetry_store.c
     src/core/telemetry_csv.c
-    src/core/isotp.c
     src/elm327/elm327.c
     src/elm327/can.c
     src/elm327/session.c

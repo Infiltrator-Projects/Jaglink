@@ -47,8 +47,8 @@ include(GNUInstallDirs)
 # LINK is JAGLINK's only top-level implementation dependency. LINK owns and
 # validates Infiltratr Common, preserving Common -> LINK -> product.
 set(JAGLINK_LINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/link")
-set(JAGLINK_LINK_VERSION "0.8.0")
-set(JAGLINK_LINK_COMMIT "bca25eaabe6600b596726fb5c4567f86e59631bb")
+set(JAGLINK_LINK_VERSION "0.8.1")
+set(JAGLINK_LINK_COMMIT "8d75e0599320e16ff44109be4cb20fa6146cabd3")
 
 if(NOT EXISTS "${JAGLINK_LINK_DIR}/VERSION")
     message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required. Clone with --recurse-submodules or run git submodule update --init --recursive.")
@@ -103,8 +103,6 @@ if(JAGLINK_BUILD_LINUX_APP)
     pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4>=4.6)
     find_program(GLIB_COMPILE_RESOURCES_EXECUTABLE NAMES glib-compile-resources REQUIRED)
 
-    # Explicit registration makes the embedded emblem deterministic in both
-    # development-tree and packaged launches.
     set(JAGLINK_LINUX_RESOURCE_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/jaglink-linux-resources.c")
     add_custom_command(
         OUTPUT "${JAGLINK_LINUX_RESOURCE_SOURCE}"
@@ -145,9 +143,6 @@ if(JAGLINK_BUILD_WINDOWS_DISCOVER)
         message(FATAL_ERROR "JAGLINK_BUILD_WINDOWS_DISCOVER is supported on Windows only.")
     endif()
 
-    # The iPhone AppIcon PNG is JAGLINK's canonical product image. LINK wraps
-    # the same PNG bytes in the Windows resource so title bar, taskbar, Explorer
-    # and About all use the same emblem as iPhone.
     link_add_windows_discover(jaglink-discover
         PRODUCT_NAME "JAGLINK"
         PRODUCT_SLUG "jaglink"

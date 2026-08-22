@@ -9,47 +9,39 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "link/workspace.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/** Stable top-level diagnostic workspace shared by every front end. */
-typedef enum JaglinkWorkspaceSection {
-    JAGLINK_WORKSPACE_VEHICLE = 0,
-    JAGLINK_WORKSPACE_MODULES,
-    JAGLINK_WORKSPACE_FAULTS,
-    JAGLINK_WORKSPACE_LIVE_DATA,
-    JAGLINK_WORKSPACE_TABLE,
-    JAGLINK_WORKSPACE_DASHBOARD,
-    JAGLINK_WORKSPACE_GRAPHS,
-    JAGLINK_WORKSPACE_LOG,
-    JAGLINK_WORKSPACE_SETTINGS,
-    JAGLINK_WORKSPACE_SECTION_COUNT
-} JaglinkWorkspaceSection;
+/*
+ * Workspace ownership lives in LINK. These aliases preserve the JAGLINK-facing
+ * source API while every front end consumes the same shared model.
+ */
+typedef LinkWorkspaceSection JaglinkWorkspaceSection;
+typedef LinkWorkspaceSectionDescriptor JaglinkWorkspaceSectionDescriptor;
 
-/** Shared section metadata. Platform shells own only presentation details. */
-typedef struct JaglinkWorkspaceSectionDescriptor {
-    JaglinkWorkspaceSection section;
-    const char *key;
-    const char *title;
-    const char *summary;
-} JaglinkWorkspaceSectionDescriptor;
+#define JAGLINK_WORKSPACE_VEHICLE LINK_WORKSPACE_VEHICLE
+#define JAGLINK_WORKSPACE_MODULES LINK_WORKSPACE_MODULES
+#define JAGLINK_WORKSPACE_FAULTS LINK_WORKSPACE_FAULTS
+#define JAGLINK_WORKSPACE_LIVE_DATA LINK_WORKSPACE_LIVE_DATA
+#define JAGLINK_WORKSPACE_TABLE LINK_WORKSPACE_TABLE
+#define JAGLINK_WORKSPACE_DASHBOARD LINK_WORKSPACE_DASHBOARD
+#define JAGLINK_WORKSPACE_GRAPHS LINK_WORKSPACE_GRAPHS
+#define JAGLINK_WORKSPACE_LOG LINK_WORKSPACE_LOG
+#define JAGLINK_WORKSPACE_SETTINGS LINK_WORKSPACE_SETTINGS
+#define JAGLINK_WORKSPACE_SECTION_COUNT LINK_WORKSPACE_SECTION_COUNT
+
+#define jaglink_workspace_section_count link_workspace_section_count
+#define jaglink_workspace_section_at link_workspace_section_at
+#define jaglink_workspace_section link_workspace_section
 
 /** Return the semantic version of the linked JAGLINK core. */
 const char *jaglink_version(void);
 
 /** Validate the core's shared project-metadata contract. */
 bool jaglink_self_check(void);
-
-/** Return the number of stable top-level diagnostic workspace sections. */
-size_t jaglink_workspace_section_count(void);
-
-/** Return shared metadata for a workspace section index, or NULL if invalid. */
-const JaglinkWorkspaceSectionDescriptor *jaglink_workspace_section_at(size_t index);
-
-/** Return shared metadata for a workspace section identifier, or NULL if invalid. */
-const JaglinkWorkspaceSectionDescriptor *jaglink_workspace_section(
-    JaglinkWorkspaceSection section);
 
 #ifdef __cplusplus
 }

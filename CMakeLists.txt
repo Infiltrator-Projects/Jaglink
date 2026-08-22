@@ -37,8 +37,8 @@ include(GNUInstallDirs)
 # LINK is JAGLINK's only top-level implementation dependency. LINK owns and
 # validates Infiltratr Common, preserving Common -> LINK -> product.
 set(JAGLINK_LINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/link")
-set(JAGLINK_LINK_VERSION "0.7.1")
-set(JAGLINK_LINK_COMMIT "4c75618da2085ecd09e8110f2883decf9b2162f9")
+set(JAGLINK_LINK_VERSION "0.7.2")
+set(JAGLINK_LINK_COMMIT "8d00d2d24ed514f7bc2f2025054839d4efabb29a")
 
 if(NOT EXISTS "${JAGLINK_LINK_DIR}/VERSION")
     message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required. Clone with --recurse-submodules or run git submodule update --init --recursive.")
@@ -93,9 +93,8 @@ if(JAGLINK_BUILD_LINUX_APP)
     pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4>=4.6)
     find_program(GLIB_COMPILE_RESOURCES_EXECUTABLE NAMES glib-compile-resources REQUIRED)
 
-    # Use explicit registration rather than relying on compiler/linker constructor
-    # behaviour. This guarantees that both development and packaged GTK launches
-    # have the emblem resource available before any widget requests it.
+    # Explicit registration makes the embedded emblem deterministic in both
+    # development-tree and packaged launches.
     set(JAGLINK_LINUX_RESOURCE_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/jaglink-linux-resources.c")
     add_custom_command(
         OUTPUT "${JAGLINK_LINUX_RESOURCE_SOURCE}"
@@ -138,7 +137,10 @@ if(JAGLINK_BUILD_WINDOWS_DISCOVER)
     link_add_windows_discover(jaglink-discover
         PRODUCT_NAME "JAGLINK"
         PRODUCT_SLUG "jaglink"
-        WINDOW_CLASS "JAGLINKDiscoverWindow")
+        WINDOW_CLASS "JAGLINKDiscoverWindow"
+        PRODUCT_VERSION "${PROJECT_VERSION}"
+        PRODUCT_COPYRIGHT "Copyright (C) 2026 Xavier Wheaton and Shannon Smith"
+        PRODUCT_SUBTITLE "Jaguar X400 Diagnostics")
     target_sources(jaglink-discover PRIVATE app/windows/jaglink.rc)
     target_include_directories(jaglink-discover PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/app/windows")
 endif()

@@ -14,14 +14,13 @@
 #error "JAGLINK_VERSION must be supplied by the build system"
 #endif
 
-/*
- * Normal CMake builds consume workspace.c through LINK::Core. The native
- * iPhone project compiles portable C sources directly, so it compiles the
- * exact same workspace.c from the pinned LINK submodule here rather than
- * carrying a JAGLINK implementation.
- */
+/* Normal CMake builds use LINK::Core; native iOS compiles the exact pinned
+ * LINK sources directly into the app core. */
 #if defined(__APPLE__) && TARGET_OS_IOS
 #include "../link/src/core/workspace.c"
+#include "../link/src/core/parameter.c"
+#include "../link/src/core/scheduler.c"
+#include "../link/src/core/telemetry.c"
 #endif
 
 static const InfiltratrProjectInfo jaglink_project_info = {

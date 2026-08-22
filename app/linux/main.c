@@ -1,4 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+/**
+ * @file main.c
+ * @brief Native GTK4 product shell for the JAGLINK X400 face.
+ *
+ * Presentation remains deliberately thin: workspace identity and Jaguar
+ * profile data come from the portable C API, while vehicle transport is kept
+ * outside the GTK layer.  The canonical product emblem is embedded as a
+ * GResource so development-tree and installed launches render identically.
+ */
 #include "about-dialog.h"
 #include "jaglink/jaglink.h"
 #include "jaglink/jaguar.h"
@@ -109,13 +118,15 @@ static void about_clicked(GtkButton *button, gpointer user_data)
 
 static GtkWidget *build_badge(void)
 {
-    GtkWidget *badge = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-    GtkWidget *mark = gtk_label_new("◆");
+    GtkWidget *badge = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    GtkWidget *emblem = gtk_image_new_from_resource(
+        "/com/github/The-First-Infiltrator/Jaglink/jaglink-emblem.png");
     GtkWidget *name = gtk_label_new("JAGLINK");
 
-    gtk_widget_add_css_class(mark, "jag-accent");
+    gtk_image_set_pixel_size(GTK_IMAGE(emblem), 62);
+    gtk_widget_set_valign(emblem, GTK_ALIGN_CENTER);
     gtk_widget_add_css_class(name, "jag-brand");
-    gtk_box_append(GTK_BOX(badge), mark);
+    gtk_box_append(GTK_BOX(badge), emblem);
     gtk_box_append(GTK_BOX(badge), name);
     return badge;
 }

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" JAGLINK_PROJECT_VERSION)
 string(STRIP "${JAGLINK_PROJECT_VERSION}" JAGLINK_PROJECT_VERSION)
-if(NOT JAGLINK_PROJECT_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+if(NOT JAGLINK_PROJECT_VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+$")
     message(FATAL_ERROR "VERSION must contain a semantic major.minor.patch version.")
 endif()
 
@@ -34,39 +34,15 @@ endif()
 include(CTest)
 include(GNUInstallDirs)
 
-set(JAGLINK_COMMON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/infiltratr-common")
-set(JAGLINK_COMMON_VERSION "1.10.0")
-set(JAGLINK_COMMON_COMMIT "182e64cb8b8992879e443b941565058166fe0161")
-
-if(NOT EXISTS "${JAGLINK_COMMON_DIR}/VERSION")
-    message(FATAL_ERROR "Infiltratr Common ${JAGLINK_COMMON_VERSION} is required. Run git submodule update --init --recursive.")
-endif()
-
-file(READ "${JAGLINK_COMMON_DIR}/VERSION" JAGLINK_COMMON_FOUND_VERSION)
-string(STRIP "${JAGLINK_COMMON_FOUND_VERSION}" JAGLINK_COMMON_FOUND_VERSION)
-if(NOT JAGLINK_COMMON_FOUND_VERSION STREQUAL JAGLINK_COMMON_VERSION)
-    message(FATAL_ERROR "Infiltratr Common ${JAGLINK_COMMON_VERSION} is required; found ${JAGLINK_COMMON_FOUND_VERSION}.")
-endif()
-
-find_program(JAGLINK_GIT_EXECUTABLE git)
-if(JAGLINK_GIT_EXECUTABLE)
-    execute_process(COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${JAGLINK_COMMON_DIR}" rev-parse HEAD
-        OUTPUT_VARIABLE JAGLINK_COMMON_FOUND_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET RESULT_VARIABLE JAGLINK_COMMON_COMMIT_RESULT)
-    if(JAGLINK_COMMON_COMMIT_RESULT EQUAL 0 AND NOT JAGLINK_COMMON_FOUND_COMMIT STREQUAL JAGLINK_COMMON_COMMIT)
-        message(FATAL_ERROR "Infiltratr Common must be pinned to ${JAGLINK_COMMON_COMMIT}; found ${JAGLINK_COMMON_FOUND_COMMIT}.")
-    endif()
-endif()
-
-set(INFILTRATR_COMMON_BUILD_TESTS OFF CACHE BOOL "Build Infiltratr Common tests" FORCE)
-set(INFILTRATR_COMMON_WARNINGS_AS_ERRORS ON CACHE BOOL "Treat Infiltratr Common warnings as errors" FORCE)
-add_subdirectory("${JAGLINK_COMMON_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/infiltratr-common" EXCLUDE_FROM_ALL)
-
+# LINK is JAGLINK's only top-level implementation dependency.  LINK owns and
+# validates its own Infiltratr Common dependency, preserving Common -> LINK ->
+# product rather than maintaining a second Common pin in each product.
 set(JAGLINK_LINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/link")
 set(JAGLINK_LINK_VERSION "0.6.0")
-set(JAGLINK_LINK_COMMIT "bbb21785983f1d94483949d4a7c50adf80f4c4e7")
+set(JAGLINK_LINK_COMMIT "9c1437e5d48181807863b98af04c0153ec4eff16")
 
 if(NOT EXISTS "${JAGLINK_LINK_DIR}/VERSION")
-    message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required. Run git submodule update --init --recursive.")
+    message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required. Clone with --recurse-submodules or run git submodule update --init --recursive.")
 endif()
 
 file(READ "${JAGLINK_LINK_DIR}/VERSION" JAGLINK_LINK_FOUND_VERSION)
@@ -75,6 +51,7 @@ if(NOT JAGLINK_LINK_FOUND_VERSION STREQUAL JAGLINK_LINK_VERSION)
     message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required; found ${JAGLINK_LINK_FOUND_VERSION}.")
 endif()
 
+find_program(JAGLINK_GIT_EXECUTABLE git)
 if(JAGLINK_GIT_EXECUTABLE)
     execute_process(COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${JAGLINK_LINK_DIR}" rev-parse HEAD
         OUTPUT_VARIABLE JAGLINK_LINK_FOUND_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET RESULT_VARIABLE JAGLINK_LINK_COMMIT_RESULT)
@@ -102,7 +79,7 @@ add_library(jaglink STATIC
 add_library(JAGLINK::Core ALIAS jaglink)
 target_include_directories(jaglink PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_definitions(jaglink PRIVATE JAGLINK_VERSION="${PROJECT_VERSION}")
-target_link_libraries(jaglink PUBLIC InfiltratrCommon::Portable LINK::Core)
+target_link_libraries(jaglink PUBLIC LINK::Core)
 
 set(JAGLINK_WARNING_FLAGS -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wstrict-prototypes -Wmissing-prototypes)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
@@ -115,9 +92,26 @@ if(JAGLINK_BUILD_LINUX_APP)
     endif()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4>=4.6)
+    find_program(GLIB_COMPILE_RESOURCES_EXECUTABLE NAMES glib-compile-resources REQUIRED)
+
+    set(JAGLINK_LINUX_RESOURCE_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/jaglink-linux-resources.c")
+    add_custom_command(
+        OUTPUT "${JAGLINK_LINUX_RESOURCE_SOURCE}"
+        COMMAND "${GLIB_COMPILE_RESOURCES_EXECUTABLE}"
+            --generate-source
+            "--target=${JAGLINK_LINUX_RESOURCE_SOURCE}"
+            jaglink.gresource.xml
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/app/linux"
+        DEPENDS
+            "${CMAKE_CURRENT_SOURCE_DIR}/app/linux/jaglink.gresource.xml"
+            "${CMAKE_CURRENT_SOURCE_DIR}/app/linux/assets/jaglink-emblem.png"
+        VERBATIM)
+
     add_executable(jaglink-linux
         app/linux/main.c
-        app/linux/about-dialog.c)
+        app/linux/about-dialog.c
+        "${JAGLINK_LINUX_RESOURCE_SOURCE}")
+    set_source_files_properties("${JAGLINK_LINUX_RESOURCE_SOURCE}" PROPERTIES COMPILE_OPTIONS "-w")
     set_target_properties(jaglink-linux PROPERTIES OUTPUT_NAME jaglink)
     target_link_libraries(jaglink-linux PRIVATE jaglink PkgConfig::GTK4)
     if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")

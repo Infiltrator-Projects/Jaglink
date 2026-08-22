@@ -73,7 +73,7 @@
 		B00000000000000000000030 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		B00000000000000000000032 /* JAGLINK/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = JAGLINK/Assets.xcassets; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000040 /* JAGLINK.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JAGLINK.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C0A110000000000000000004 /* InfiltratrCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = InfiltratrCommon.xcodeproj; path = "../../src/infiltratr-common/apple/InfiltratrCommon.xcodeproj"; sourceTree = SOURCE_ROOT; };
+		C0A110000000000000000004 /* InfiltratrCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = InfiltratrCommon.xcodeproj; path = "../../src/link/src/infiltratr-common/apple/InfiltratrCommon.xcodeproj"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -336,7 +336,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../include",
-					"$(SRCROOT)/../../src/infiltratr-common/include",
+					"$(SRCROOT)/../../src/link/src/infiltratr-common/include",
 					"$(SRCROOT)/../../platform/apple",
 				);
 				INFOPLIST_KEY_CFBundleDisplayName = JAGLINK;
@@ -348,7 +348,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.4;
+				MARKETING_VERSION = 0.2.5;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.The-First-Infiltrator.Jaglink";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -377,7 +377,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../include",
-					"$(SRCROOT)/../../src/infiltratr-common/include",
+					"$(SRCROOT)/../../src/link/src/infiltratr-common/include",
 					"$(SRCROOT)/../../platform/apple",
 				);
 				INFOPLIST_KEY_CFBundleDisplayName = JAGLINK;
@@ -389,7 +389,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.4;
+				MARKETING_VERSION = 0.2.5;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.The-First-Infiltrator.Jaglink";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

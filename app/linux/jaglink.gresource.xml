@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/com/github/The-First-Infiltrator/Jaglink">
+    <file alias="jaglink-emblem.png">assets/jaglink-emblem.png</file>
+  </gresource>
+</gresources>

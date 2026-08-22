@@ -23,12 +23,13 @@ jobs:
         run: |
           set -euo pipefail
           mapfile -t gitlinks < <(git ls-files --stage | awk '$1 == "160000" { print $4 }' | sort)
-          expected_gitlinks=("src/infiltratr-common" "src/link")
+          expected_gitlinks=("src/link")
           if [[ "${gitlinks[*]}" != "${expected_gitlinks[*]}" ]]; then
-            printf 'Unexpected gitlink dependency set:\n%s\n' "${gitlinks[*]:-<none>}" >&2
+            printf 'Unexpected top-level dependency set:\n%s\n' "${gitlinks[*]:-<none>}" >&2
             exit 1
           fi
 
+          version="$(tr -d '[:space:]' < VERSION)"
           test ! -e platform/windows/jaglink-discover.c
           test ! -d src/discover
           test ! -e src/core/isotp.c
@@ -37,9 +38,16 @@ jobs:
           grep -q 'LINK::Core' CMakeLists.txt
           grep -q 'link_add_windows_discover(jaglink-discover' CMakeLists.txt
           grep -q 'set(JAGLINK_LINK_VERSION "0.6.0")' CMakeLists.txt
-          grep -q 'set(JAGLINK_LINK_COMMIT "bbb21785983f1d94483949d4a7c50adf80f4c4e7")' CMakeLists.txt
-          test "$(git -C src/link rev-parse HEAD)" = "bbb21785983f1d94483949d4a7c50adf80f4c4e7"
+          grep -q 'set(JAGLINK_LINK_COMMIT "9c1437e5d48181807863b98af04c0153ec4eff16")' CMakeLists.txt
+          test "$(git -C src/link rev-parse HEAD)" = "9c1437e5d48181807863b98af04c0153ec4eff16"
+          test -f src/link/src/infiltratr-common/VERSION
+          test "$(tr -d '[:space:]' < src/link/src/infiltratr-common/VERSION)" = "1.10.0"
           grep -q 'path = ../../src/link/src/core/isotp.c' app/ios/JAGLINK.xcodeproj/project.pbxproj
+          grep -q "MARKETING_VERSION = ${version};" app/ios/JAGLINK.xcodeproj/project.pbxproj
+          grep -Fq 'Copyright © 2026 Xavier Wheaton and Shannon Smith' app/ios/JAGLINK.xcodeproj/project.pbxproj
+          grep -Fq 'Copyright © 2026 Xavier Wheaton and Shannon Smith' app/ios/JAGLINK/JAGLINKApp.swift
+          grep -Fq 'gtk_image_new_from_resource' app/linux/main.c
+          ! grep -Fq 'gtk_label_new("◆")' app/linux/main.c
 
           grep -q 'link_parameter_store_record' src/link/src/core/parameter.c
           grep -q 'LINK_PARAMETER_STORE_HISTORY_CAPACITY 1024U' src/link/include/link/parameter_store.h
@@ -262,15 +270,13 @@ jobs:
 
             const main = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
             if (main.data.commit.sha !== target) {
-              core.info(`Skipping stale release run at ${target}; main is ${main.data.commit.sha}.`);
-              return;
+              throw new Error(`Stale release run at ${target}; main is ${main.data.commit.sha}.`);
             }
 
             try {
               const tagRef = await github.rest.git.getRef({ owner, repo, ref: `tags/${tag}` });
               if (tagRef.data.object.sha !== target) {
-                core.info(`${tag} already points to ${tagRef.data.object.sha}; this push is not a release commit.`);
-                return;
+                throw new Error(`${tag} already points to ${tagRef.data.object.sha}; refusing a false-green release.`);
               }
             } catch (error) {
               if (error.status !== 404) throw error;

@@ -33,12 +33,12 @@ static const InfiltratrProjectInfo jaglink_project_info_record = {
     .version = JAGLINK_VERSION,
     .source_id = "jaglink-" JAGLINK_VERSION,
     .build_profile = "portable-c11",
-    .author = "Shannon Smith",
+    .author = "Xavier Wheaton and Shannon Smith",
     .website = "https://github.com/The-First-Infiltrator/Jaglink",
     .license_id = "GPL-3.0-or-later",
     .comments = "Jaguar X-Type X400 diagnostics, evidence capture and vehicle-focused diagnostic tooling.",
     .icon_name = "jaglink",
-    .copyright_text = "Copyright © 2026 Shannon Smith\n\n"
+    .copyright_text = "Copyright © 2026 Xavier Wheaton and Shannon Smith\n\n"
                       "This program comes with absolutely no warranty.\n"
                       "See the GNU GPL v3+ License for details."
 };

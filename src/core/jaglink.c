@@ -6,17 +6,21 @@
 
 #include <stddef.h>
 
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
+
 #ifndef JAGLINK_VERSION
 #error "JAGLINK_VERSION must be supplied by the build system"
 #endif
 
 /*
- * CMake links LINK::Core and defines LINK_WORKSPACE_EXTERNAL. The Apple
- * project compiles portable C sources directly, so it pulls the exact same
- * LINK workspace implementation from the pinned submodule here instead of
- * carrying a JAGLINK copy.
+ * Normal CMake builds consume workspace.c through LINK::Core. The native
+ * iPhone project compiles portable C sources directly, so it compiles the
+ * exact same workspace.c from the pinned LINK submodule here rather than
+ * carrying a JAGLINK implementation.
  */
-#ifndef LINK_WORKSPACE_EXTERNAL
+#if defined(__APPLE__) && TARGET_OS_IOS
 #include "../link/src/core/workspace.c"
 #endif
 

@@ -47,8 +47,8 @@ include(GNUInstallDirs)
 # LINK is JAGLINK's only top-level implementation dependency. LINK owns and
 # validates Infiltratr Common, preserving Common -> LINK -> product.
 set(JAGLINK_LINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/link")
-set(JAGLINK_LINK_VERSION "0.7.4")
-set(JAGLINK_LINK_COMMIT "7af290d71b38859202ccc90c060ee29b56d2296c")
+set(JAGLINK_LINK_VERSION "0.7.5")
+set(JAGLINK_LINK_COMMIT "9b707e121ad5dcf45403b06c8ca8dda5ef2b9e35")
 
 if(NOT EXISTS "${JAGLINK_LINK_DIR}/VERSION")
     message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required. Clone with --recurse-submodules or run git submodule update --init --recursive.")

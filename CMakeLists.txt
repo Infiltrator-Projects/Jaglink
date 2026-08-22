@@ -93,11 +93,16 @@ if(JAGLINK_BUILD_LINUX_APP)
     pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4>=4.6)
     find_program(GLIB_COMPILE_RESOURCES_EXECUTABLE NAMES glib-compile-resources REQUIRED)
 
+    # Use explicit registration rather than relying on compiler/linker constructor
+    # behaviour. This guarantees that both development and packaged GTK launches
+    # have the emblem resource available before any widget requests it.
     set(JAGLINK_LINUX_RESOURCE_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/jaglink-linux-resources.c")
     add_custom_command(
         OUTPUT "${JAGLINK_LINUX_RESOURCE_SOURCE}"
         COMMAND "${GLIB_COMPILE_RESOURCES_EXECUTABLE}"
             --generate-source
+            --manual-register
+            --c-name=jaglink_linux_resources
             "--target=${JAGLINK_LINUX_RESOURCE_SOURCE}"
             jaglink.gresource.xml
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/app/linux"

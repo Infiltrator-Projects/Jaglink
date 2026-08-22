@@ -4,7 +4,7 @@
 
 JAGLINK is the Jaguar X-Type X400 product face built on the shared LINK vehicle-diagnostics engine.
 
-**Current release: 0.2.8.**
+**Current release: 0.2.9.**
 
 ## Dependency hierarchy
 
@@ -40,7 +40,7 @@ The Linux shell is C/GTK4. Its canonical Jaguar+OBD emblem is embedded as a GRes
 
 ## Windows OpenPort/J2534 Discover
 
-`jaglink-discover` is the Jaguar face of LINK's shared read-only scanner. LINK 0.7.4 supplies the same modern native Windows interaction model used by MBLINK: Common Controls v6 styling, File/Help menu, native Task Dialog About screen, DPI-aware layout, evidence log/annotations and UTF-8-safe status rendering.
+`jaglink-discover` is the Jaguar face of LINK's shared read-only scanner. LINK 0.7.5 supplies the same modern native Windows interaction model used by MBLINK: Common Controls v6 styling, File/Help menu, native Task Dialog About screen, DPI-aware layout, evidence log/annotations and UTF-8-safe status rendering.
 
 The Windows EXE uses the exact `AppIcon-60@3x.png` from the iPhone asset catalogue as its canonical product image. LINK wraps those PNG bytes into the Windows resource and embeds version/copyright metadata at build time; JAGLINK no longer maintains an independent `.ico` file.
 

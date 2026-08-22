@@ -4,7 +4,7 @@
 
 JAGLINK is the Jaguar X-Type X400 product face built on the shared LINK vehicle-diagnostics engine.
 
-**Current release: 0.2.10.**
+**Current release: 0.2.11.**
 
 ## Dependency hierarchy
 

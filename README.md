@@ -4,7 +4,7 @@
 
 JAGLINK is the Jaguar X-Type X400 product face built on the shared LINK vehicle-diagnostics engine.
 
-**Current release: 0.2.11.**
+**Current release: 0.2.12.**
 
 ## Dependency hierarchy
 
@@ -17,11 +17,9 @@ Infiltratr Common
  Jaguar/X400 face
 ```
 
-JAGLINK pins LINK 0.7.5 at `src/link`. LINK owns Infiltratr Common 1.10.0 beneath it, so JAGLINK carries no second top-level Common dependency.
+JAGLINK pins LINK 0.9.1 at `src/link`. LINK owns Infiltratr Common 1.11.0 beneath it, so JAGLINK carries no second top-level Common dependency.
 
-LINK owns the shared workspace, ISO-TP, byte-stream transport ABI, ELM327 framing/parser/initialisation, ELM-managed CAN, ELM session/probe, parameter/store/scheduler/telemetry runtime, Discover safety/evidence and the native Windows OpenPort 2.0/J2534 scanner shell. JAGLINK retains compatibility façades plus Jaguar identity, X400 definitions and genuinely Jaguar-specific behaviour.
-
-The next shared-code migrations are standard OBD-II and UDS.
+LINK owns the shared workspace, ISO-TP, byte-stream transport ABI, ELM327 framing/parser/initialisation, ELM-managed CAN, ELM session/probe, parameter/store/scheduler/telemetry runtime, standard OBD-II, UDS, the portable diagnostic-flow controller, Discover safety/evidence and the native Windows OpenPort 2.0/J2534 scanner shell. JAGLINK retains compatibility façades plus Jaguar identity, X400 definitions and genuinely Jaguar-specific behaviour.
 
 ## X400 foundation
 
@@ -40,7 +38,7 @@ The Linux shell is C/GTK4. Its canonical Jaguar+OBD emblem is embedded as a GRes
 
 ## Windows OpenPort/J2534 Discover
 
-`jaglink-discover` is the Jaguar face of LINK's shared read-only scanner. LINK 0.7.5 supplies the same modern native Windows interaction model used by MBLINK: Common Controls v6 styling, File/Help menu, native Task Dialog About screen, DPI-aware layout, evidence log/annotations and UTF-8-safe status rendering.
+`jaglink-discover` is the Jaguar face of LINK's shared read-only scanner. LINK 0.9.1 supplies the same modern native Windows interaction model used by MBLINK: Common Controls v6 styling, File/Help menu, native Task Dialog About screen, DPI-aware layout, evidence log/annotations and UTF-8-safe status rendering.
 
 The Windows EXE uses the exact `AppIcon-60@3x.png` from the iPhone asset catalogue as its canonical product image. LINK wraps those PNG bytes into the Windows resource and embeds version/copyright metadata at build time; JAGLINK no longer maintains an independent `.ico` file.
 

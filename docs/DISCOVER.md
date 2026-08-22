@@ -2,52 +2,35 @@
 
 # JAGLINK Discover
 
-`jaglink-discover` is the Windows OpenPort 2.0 / SAE J2534 discovery front end for JAGLINK 0.2.0. It is intentionally a forensic, read-only discovery tool rather than a programming or actuator-control utility.
+JAGLINK Discover is the JAGLINK-branded face of the shared LINK Discover subsystem.
+
+JAGLINK does not own a separate discovery engine or Windows OpenPort/J2534 scanner implementation. Shared discovery behaviour, safety classification, evidence writing and the Windows scanner source live in LINK.
+
+The JAGLINK compatibility API is exposed through `include/jaglink/discover.h`, which aliases the product-prefixed names to the shared `link_*` API without duplicating implementation.
+
+## Shared Windows scanner
+
+`jaglink-discover.exe` is created through LINK's `link_add_windows_discover` constructor. The target compiles LINK's single `platform/windows/link-discover.c` implementation and supplies only the JAGLINK product identity.
+
+The equivalent MBLINK executable is built from the exact same source. Any difference in capture, safety, evidence or J2534 behaviour between the two products is therefore a regression.
 
 ## Supported discovery path
 
-The Windows target is built as a Win32 executable because the commonly installed Tactrix OpenPort 2.0 J2534 FunctionLibrary is 32-bit. At startup the GUI searches the standard J2534 04.04 registry locations for an OpenPort entry and reads its `FunctionLibrary` value. If no entry is found, the DLL path remains editable and defaults to the conventional OpenPort 2.0 installation path.
+The shared Windows target is built as a Win32 executable because the commonly installed Tactrix OpenPort 2.0 J2534 FunctionLibrary is 32-bit. The GUI searches standard J2534 04.04 registry locations for an OpenPort entry and reads its `FunctionLibrary` value. If no entry is found, the DLL path remains editable.
 
-The primary capture mode opens the J2534 device and connects using the CAN protocol at exactly 500000 bit/s. Capture mode calls only `PassThruReadMsgs`; it does not call `PassThruWriteMsgs`, so ordinary passive capture has no transmit path.
+The primary capture mode opens the device and connects using CAN at 500000 bit/s. Passive capture reads traffic only and does not use the transmit path.
 
-The bounded OBD inventory temporarily reconnects using ISO 15765 at 500000 bit/s, installs response flow-control filters for the conventional 11-bit OBD response range, and sends only these six standard information requests:
+The bounded OBD inventory temporarily reconnects using ISO 15765 at 500000 bit/s and sends only a finite set of standard read-only information requests. Every request is passed through LINK's deny-by-default safety classifier before the J2534 transmit function can be reached.
 
-- Mode 01 PID 00 — supported current-data PIDs;
-- Mode 09 PID 00 — supported vehicle-information PIDs;
-- Mode 09 PID 02 — VIN;
-- Mode 09 PID 04 — calibration ID;
-- Mode 09 PID 06 — calibration verification numbers;
-- Mode 09 PID 0A — ECU name.
+## Safety and evidence
 
-Each request is safety-classified before the J2534 transmit function can be reached. The inventory is finite and returns to passive CAN capture when it finishes.
+The safety classifier and JSONL evidence writer are implemented in LINK under `src/discover/`. Unknown services and write/control operations remain blocked by default. Captured frames and operator annotations use the same evidence schema in MBLINK and JAGLINK.
 
-## Deny-by-default safety policy
-
-The portable classifier in `src/discover/safety.c` admits only explicit read-only services. Standard OBD read services 01, 03, 07, 09 and 0A are classified read-only. UDS ReadDTCInformation (19) and ReadDataByIdentifier (22) are also classified read-only for future evidence tooling.
-
-Everything else is blocked unless explicitly classified. In particular the classifier blocks OBD DTC clearing and control operations, UDS ECU reset, ClearDiagnosticInformation, SecurityAccess, Authentication, WriteDataByIdentifier, InputOutputControlByIdentifier, CommunicationControl, RoutineControl, WriteMemoryByAddress, RequestDownload, RequestUpload, TransferData and RequestTransferExit. Unknown service identifiers are blocked by default.
-
-The Windows inventory itself uses only OBD modes 01 and 09.
-
-## Evidence JSON Lines
-
-Every captured or inventory frame can be written to a timestamped `.jsonl` evidence stream. Frame records contain:
-
-```json
-{"type":"frame","timestamp_ns":123456789,"direction":"rx","protocol":"CAN","can_id":"0x000007E8","data":"4100...","annotation":"passive 500 kbit/s capture"}
-```
-
-Operator notes are separate records:
-
-```json
-{"type":"annotation","timestamp_ns":123456790,"text":"Ignition switched from II to 0"}
-```
-
-Strings are JSON-escaped by the portable evidence writer. The GUI keeps a session evidence file in the Windows temporary directory and the **Export JSONL** button copies the flushed evidence to an operator-selected path.
+The full behavioural contract, allowed product-face differences and regression rules are documented in LINK's `docs/DISCOVER.md` and `docs/PRODUCT_FACES.md`.
 
 ## Build on Windows
 
-Use a Visual Studio developer environment with the repository and its submodule checked out:
+With recursive submodules initialised:
 
 ```powershell
 cmake -S . -B build-win32 -A Win32 -DCMAKE_BUILD_TYPE=Release -DJAGLINK_BUILD_WINDOWS_DISCOVER=ON
@@ -56,7 +39,3 @@ ctest --test-dir build-win32 -C Release --output-on-failure
 ```
 
 The executable is `build-win32/Release/jaglink-discover.exe`.
-
-## Portable tests
-
-`jaglink-test-discover-safety` verifies the allowlist and all explicit high-risk deny classes. `jaglink-test-evidence` verifies JSONL frame output, timestamping, hexadecimal payload encoding, annotations and JSON string escaping. Both tests run on the normal portable C11 CI matrix and in the Windows build.

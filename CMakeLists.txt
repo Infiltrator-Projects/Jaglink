@@ -1,6 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required(VERSION 3.20)
 
+# JAGLINK Discover is shipped as a standalone Windows executable. Select the
+# static MSVC runtime before C is enabled so product, LINK and Common objects
+# agree and the EXE starts on a clean Windows installation.
+if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+endif()
+if(MSVC OR WIN32)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" JAGLINK_PROJECT_VERSION)
 string(STRIP "${JAGLINK_PROJECT_VERSION}" JAGLINK_PROJECT_VERSION)
 if(NOT JAGLINK_PROJECT_VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+$")
@@ -37,8 +47,8 @@ include(GNUInstallDirs)
 # LINK is JAGLINK's only top-level implementation dependency. LINK owns and
 # validates Infiltratr Common, preserving Common -> LINK -> product.
 set(JAGLINK_LINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/link")
-set(JAGLINK_LINK_VERSION "0.7.2")
-set(JAGLINK_LINK_COMMIT "8d00d2d24ed514f7bc2f2025054839d4efabb29a")
+set(JAGLINK_LINK_VERSION "0.7.4")
+set(JAGLINK_LINK_COMMIT "7af290d71b38859202ccc90c060ee29b56d2296c")
 
 if(NOT EXISTS "${JAGLINK_LINK_DIR}/VERSION")
     message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required. Clone with --recurse-submodules or run git submodule update --init --recursive.")
@@ -134,15 +144,19 @@ if(JAGLINK_BUILD_WINDOWS_DISCOVER)
     if(NOT WIN32)
         message(FATAL_ERROR "JAGLINK_BUILD_WINDOWS_DISCOVER is supported on Windows only.")
     endif()
+
+    # The iPhone AppIcon PNG is JAGLINK's canonical product image. LINK wraps
+    # the same PNG bytes in the Windows resource so title bar, taskbar, Explorer
+    # and About all use the same emblem as iPhone.
     link_add_windows_discover(jaglink-discover
         PRODUCT_NAME "JAGLINK"
         PRODUCT_SLUG "jaglink"
         WINDOW_CLASS "JAGLINKDiscoverWindow"
         PRODUCT_VERSION "${PROJECT_VERSION}"
         PRODUCT_COPYRIGHT "Copyright (C) 2026 Xavier Wheaton and Shannon Smith"
-        PRODUCT_SUBTITLE "Jaguar X400 Diagnostics")
-    target_sources(jaglink-discover PRIVATE app/windows/jaglink.rc)
-    target_include_directories(jaglink-discover PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/app/windows")
+        PRODUCT_SUBTITLE "Jaguar X400 Diagnostics"
+        PRODUCT_WEBSITE "https://github.com/The-First-Infiltrator/Jaglink"
+        PRODUCT_ICON_PNG "${CMAKE_CURRENT_SOURCE_DIR}/app/ios/JAGLINK/Assets.xcassets/AppIcon.appiconset/AppIcon-60@3x.png")
 endif()
 
 function(jaglink_add_test target source)

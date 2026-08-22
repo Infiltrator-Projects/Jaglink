@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=JAGLINK
+Comment=Jaguar X-Type X400 diagnostics
+Exec=jaglink
+Icon=jaglink
+Terminal=false
+Categories=Utility;
+StartupNotify=true

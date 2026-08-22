@@ -123,6 +123,11 @@ if(JAGLINK_BUILD_LINUX_APP)
         target_compile_options(jaglink-linux PRIVATE ${JAGLINK_WARNING_FLAGS} -Werror)
     endif()
     install(TARGETS jaglink-linux RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+    install(FILES app/linux/assets/jaglink-emblem.png
+            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps"
+            RENAME jaglink.png)
+    install(FILES app/linux/com.github.The-First-Infiltrator.Jaglink.desktop
+            DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
     install(FILES README.md docs/JAGUAR.md docs/DISCOVER.md
             DESTINATION "${CMAKE_INSTALL_DOCDIR}")
 endif()
@@ -135,6 +140,8 @@ if(JAGLINK_BUILD_WINDOWS_DISCOVER)
         PRODUCT_NAME "JAGLINK"
         PRODUCT_SLUG "jaglink"
         WINDOW_CLASS "JAGLINKDiscoverWindow")
+    target_sources(jaglink-discover PRIVATE app/windows/jaglink.rc)
+    target_include_directories(jaglink-discover PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/app/windows")
 endif()
 
 function(jaglink_add_test target source)

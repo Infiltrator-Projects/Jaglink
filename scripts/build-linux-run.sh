@@ -29,6 +29,11 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --prefix) prefix="$2"; shift 2 ;;
     --no-install) do_install=0; shift ;;
+    --help|-h)
+      echo "Usage: $0 [--prefix PATH] [--no-install]"
+      echo "Build JAGLINK natively from the bundled source and optionally install it."
+      exit 0
+      ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
 done

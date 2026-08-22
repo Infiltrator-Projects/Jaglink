@@ -4,7 +4,7 @@
 
 JAGLINK is the Jaguar X-Type X400 product face built on the shared LINK vehicle-diagnostics engine.
 
-**Current release: 0.2.7.**
+**Current release: 0.2.8.**
 
 ## Dependency hierarchy
 
@@ -17,7 +17,7 @@ Infiltratr Common
  Jaguar/X400 face
 ```
 
-JAGLINK pins LINK 0.7.4 at `src/link`. LINK owns Infiltratr Common 1.10.0 beneath it, so JAGLINK carries no second top-level Common dependency.
+JAGLINK pins LINK 0.7.5 at `src/link`. LINK owns Infiltratr Common 1.10.0 beneath it, so JAGLINK carries no second top-level Common dependency.
 
 LINK owns the shared workspace, ISO-TP, byte-stream transport ABI, ELM327 framing/parser/initialisation, ELM-managed CAN, ELM session/probe, parameter/store/scheduler/telemetry runtime, Discover safety/evidence and the native Windows OpenPort 2.0/J2534 scanner shell. JAGLINK retains compatibility façades plus Jaguar identity, X400 definitions and genuinely Jaguar-specific behaviour.
 

@@ -31,4 +31,6 @@ Reference publications:
 
 ## Current boundary
 
-0.1.0 does not send Jaguar-specific module requests. Generic OBD-II remains available through JAGLINK's portable engine. The next manufacturer work is read-only network/module discovery with evidence preserved before any proprietary decoding is promoted.
+0.2.0 adds read-only OpenPort 2.0/J2534 discovery without adding unverified Jaguar-specific request formats. It can passively capture the documented 500 kbit/s CAN network and run a strictly bounded standard OBD inventory. Evidence is recorded as timestamped JSON Lines with operator annotations, and a deny-by-default classifier blocks unsafe or unknown diagnostic services before transmission. Generic OBD-II remains available through JAGLINK's portable engine.
+
+The next manufacturer work remains evidence-led: preserve reproducible X400 captures, corroborate module behaviour, and only then promote proprietary Jaguar definitions into the portable manufacturer layer.

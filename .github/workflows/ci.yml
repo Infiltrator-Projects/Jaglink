@@ -12,8 +12,8 @@ permissions:
   contents: read
 
 env:
-  LINK_VERSION: 0.7.1
-  LINK_COMMIT: 4c75618da2085ecd09e8110f2883decf9b2162f9
+  LINK_VERSION: 0.7.2
+  LINK_COMMIT: 8d00d2d24ed514f7bc2f2025054839d4efabb29a
 
 jobs:
   standalone-audit:
@@ -69,6 +69,12 @@ jobs:
           grep -Fq 'jaglink_linux_resources_register_resource' app/linux/main.c
           grep -Fq 'gtk_image_new_from_resource' app/linux/main.c
           ! grep -Fq 'gtk_label_new("◆")' app/linux/main.c
+
+          grep -Fq 'create_main_menu' src/link/platform/windows/link-discover-ui.c
+          grep -Fq 'ShellAboutA' src/link/platform/windows/link-discover-ui.c
+          grep -Fq 'IDM_HELP_ABOUT' src/link/platform/windows/link-discover-ui.c
+          test -s app/windows/jaglink.ico
+          test -s app/windows/jaglink.rc
 
           if git grep -n -I -i -E 'mercedes|mercedes-benz' -- . \
             ':(exclude).github/workflows/ci.yml' \
@@ -135,6 +141,12 @@ jobs:
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
           "version=$version" >> $env:GITHUB_OUTPUT
+      - name: Verify branded shared Windows shell
+        shell: pwsh
+        run: |
+          if (-not (Test-Path app/windows/jaglink.ico)) { throw 'Missing JAGLINK icon resource' }
+          if (-not (Select-String -Path src/link/platform/windows/link-discover-ui.c -Pattern 'create_main_menu' -Quiet)) { throw 'Shared File/Help menu is missing' }
+          if (-not (Select-String -Path src/link/platform/windows/link-discover-ui.c -Pattern 'ShellAboutA' -Quiet)) { throw 'Shared About dialog is missing' }
       - name: Configure
         shell: pwsh
         run: cmake -S . -B build-win32 -A Win32 -DCMAKE_BUILD_TYPE=Release -DJAGLINK_BUILD_WINDOWS_DISCOVER=ON
@@ -334,7 +346,7 @@ jobs:
               release = (await github.rest.repos.createRelease({
                 owner, repo, tag_name: tag, target_commitish: target,
                 name: `JAGLINK ${version}`,
-                body: `JAGLINK ${version}: Jaguar X400 diagnostics on LINK 0.7.1 with explicitly registered Linux branding resources.`,
+                body: `JAGLINK ${version}: Jaguar X400 diagnostics on LINK 0.7.2 with the shared native Windows menu/About shell and explicitly registered Linux branding resources.`,
                 draft: false, prerelease: false, generate_release_notes: true
               })).data;
             }

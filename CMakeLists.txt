@@ -16,6 +16,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(JAGLINK_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
 option(JAGLINK_BUILD_LINUX_APP "Build the native GTK4 Linux front end" OFF)
+if(WIN32)
+    set(JAGLINK_WINDOWS_DISCOVER_DEFAULT ON)
+else()
+    set(JAGLINK_WINDOWS_DISCOVER_DEFAULT OFF)
+endif()
+option(JAGLINK_BUILD_WINDOWS_DISCOVER "Build the Win32 OpenPort/J2534 discovery GUI" ${JAGLINK_WINDOWS_DISCOVER_DEFAULT})
 
 if(JAGLINK_ENABLE_SANITIZERS)
     if(NOT CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
@@ -26,6 +32,7 @@ if(JAGLINK_ENABLE_SANITIZERS)
 endif()
 
 include(CTest)
+include(GNUInstallDirs)
 
 set(JAGLINK_COMMON_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/infiltratr-common")
 set(JAGLINK_COMMON_VERSION "1.10.0")
@@ -67,7 +74,9 @@ add_library(jaglink STATIC
     src/elm327/probe.c
     src/obd2/obd2.c
     src/uds/uds.c
-    src/jaguar/jaguar.c)
+    src/jaguar/jaguar.c
+    src/discover/safety.c
+    src/discover/evidence.c)
 
 add_library(JAGLINK::Core ALIAS jaglink)
 target_include_directories(jaglink PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -86,10 +95,23 @@ if(JAGLINK_BUILD_LINUX_APP)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4>=4.6)
     add_executable(jaglink-linux app/linux/main.c)
+    set_target_properties(jaglink-linux PROPERTIES OUTPUT_NAME jaglink)
     target_link_libraries(jaglink-linux PRIVATE jaglink PkgConfig::GTK4)
     if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
         target_compile_options(jaglink-linux PRIVATE ${JAGLINK_WARNING_FLAGS} -Werror)
     endif()
+    install(TARGETS jaglink-linux RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+    install(FILES README.md docs/JAGUAR.md docs/DISCOVER.md
+            DESTINATION "${CMAKE_INSTALL_DOCDIR}")
+endif()
+
+if(JAGLINK_BUILD_WINDOWS_DISCOVER)
+    if(NOT WIN32)
+        message(FATAL_ERROR "JAGLINK_BUILD_WINDOWS_DISCOVER is supported on Windows only.")
+    endif()
+    add_executable(jaglink-discover WIN32 platform/windows/jaglink-discover.c)
+    target_link_libraries(jaglink-discover PRIVATE jaglink comdlg32 advapi32)
+    target_compile_definitions(jaglink-discover PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
 
 function(jaglink_add_test target source)
@@ -119,4 +141,17 @@ if(BUILD_TESTING)
     jaglink_add_test(jaglink-test-uds tests/test_uds.c)
     jaglink_add_test(jaglink-test-uds-dtc tests/test_uds_dtc.c)
     jaglink_add_test(jaglink-test-jaguar tests/test_jaguar.c)
+    jaglink_add_test(jaglink-test-discover-safety tests/test_discover_safety.c)
+    jaglink_add_test(jaglink-test-evidence tests/test_evidence.c)
 endif()
+
+set(CPACK_PACKAGE_NAME "jaglink")
+set(CPACK_PACKAGE_VENDOR "JAGLINK Project")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Jaguar X-Type X400 diagnostics platform")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "JAGLINK Project")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libgtk-4-1 (>= 4.6)")
+set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+include(CPack)

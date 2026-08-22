@@ -6,6 +6,7 @@
 #ifndef JAGLINK_OBD2_H
 #define JAGLINK_OBD2_H
 
+#include "jaglink/elm327.h"
 #include "link/obd2.h"
 
 #ifdef __cplusplus

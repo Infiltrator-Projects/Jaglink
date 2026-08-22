@@ -23,10 +23,11 @@
  * Normal CMake builds consume shared engines through LINK::Core.  The native
  * iPhone target compiles portable C sources directly, so include the exact
  * sources from the pinned LINK checkout rather than maintaining product-owned
- * copies of workspace, runtime, transport or ELM327 logic.
+ * copies of workspace, runtime, transport or diagnostic state machines.
  */
 #if defined(__APPLE__) && TARGET_OS_IOS
 #include "../link/src/core/workspace.c"
+#include "../link/src/core/diagnostic_flow.c"
 #include "../link/src/core/parameter.c"
 #include "../link/src/core/scheduler.c"
 #include "../link/src/core/telemetry.c"

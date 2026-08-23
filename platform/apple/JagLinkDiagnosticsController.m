@@ -6,6 +6,7 @@
 #import "jaglink/elm327_session.h"
 #import "jaglink/telemetry.h"
 #import "link/diagnostic_flow.h"
+#import "link/elm327_simulator.h"
 
 #include <stdint.h>
 
@@ -20,6 +21,7 @@
 @property(nonatomic, readwrite, getter=isActive) BOOL active;
 @property(nonatomic, readwrite, getter=isReady) BOOL ready;
 
+- (void)prepareForStart;
 - (void)handleSessionEvent:(const JaglinkElm327Session *)session;
 - (void)processCompletedResponse;
 - (void)beginPortableSession;
@@ -35,6 +37,8 @@
     JagLinkBLETransport *_provider;
     JaglinkElm327Session _session;
     BOOL _sessionInitialized;
+    BOOL _simulated;
+    LinkElm327Simulator _simulator;
     LinkDiagnosticFlow _flow;
     JaglinkTelemetryStore _telemetry;
     JaglinkTelemetryRecorder _recorder;
@@ -143,7 +147,7 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
         _sessionInitialized = NO;
         jaglink_elm327_session_disconnect(&_session);
         jaglink_elm327_session_deinit(&_session);
-    } else {
+    } else if (!_simulated) {
         [_provider disconnect];
     }
 }
@@ -160,14 +164,8 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
     [self notifyDelegate];
 }
 
-- (void)start
+- (void)prepareForStart
 {
-    if (![NSThread isMainThread]) {
-        dispatch_async(dispatch_get_main_queue(), ^{ [self start]; });
-        return;
-    }
-    if (self.active) return;
-
     _pollGeneration++;
     self.active = YES;
     self.ready = NO;
@@ -182,8 +180,42 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
     _sessionCSV = [[NSMutableData alloc] init];
     _sessionMonotonicStartMs = JagLinkMonotonicMilliseconds();
     jaglink_telemetry_session_metadata_init(&_sessionMetadata, JagLinkEpochMilliseconds(), NULL, NULL);
+}
+
+- (void)start
+{
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self start]; });
+        return;
+    }
+    if (self.active) return;
+    _simulated = NO;
+    [self prepareForStart];
+    self.peripheralName = nil;
+    self.adapterIdentifier = nil;
     [self notifyDelegate];
     [_provider start];
+}
+
+- (void)startSimulated
+{
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self startSimulated]; });
+        return;
+    }
+    if (self.active) return;
+
+    _simulated = YES;
+    [self prepareForStart];
+    self.peripheralName = @"Simulated ELM327";
+    self.adapterIdentifier = nil;
+
+    LinkElm327SimulatorConfig config = LINK_ELM327_SIMULATOR_CONFIG_INIT;
+    config.adapter_identifier = "ELM327 v2.3 JAGLINK SIM";
+    config.vin = "SAJAC51M31XC12345";
+    link_elm327_simulator_init(&_simulator, &config);
+    [self notifyDelegate];
+    [self beginPortableSession];
 }
 
 - (void)disconnect
@@ -199,7 +231,7 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
         _sessionInitialized = NO;
         jaglink_elm327_session_disconnect(&_session);
         jaglink_elm327_session_deinit(&_session);
-    } else {
+    } else if (!_simulated) {
         [_provider disconnect];
     }
     const uint64_t endedEpochMs = JagLinkEpochMilliseconds();
@@ -209,6 +241,7 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
     }
     LinkDiagnosticFlowConfig flowConfig = LINK_DIAGNOSTIC_FLOW_CONFIG_INIT;
     (void)link_diagnostic_flow_init(&_flow, &flowConfig);
+    _simulated = NO;
     self.active = NO;
     self.ready = NO;
     [self setStatus:@"Disconnected"];
@@ -216,6 +249,7 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
 
 - (void)bleTransportDidUpdate:(JagLinkBLETransport *)transport
 {
+    if (_simulated) return;
     self.peripheralName = transport.peripheralName;
     self.adapterIdentifier = transport.adapterIdentifier;
     if (transport.adapterIdentifier != nil) {
@@ -240,7 +274,9 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
 
 - (void)beginPortableSession
 {
-    JaglinkTransport transport = JagLinkBLETransportMakeCTransport(_provider);
+    JaglinkTransport transport = _simulated
+        ? link_elm327_simulator_transport(&_simulator)
+        : JagLinkBLETransportMakeCTransport(_provider);
     if (!jaglink_transport_is_valid(&transport) ||
         !jaglink_elm327_session_init(&_session, &transport, JagLinkSessionEvent, (__bridge void *)self)) {
         [self markFlowFailure:@"Failed to initialise portable diagnostic session"];
@@ -248,6 +284,12 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
     }
 
     _sessionInitialized = YES;
+    if (_simulated && jaglink_elm327_session_connect(&_session) != JAGLINK_TRANSPORT_OK) {
+        _sessionInitialized = NO;
+        jaglink_elm327_session_deinit(&_session);
+        [self markFlowFailure:@"Failed to connect simulated ELM327 transport"];
+        return;
+    }
     if (!_recorder.started &&
         !jaglink_telemetry_recorder_begin(&_recorder, &_sessionMetadata,
                                           JagLinkAppendCSV, (__bridge void *)_sessionCSV)) {
@@ -265,7 +307,7 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
         return;
     }
     [self startTickTimer];
-    [self setStatus:@"Initialising ELM327 adapter"];
+    [self setStatus:_simulated ? @"Initialising simulated ELM327 adapter" : @"Initialising ELM327 adapter"];
     [self driveDiagnosticFlow];
 }
 
@@ -297,12 +339,10 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
 - (BOOL)beginCommand:(const char *)command timeout:(uint64_t)timeoutMs
 {
     if (!_sessionInitialized || command == NULL) return NO;
-    JaglinkElm327SessionOpResult result =
-        jaglink_elm327_session_begin(&_session, command,
-                                     JagLinkMonotonicMilliseconds(), timeoutMs);
+    JaglinkElm327SessionOpResult result = jaglink_elm327_session_begin(
+        &_session, command, JagLinkMonotonicMilliseconds(), timeoutMs);
     if (result != JAGLINK_ELM327_SESSION_OP_OK) {
-        NSString *reason = JagLinkStringFromCString(
-            jaglink_elm327_session_op_result_name(result));
+        NSString *reason = JagLinkStringFromCString(jaglink_elm327_session_op_result_name(result));
         link_diagnostic_flow_fail(&_flow, LINK_DIAGNOSTIC_FLOW_RESULT_ELM_ERROR);
         [self setStatus:[NSString stringWithFormat:@"Diagnostic command failed: %@", reason]];
         return NO;
@@ -317,9 +357,7 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
         return;
     }
     if (session->status == JAGLINK_ELM327_SESSION_TIMED_OUT) {
-        if (JagLinkFlowIsFaultScan(&_flow)) {
-            self.faultScanStatusText = @"Fault scan timed out; reconnect required";
-        }
+        if (JagLinkFlowIsFaultScan(&_flow)) self.faultScanStatusText = @"Fault scan timed out; reconnect required";
         _flow.elm_failure = session->elm_result;
         link_diagnostic_flow_fail(&_flow, LINK_DIAGNOSTIC_FLOW_RESULT_ELM_ERROR);
         [self setStatus:@"Diagnostic request timed out; reconnect to resynchronise"];
@@ -351,26 +389,20 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
     }
 
     (void)jaglink_telemetry_store_record_transcript(
-        &_telemetry,
-        JagLinkElapsedMilliseconds(_sessionMonotonicStartMs),
-        _session.parser.command,
-        response);
+        &_telemetry, JagLinkElapsedMilliseconds(_sessionMonotonicStartMs),
+        _session.parser.command, response);
     if (_recorder.started && !_recorder.finished &&
         !jaglink_telemetry_recorder_record_response(
-            &_recorder,
-            JagLinkElapsedMilliseconds(_sessionMonotonicStartMs),
-            _session.parser.command,
-            response)) {
+            &_recorder, JagLinkElapsedMilliseconds(_sessionMonotonicStartMs),
+            _session.parser.command, response)) {
         [self markFlowFailure:@"Could not append diagnostic transcript"];
         return;
     }
 
     LinkDiagnosticFlowEvent event;
     LinkDiagnosticFlowResult result = link_diagnostic_flow_accept_response(
-        &_flow,
-        (const LinkElm327Response *)response,
-        JagLinkMonotonicMilliseconds(),
-        &event);
+        &_flow, (const LinkElm327Response *)response,
+        JagLinkMonotonicMilliseconds(), &event);
     if (result != LINK_DIAGNOSTIC_FLOW_RESULT_OK) {
         NSString *reason = JagLinkStringFromCString(link_diagnostic_flow_result_name(result));
         [self setStatus:[NSString stringWithFormat:@"Shared diagnostic flow failed: %@", reason]];
@@ -382,10 +414,10 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
 
 - (void)driveDiagnosticFlow
 {
-    if (!_sessionInitialized || !_provider.isReady ||
-        _flow.stage == LINK_DIAGNOSTIC_FLOW_FAILED) {
-        return;
-    }
+    const BOOL transportReady = _simulated
+        ? (_sessionInitialized && jaglink_elm327_session_is_connected(&_session))
+        : _provider.isReady;
+    if (!_sessionInitialized || !transportReady || _flow.stage == LINK_DIAGNOSTIC_FLOW_FAILED) return;
 
     LinkDiagnosticFlowAction action;
     LinkDiagnosticFlowResult result = link_diagnostic_flow_next_action(
@@ -399,18 +431,13 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
     switch (action.kind) {
     case LINK_DIAGNOSTIC_FLOW_ACTION_NONE:
         return;
-
     case LINK_DIAGNOSTIC_FLOW_ACTION_SEND_COMMAND:
         if (_flow.stage == LINK_DIAGNOSTIC_FLOW_INITIALIZING) {
-            self.statusText = @"Initialising ELM327 adapter";
+            self.statusText = _simulated ? @"Initialising simulated ELM327 adapter" : @"Initialising ELM327 adapter";
         } else if (_flow.stage == LINK_DIAGNOSTIC_FLOW_DISCOVERING_PIDS) {
-            if (_flow.supported_pid_base == 0U) {
-                self.statusText = @"Checking standard OBD-II capabilities";
-            } else {
-                self.statusText = [NSString stringWithFormat:
-                    @"Checking OBD-II PID block 0x%02X",
-                    (unsigned int)_flow.supported_pid_base];
-            }
+            self.statusText = _flow.supported_pid_base == 0U
+                ? @"Checking standard OBD-II capabilities"
+                : [NSString stringWithFormat:@"Checking OBD-II PID block 0x%02X", (unsigned int)_flow.supported_pid_base];
         } else if (_flow.stage == LINK_DIAGNOSTIC_FLOW_SCANNING_STORED_DTCS) {
             self.faultScanStatusText = @"Scanning stored, pending and permanent OBD-II faults";
             self.statusText = @"Scanning stored OBD-II fault codes";
@@ -419,36 +446,35 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
         } else if (_flow.stage == LINK_DIAGNOSTIC_FLOW_SCANNING_PERMANENT_DTCS) {
             self.statusText = @"Scanning permanent OBD-II fault codes";
         } else if (_flow.stage == LINK_DIAGNOSTIC_FLOW_READING_LIVE) {
-            self.statusText = @"Live standard OBD-II data; X400 manufacturer discovery not yet enabled";
+            self.statusText = _simulated
+                ? @"Simulated ELM327 · live standard OBD-II data"
+                : @"Live standard OBD-II data; X400 manufacturer discovery not yet enabled";
         }
         [self notifyDelegate];
         (void)[self beginCommand:action.command timeout:action.timeout_ms];
         return;
-
     case LINK_DIAGNOSTIC_FLOW_ACTION_WAIT: {
         uint64_t waitMs = action.wait_ms > 60000U ? 60000U : action.wait_ms;
         const NSUInteger generation = _pollGeneration;
-        dispatch_after(
-            dispatch_time(DISPATCH_TIME_NOW, (int64_t)waitMs * NSEC_PER_MSEC),
-            dispatch_get_main_queue(), ^{
-                if (generation == self->_pollGeneration) [self driveDiagnosticFlow];
-            });
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)waitMs * NSEC_PER_MSEC),
+                       dispatch_get_main_queue(), ^{
+            if (generation == self->_pollGeneration) [self driveDiagnosticFlow];
+        });
         return;
     }
-
     case LINK_DIAGNOSTIC_FLOW_ACTION_READY:
         self.ready = YES;
         if (_flow.scheduler.count == 0U) {
             [self setStatus:@"Connected; no supported dashboard PIDs were advertised"];
         } else {
-            [self setStatus:@"Live standard OBD-II data; X400 manufacturer discovery not yet enabled"];
+            [self setStatus:_simulated
+                ? @"Simulated ELM327 · live standard OBD-II data"
+                : @"Live standard OBD-II data; X400 manufacturer discovery not yet enabled"];
         }
         return;
-
     case LINK_DIAGNOSTIC_FLOW_ACTION_MANUFACTURER_EXTENSION:
         [self markFlowFailure:@"Unexpected manufacturer extension request in JAGLINK standard flow"];
         return;
-
     case LINK_DIAGNOSTIC_FLOW_ACTION_FAILED:
         [self markFlowFailure:@"Shared diagnostic flow entered the failed state"];
         return;
@@ -458,11 +484,9 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
 - (BOOL)applyFlowEvent:(const LinkDiagnosticFlowEvent *)event
 {
     if (event == NULL) return NO;
-
     switch (event->kind) {
     case LINK_DIAGNOSTIC_FLOW_EVENT_NONE:
         return YES;
-
     case LINK_DIAGNOSTIC_FLOW_EVENT_ADAPTER_IDENTIFIED: {
         const char *identifier = link_diagnostic_flow_adapter_identifier(&_flow);
         if (identifier != NULL) {
@@ -471,19 +495,13 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
         }
         return YES;
     }
-
     case LINK_DIAGNOSTIC_FLOW_EVENT_PID_DISCOVERY_COMPLETE:
         return YES;
-
     case LINK_DIAGNOSTIC_FLOW_EVENT_DTC_LIST: {
         NSArray<NSString *> *codes = JagLinkDTCStrings(event->dtc_list);
         switch (event->dtc_kind) {
-        case LINK_OBD2_DTC_STORED:
-            self.storedDTCs = codes;
-            break;
-        case LINK_OBD2_DTC_PENDING:
-            self.pendingDTCs = codes;
-            break;
+        case LINK_OBD2_DTC_STORED: self.storedDTCs = codes; break;
+        case LINK_OBD2_DTC_PENDING: self.pendingDTCs = codes; break;
         case LINK_OBD2_DTC_PERMANENT:
             self.permanentDTCs = codes;
             self.faultScanStatusText = [NSString stringWithFormat:
@@ -497,12 +515,9 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
         [self notifyDelegate];
         return YES;
     }
-
     case LINK_DIAGNOSTIC_FLOW_EVENT_LIVE_SAMPLE: {
         if (!jaglink_telemetry_store_record(
-                &_telemetry,
-                JagLinkElapsedMilliseconds(_sessionMonotonicStartMs),
-                &event->sample)) {
+                &_telemetry, JagLinkElapsedMilliseconds(_sessionMonotonicStartMs), &event->sample)) {
             [self markFlowFailure:@"Could not record live telemetry sample"];
             return NO;
         }
@@ -516,16 +531,14 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
             return NO;
         }
         self.ready = YES;
-        self.statusText = @"Live standard OBD-II data";
+        self.statusText = _simulated ? @"Simulated ELM327 · live OBD-II data" : @"Live standard OBD-II data";
         [self notifyDelegate];
         return YES;
     }
-
     case LINK_DIAGNOSTIC_FLOW_EVENT_LIVE_NO_DATA:
         self.statusText = @"Live OBD-II data; one PID returned no data";
         [self notifyDelegate];
         return YES;
-
     case LINK_DIAGNOSTIC_FLOW_EVENT_LIVE_UNSUPPORTED:
         self.statusText = @"Live OBD-II data; one advertised sub-field is unavailable";
         [self notifyDelegate];
@@ -555,9 +568,7 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
     for (size_t reverseIndex = count; reverseIndex > 0U && values.count < limit; --reverseIndex) {
         JaglinkTelemetrySample sample;
         if (!jaglink_telemetry_store_history_at(&_telemetry, reverseIndex - 1U, &sample) ||
-            sample.measurement.pid != pid) {
-            continue;
-        }
+            sample.measurement.pid != pid) continue;
         [values insertObject:@(sample.measurement.value) atIndex:0U];
     }
     return values;
@@ -577,8 +588,7 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
 - (nullable NSString *)csvSnapshot
 {
     if (_sessionCSV.length == 0U) return nil;
-    return [[NSString alloc] initWithData:[_sessionCSV copy]
-                                 encoding:NSUTF8StringEncoding];
+    return [[NSString alloc] initWithData:[_sessionCSV copy] encoding:NSUTF8StringEncoding];
 }
 
 @end

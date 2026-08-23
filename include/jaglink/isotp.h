@@ -26,6 +26,7 @@ typedef LinkIsoTpTxConfig JaglinkIsoTpTxConfig;
 typedef LinkIsoTpTx JaglinkIsoTpTx;
 
 #define JAGLINK_ISOTP_CLASSIC_CAN_DATA_LENGTH LINK_ISOTP_CLASSIC_CAN_DATA_LENGTH
+#define JAGLINK_ISOTP_CAN_FD_MAX_DATA_LENGTH LINK_ISOTP_CAN_FD_MAX_DATA_LENGTH
 #define JAGLINK_ISOTP_MAX_PDU_LENGTH LINK_ISOTP_MAX_PDU_LENGTH
 
 #define JAGLINK_ISOTP_ADDRESSING_NORMAL LINK_ISOTP_ADDRESSING_NORMAL
@@ -70,6 +71,7 @@ typedef LinkIsoTpTx JaglinkIsoTpTx;
 #define jaglink_isotp_rx_state_name link_isotp_rx_state_name
 #define jaglink_isotp_tx_state_name link_isotp_tx_state_name
 #define jaglink_isotp_address_is_valid link_isotp_address_is_valid
+#define jaglink_isotp_can_data_length_is_valid link_isotp_can_data_length_is_valid
 #define jaglink_isotp_stmin_to_us link_isotp_stmin_to_us
 #define jaglink_isotp_rx_init link_isotp_rx_init
 #define jaglink_isotp_rx_reset link_isotp_rx_reset

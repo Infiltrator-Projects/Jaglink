@@ -6,8 +6,8 @@
 
 JAGLINK is the Jaguar X-Type X400 product face built on the shared LINK vehicle-diagnostics engine.
 
-**Current source version:** 0.2.13  
-**Shared engine:** LINK 0.9.1 → Infiltratr Common 1.11.0  
+**Current source version:** see [`VERSION`](VERSION)  
+**Shared engine:** exact LINK gitlink at `src/link`; LINK owns the nested Infiltratr Common pin  
 **Platforms:** Linux, iPhone/iOS and Windows Discover  
 **Licence:** GPL-3.0-or-later
 
@@ -22,9 +22,9 @@ Infiltratr Common
  Jaguar/X400 face
 ```
 
-JAGLINK pins LINK at `src/link`. LINK owns the Common dependency beneath it, so JAGLINK carries no second top-level Common submodule.
+JAGLINK pins one exact LINK commit at `src/link`. LINK owns the Common dependency beneath it, so JAGLINK carries no second top-level Common submodule. CMake and CI validate the committed recursive gitlinks rather than maintaining duplicate expected-version constants.
 
-Shared workspace, ISO-TP, transport, ELM327, standard OBD-II, UDS, scheduler/telemetry, portable diagnostic sequencing, Discover safety/evidence and the Windows OpenPort/J2534 shell belong in LINK. Jaguar identity, X400 definitions and genuinely Jaguar-specific behaviour remain in JAGLINK.
+Shared workspace, Classical CAN/CAN-FD ISO-TP, transport, ELM327, standard OBD-II, generic DTC knowledge, the complete product-neutral UDS service catalogue/codecs, scheduler/telemetry, portable diagnostic sequencing, Discover safety/evidence and the Windows OpenPort/J2534 shell belong in LINK. Jaguar identity, X400 definitions and genuinely Jaguar-specific behaviour remain in JAGLINK.
 
 ## Capabilities
 
@@ -35,7 +35,7 @@ The current Jaguar layer represents the source-corroborated X400 network topolog
 - ISO 9141 diagnostic serial link — 10.4 kbit/s; and
 - D2B optical infotainment network — 5.6 Mbit/s.
 
-The product uses LINK's shared ELM327/OBD-II/UDS engine, portable diagnostic-flow controller and read-only Windows OpenPort/J2534 Discover scanner.
+The product uses LINK's shared ELM327/OBD-II/UDS engine, Classical CAN and CAN-FD ISO-TP support, portable diagnostic-flow controller and read-only Windows OpenPort/J2534 Discover scanner. Product-prefixed compatibility headers expose LINK's 64-byte CAN-FD contract and complete 27-service generic UDS catalogue without duplicating implementations.
 
 Manufacturer-specific meanings remain evidence-gated until documentation or reproducible vehicle captures establish them.
 
@@ -44,6 +44,8 @@ Manufacturer-specific meanings remain evidence-gated until documentation or repr
 Portable diagnostic behaviour is C11. C++ is used only where it materially improves a design. Platform-required languages remain narrow presentation/interop edges and must not become alternate protocol implementations.
 
 The Linux shell is C/GTK4 and embeds the canonical Jaguar+OBD emblem as a registered GResource. The iPhone project is `app/ios/JAGLINK.xcodeproj`; SwiftUI remains a presentation edge over the shared portable model.
+
+The native iOS UDS bridge compiles the exact pinned LINK core UDS and service-codec implementations. CI verifies that bridge explicitly so a new shared UDS implementation cannot disappear from iOS while remaining present in CMake builds.
 
 Windows Discover uses LINK's shared native shell with Common Controls v6 styling, DPI-aware layout, evidence annotations and UTF-8-safe status rendering. The executable uses the canonical iPhone app icon as its Windows product image, embeds version/copyright metadata and links the static MSVC runtime.
 
@@ -59,7 +61,9 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-GitHub CI verifies the portable core, sanitizer coverage, Linux application/package path, Windows Discover executable and launch smoke test, Apple/iOS build and unsigned physical-device IPA before any release job can run.
+GitHub CI verifies the exact recursive dependency tree, portable core, product-to-LINK facade, sanitizer coverage, Linux application/package path, Windows Discover executable and launch smoke test, Apple/iOS build and unsigned physical-device IPA before any release job can run.
+
+The native Linux `.run` contains the complete source/dependency tree, builds JAGLINK with tests enabled, runs CTest, and installs only after the native test suite passes.
 
 ## Release assets
 
@@ -69,10 +73,12 @@ A successful numbered release is atomic across supported targets and publishes:
 | --- | --- |
 | `JAGLINK-<version>-unsigned.ipa` | Unsigned physical-device iPhone package. |
 | `JAGLINK-<version>-linux-amd64.deb` | Generic Linux amd64 Debian package. |
-| `JAGLINK-<version>-linux-native.run` | Native local Linux build/install program. |
+| `JAGLINK-<version>-linux-native.run` | Native local Linux build/test/install program. |
 | `JAGLINK-<version>-windows-discover.exe` | Read-only Windows OpenPort/J2534 Discover application. |
 | `JAGLINK-<version>-source.zip` | Exact tested source archive including the pinned dependency tree. |
 | `SHA256SUMS.txt` | SHA-256 checksums for all project-owned release artifacts. |
+
+Release notes derive the LINK and Common versions from that exact dependency tree instead of maintaining separate hard-coded version strings.
 
 ## Repository and release policy
 

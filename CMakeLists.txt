@@ -1,9 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required(VERSION 3.20)
 
-# JAGLINK Discover is shipped as a standalone Windows executable. Select the
-# static MSVC runtime before C is enabled so product, LINK and Common objects
-# agree and the EXE starts on a clean Windows installation.
 if(POLICY CMP0091)
     cmake_policy(SET CMP0091 NEW)
 endif()
@@ -16,7 +13,6 @@ string(STRIP "${JAGLINK_PROJECT_VERSION}" JAGLINK_PROJECT_VERSION)
 if(NOT JAGLINK_PROJECT_VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+$")
     message(FATAL_ERROR "VERSION must contain a semantic major.minor.patch version.")
 endif()
-
 project(JAGLINK VERSION "${JAGLINK_PROJECT_VERSION}" LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
@@ -44,28 +40,43 @@ endif()
 include(CTest)
 include(GNUInstallDirs)
 
-# LINK is JAGLINK's only top-level implementation dependency. LINK owns and
-# validates Infiltratr Common, preserving Common -> LINK -> product.
+# LINK is JAGLINK's only top-level implementation dependency. The superproject
+# gitlink is authoritative; LINK owns and validates the Common pin beneath it.
 set(JAGLINK_LINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/link")
-set(JAGLINK_LINK_VERSION "0.11.0")
-set(JAGLINK_LINK_COMMIT "52936abcb124e4b6a7b81adaca8562ec03bc1fdc")
-
 if(NOT EXISTS "${JAGLINK_LINK_DIR}/VERSION")
-    message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required. Clone with --recurse-submodules or run git submodule update --init --recursive.")
+    message(FATAL_ERROR
+        "LINK is required. Clone with --recurse-submodules or initialise submodules recursively.")
 endif()
-
-file(READ "${JAGLINK_LINK_DIR}/VERSION" JAGLINK_LINK_FOUND_VERSION)
-string(STRIP "${JAGLINK_LINK_FOUND_VERSION}" JAGLINK_LINK_FOUND_VERSION)
-if(NOT JAGLINK_LINK_FOUND_VERSION STREQUAL JAGLINK_LINK_VERSION)
-    message(FATAL_ERROR "LINK ${JAGLINK_LINK_VERSION} is required; found ${JAGLINK_LINK_FOUND_VERSION}.")
+file(READ "${JAGLINK_LINK_DIR}/VERSION" JAGLINK_LINK_VERSION)
+string(STRIP "${JAGLINK_LINK_VERSION}" JAGLINK_LINK_VERSION)
+if(NOT JAGLINK_LINK_VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+$")
+    message(FATAL_ERROR "Pinned LINK VERSION is not semantic: ${JAGLINK_LINK_VERSION}")
 endif()
 
 find_program(JAGLINK_GIT_EXECUTABLE git)
 if(JAGLINK_GIT_EXECUTABLE)
-    execute_process(COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${JAGLINK_LINK_DIR}" rev-parse HEAD
-        OUTPUT_VARIABLE JAGLINK_LINK_FOUND_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET RESULT_VARIABLE JAGLINK_LINK_COMMIT_RESULT)
-    if(JAGLINK_LINK_COMMIT_RESULT EQUAL 0 AND NOT JAGLINK_LINK_FOUND_COMMIT STREQUAL JAGLINK_LINK_COMMIT)
-        message(FATAL_ERROR "LINK must be pinned to ${JAGLINK_LINK_COMMIT}; found ${JAGLINK_LINK_FOUND_COMMIT}.")
+    execute_process(
+        COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${CMAKE_CURRENT_SOURCE_DIR}" ls-tree HEAD src/link
+        OUTPUT_VARIABLE JAGLINK_LINK_GITLINK
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        RESULT_VARIABLE JAGLINK_LINK_GITLINK_RESULT)
+    execute_process(
+        COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${JAGLINK_LINK_DIR}" rev-parse HEAD
+        OUTPUT_VARIABLE JAGLINK_LINK_FOUND_COMMIT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        RESULT_VARIABLE JAGLINK_LINK_COMMIT_RESULT)
+    if(JAGLINK_LINK_GITLINK_RESULT EQUAL 0 AND JAGLINK_LINK_COMMIT_RESULT EQUAL 0)
+        string(REGEX MATCH "^160000 commit ([0-9a-fA-F]+)" JAGLINK_LINK_GITLINK_MATCH "${JAGLINK_LINK_GITLINK}")
+        if(NOT JAGLINK_LINK_GITLINK_MATCH)
+            message(FATAL_ERROR "Unable to resolve the LINK gitlink from the JAGLINK commit.")
+        endif()
+        set(JAGLINK_LINK_EXPECTED_COMMIT "${CMAKE_MATCH_1}")
+        if(NOT JAGLINK_LINK_FOUND_COMMIT STREQUAL JAGLINK_LINK_EXPECTED_COMMIT)
+            message(FATAL_ERROR
+                "LINK checkout does not match the JAGLINK gitlink: expected ${JAGLINK_LINK_EXPECTED_COMMIT}, found ${JAGLINK_LINK_FOUND_COMMIT}.")
+        endif()
     endif()
 endif()
 
@@ -166,6 +177,7 @@ endfunction()
 if(BUILD_TESTING)
     jaglink_add_test(jaglink-test-core tests/test_core.c)
     target_compile_definitions(jaglink-test-core PRIVATE JAGLINK_TEST_EXPECTED_VERSION="${PROJECT_VERSION}")
+    jaglink_add_test(jaglink-test-link-facade tests/test_link_facade.c)
     jaglink_add_test(jaglink-test-elm327 tests/test_elm327.c)
     jaglink_add_test(jaglink-test-elm327-can tests/test_elm327_can.c)
     jaglink_add_test(jaglink-test-elm327-session tests/test_elm327_session.c)

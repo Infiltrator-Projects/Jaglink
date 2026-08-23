@@ -31,7 +31,7 @@ while [[ $# -gt 0 ]]; do
     --no-install) do_install=0; shift ;;
     --help|-h)
       echo "Usage: $0 [--prefix PATH] [--no-install]"
-      echo "Build JAGLINK natively from the bundled source and optionally install it."
+      echo "Build and test JAGLINK natively from the bundled source and optionally install it."
       exit 0
       ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
@@ -66,8 +66,13 @@ line="$(awk -v marker="$marker" '$0 == marker { print NR + 1; exit }' "$self")"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 tail -n +"$line" "$self" | tar -xzf - -C "$work"
-cmake -S "$work" -B "$work/build" -DCMAKE_BUILD_TYPE=Release -DJAGLINK_BUILD_LINUX_APP=ON -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX="$prefix"
+cmake -S "$work" -B "$work/build" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DJAGLINK_BUILD_LINUX_APP=ON \
+  -DBUILD_TESTING=ON \
+  -DCMAKE_INSTALL_PREFIX="$prefix"
 cmake --build "$work/build" --parallel
+ctest --test-dir "$work/build" --output-on-failure --parallel
 if [[ $do_install -eq 1 ]]; then
   if [[ -w "$prefix" || $EUID -eq 0 ]]; then
     cmake --install "$work/build"
@@ -75,7 +80,7 @@ if [[ $do_install -eq 1 ]]; then
     sudo cmake --install "$work/build"
   fi
 fi
-echo "JAGLINK native Linux build completed."
+echo "JAGLINK native Linux build and tests completed successfully."
 exit 0
 __JAGLINK_ARCHIVE_BELOW__
 STUB

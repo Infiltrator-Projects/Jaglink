@@ -77,6 +77,113 @@ private struct JagPanel<Content: View>: View {
     }
 }
 
+private struct JagSummaryTile: View {
+    let title: String
+    let value: String
+    let detail: String
+    let systemImage: String
+    let highlight: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .fill(JagPalette.cockpit.opacity(0.82))
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .stroke(highlight.opacity(0.58), lineWidth: 0.8)
+                    Image(systemName: systemImage)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(highlight)
+                }
+                .frame(width: 38, height: 38)
+                Spacer(minLength: 4)
+            }
+
+            Text(title.uppercased())
+                .font(.caption2.weight(.bold))
+                .tracking(1.2)
+                .foregroundStyle(JagPalette.mutedIvory)
+
+            Text(value)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundStyle(JagPalette.ivory)
+                .lineLimit(1)
+                .minimumScaleFactor(0.68)
+
+            Text(detail)
+                .font(.caption)
+                .foregroundStyle(JagPalette.chrome.opacity(0.82))
+                .lineLimit(2)
+                .minimumScaleFactor(0.78)
+        }
+        .frame(maxWidth: .infinity, minHeight: 136, alignment: .leading)
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 17, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [JagPalette.panelRaised.opacity(0.92), JagPalette.panel.opacity(0.96)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 17, style: .continuous)
+                .stroke(JagPalette.warmMetal.opacity(0.34), lineWidth: 0.8)
+        )
+        .shadow(color: .black.opacity(0.24), radius: 10, x: 0, y: 6)
+    }
+}
+
+private struct JagMetricTile: View {
+    let parameter: DiagnosticParameter
+    let toggleFavourite: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(alignment: .top, spacing: 6) {
+                Text(parameter.title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(JagPalette.ivory)
+                    .lineLimit(2)
+                Spacer(minLength: 2)
+                Button(action: toggleFavourite) {
+                    Image(systemName: parameter.favourite ? "star.fill" : "star")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(parameter.favourite ? JagPalette.warmMetal : JagPalette.chrome)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(parameter.favourite ? "Remove favourite" : "Add favourite")
+            }
+
+            Text(parameter.formattedValue)
+                .font(.system(size: 21, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(JagPalette.warmMetal)
+                .lineLimit(1)
+                .minimumScaleFactor(0.62)
+
+            Text(parameter.id)
+                .font(.caption2.monospaced())
+                .foregroundStyle(JagPalette.chrome.opacity(0.62))
+                .lineLimit(1)
+                .truncationMode(.middle)
+        }
+        .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
+        .padding(13)
+        .background(
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                .fill(JagPalette.cockpit.opacity(0.56))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                .stroke(JagPalette.warmMetal.opacity(0.28), lineWidth: 0.8)
+        )
+    }
+}
+
 private struct JagWordmark: View {
     var body: some View {
         HStack(spacing: 15) {
@@ -99,6 +206,15 @@ private struct JagWordmark: View {
 struct ContentView: View {
     @StateObject private var model = ConnectionViewModel()
 
+    private let dashboardColumns = [
+        GridItem(.flexible(), spacing: 11),
+        GridItem(.flexible(), spacing: 11)
+    ]
+
+    private var totalFaultCount: Int {
+        model.storedDTCs.count + model.pendingDTCs.count + model.permanentDTCs.count
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -112,12 +228,13 @@ struct ContentView: View {
                 ScrollView {
                     LazyVStack(spacing: 16) {
                         hero
-                        vehiclePanel
+                        dashboardGrid
                         networkPanel
                         faultPanel
                         liveDataPanel
                         logPanel
                     }
+                    .frame(maxWidth: .infinity)
                     .padding(.horizontal, 14)
                     .padding(.bottom, 30)
                 }
@@ -217,6 +334,39 @@ struct ContentView: View {
         .padding(.top, 12)
     }
 
+    private var dashboardGrid: some View {
+        LazyVGrid(columns: dashboardColumns, spacing: 11) {
+            JagSummaryTile(
+                title: "Vehicle",
+                value: "X400",
+                detail: model.profileDisplayName,
+                systemImage: "car.side.fill",
+                highlight: JagPalette.warmMetal
+            )
+            JagSummaryTile(
+                title: "Vehicle link",
+                value: model.isActive ? "CONNECTED" : "STANDBY",
+                detail: model.peripheralName,
+                systemImage: model.isActive ? "link" : "antenna.radiowaves.left.and.right",
+                highlight: model.isActive ? JagPalette.racingGreen : JagPalette.chrome
+            )
+            JagSummaryTile(
+                title: "Fault memory",
+                value: "\(totalFaultCount)",
+                detail: model.faultScanStatusText,
+                systemImage: "exclamationmark.triangle.fill",
+                highlight: totalFaultCount == 0 ? JagPalette.racingGreen : JagPalette.jaguarRed
+            )
+            JagSummaryTile(
+                title: "Recording",
+                value: "\(model.recordedSampleCount)",
+                detail: "Diagnostic samples captured",
+                systemImage: "waveform.path.ecg",
+                highlight: JagPalette.amber
+            )
+        }
+    }
+
     private func statusPill(title: String, icon: String, colour: Color) -> some View {
         Label(title, systemImage: icon)
             .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -302,32 +452,14 @@ struct ContentView: View {
                 Text("Connect to the vehicle to populate live parameters.")
                     .font(.subheadline)
                     .foregroundStyle(JagPalette.mutedIvory)
-            }
-
-            ForEach(model.diagnosticParameters) { parameter in
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(parameter.title)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(JagPalette.ivory)
-                        Text(parameter.id)
-                            .font(.caption2.monospaced())
-                            .foregroundStyle(JagPalette.chrome.opacity(0.64))
+            } else {
+                LazyVGrid(columns: dashboardColumns, spacing: 10) {
+                    ForEach(model.diagnosticParameters) { parameter in
+                        JagMetricTile(parameter: parameter) {
+                            model.toggleFavourite(stableKey: parameter.id)
+                        }
                     }
-                    Spacer()
-                    Text(parameter.formattedValue)
-                        .font(.system(.body, design: .rounded).weight(.bold))
-                        .monospacedDigit()
-                        .foregroundStyle(JagPalette.warmMetal)
-                    Button {
-                        model.toggleFavourite(stableKey: parameter.id)
-                    } label: {
-                        Image(systemName: parameter.favourite ? "star.fill" : "star")
-                            .foregroundStyle(parameter.favourite ? JagPalette.warmMetal : JagPalette.chrome)
-                    }
-                    .buttonStyle(.plain)
                 }
-                .padding(.vertical, 3)
             }
         }
     }

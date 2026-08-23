@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * @file obd2.h
- * @brief JAGLINK compatibility aliases for LINK's shared SAE OBD-II engine.
+ * @brief JAGLINK compatibility aliases for LINK's shared SAE OBD-II and generic DTC knowledge engines.
  */
 #ifndef JAGLINK_OBD2_H
 #define JAGLINK_OBD2_H
 
 #include "jaglink/elm327.h"
 #include "link/obd2.h"
+#include "link/dtc_knowledge.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,6 +23,10 @@ typedef LinkObd2Dtc JaglinkObd2Dtc;
 typedef LinkObd2DtcList JaglinkObd2DtcList;
 typedef LinkObd2Readiness JaglinkObd2Readiness;
 typedef LinkObd2ClearAuthorization JaglinkObd2ClearAuthorization;
+typedef LinkDtcSystem JaglinkDtcSystem;
+typedef LinkDtcOrigin JaglinkDtcOrigin;
+typedef LinkDtcSource JaglinkDtcSource;
+typedef LinkDtcKnowledge JaglinkDtcKnowledge;
 
 #define JAGLINK_OBD2_VIN_LENGTH LINK_OBD2_VIN_LENGTH
 #define JAGLINK_OBD2_DTC_TEXT_LENGTH LINK_OBD2_DTC_TEXT_LENGTH
@@ -50,6 +55,17 @@ typedef LinkObd2ClearAuthorization JaglinkObd2ClearAuthorization;
 #define JAGLINK_OBD2_DTC_PERMANENT LINK_OBD2_DTC_PERMANENT
 #define JAGLINK_OBD2_CLEAR_AUTHORIZATION_INIT LINK_OBD2_CLEAR_AUTHORIZATION_INIT
 
+#define JAGLINK_DTC_SYSTEM_UNKNOWN LINK_DTC_SYSTEM_UNKNOWN
+#define JAGLINK_DTC_SYSTEM_POWERTRAIN LINK_DTC_SYSTEM_POWERTRAIN
+#define JAGLINK_DTC_SYSTEM_CHASSIS LINK_DTC_SYSTEM_CHASSIS
+#define JAGLINK_DTC_SYSTEM_BODY LINK_DTC_SYSTEM_BODY
+#define JAGLINK_DTC_SYSTEM_NETWORK LINK_DTC_SYSTEM_NETWORK
+#define JAGLINK_DTC_ORIGIN_UNKNOWN LINK_DTC_ORIGIN_UNKNOWN
+#define JAGLINK_DTC_ORIGIN_STANDARD_GENERIC LINK_DTC_ORIGIN_STANDARD_GENERIC
+#define JAGLINK_DTC_ORIGIN_MANUFACTURER_SPECIFIC LINK_DTC_ORIGIN_MANUFACTURER_SPECIFIC
+#define JAGLINK_DTC_SOURCE_UNKNOWN LINK_DTC_SOURCE_UNKNOWN
+#define JAGLINK_DTC_SOURCE_STANDARD_GENERIC LINK_DTC_SOURCE_STANDARD_GENERIC
+
 #define jaglink_obd2_result_name link_obd2_result_name
 #define jaglink_obd2_unit_name link_obd2_unit_name
 #define jaglink_obd2_pid_name link_obd2_pid_name
@@ -68,6 +84,13 @@ typedef LinkObd2ClearAuthorization JaglinkObd2ClearAuthorization;
 #define jaglink_obd2_decode_vin link_obd2_decode_vin
 #define jaglink_obd2_decode_dtcs link_obd2_decode_dtcs
 #define jaglink_obd2_decode_dtc_pair link_obd2_decode_dtc_pair
+#define jaglink_dtc_resolve link_dtc_resolve
+#define jaglink_dtc_catalogue_definition_count link_dtc_catalogue_definition_count
+#define jaglink_dtc_catalogue_snapshot link_dtc_catalogue_snapshot
+#define jaglink_dtc_system_name link_dtc_system_name
+#define jaglink_dtc_origin_name link_dtc_origin_name
+#define jaglink_dtc_source_name link_dtc_source_name
+#define jaglink_dtc_format_uds_status link_dtc_format_uds_status
 
 #ifdef __cplusplus
 }

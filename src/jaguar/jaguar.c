@@ -6,6 +6,9 @@
 static const char x400_network_provenance[] =
     "Jaguar Introduction to X-TYPE Service Training (2002) and Jaguar X-TYPE 2002 Electrical Guide";
 
+static const char x400_fuel_used_provenance[] =
+    "Jaguar X-TYPE Electrical Guide CAN message matrix: ID 0x44D, CAN FUEL USED, ECM to instrument cluster, data for trip computer calculations. Numerical byte layout/scaling is not yet vehicle-verified.";
+
 static const JaglinkJaguarNetworkDefinition x400_networks[] = {
     { "x400-powertrain-can", "Powertrain CAN", JAGLINK_JAGUAR_NETWORK_CAN,
       JAGLINK_JAGUAR_NETWORK_ROLE_POWERTRAIN, 500000U,
@@ -19,6 +22,18 @@ static const JaglinkJaguarNetworkDefinition x400_networks[] = {
     { "x400-audio-d2b", "D2B Optical", JAGLINK_JAGUAR_NETWORK_D2B,
       JAGLINK_JAGUAR_NETWORK_ROLE_INFOTAINMENT, 5600000U,
       JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_network_provenance }
+};
+
+static const JaglinkJaguarFuelSignalDefinition x400_fuel_signals[] = {
+    {
+        "x400-can-fuel-used",
+        "CAN FUEL USED",
+        "x400-powertrain-can",
+        0x44dU,
+        JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED,
+        false,
+        x400_fuel_used_provenance
+    }
 };
 
 static const JaglinkJaguarVehicleProfile x400_profile = {
@@ -77,6 +92,27 @@ bool jaglink_jaguar_network_definition_is_valid(const JaglinkJaguarNetworkDefini
     return true;
 }
 
+bool jaglink_jaguar_fuel_signal_definition_is_valid(
+    const JaglinkJaguarFuelSignalDefinition *definition)
+{
+    if (definition == NULL || definition->key == NULL || definition->key[0] == '\0' ||
+        definition->name == NULL || definition->name[0] == '\0' ||
+        definition->network_key == NULL || definition->network_key[0] == '\0' ||
+        definition->provenance == NULL || definition->provenance[0] == '\0' ||
+        definition->message_id > 0x7ffU) {
+        return false;
+    }
+    if (definition->status < JAGLINK_JAGUAR_DEFINITION_CANDIDATE ||
+        definition->status > JAGLINK_JAGUAR_DEFINITION_VEHICLE_VERIFIED) {
+        return false;
+    }
+    if (definition->decoder_verified &&
+        definition->status != JAGLINK_JAGUAR_DEFINITION_VEHICLE_VERIFIED) {
+        return false;
+    }
+    return true;
+}
+
 bool jaglink_jaguar_vehicle_profile_is_valid(const JaglinkJaguarVehicleProfile *profile)
 {
     size_t index;
@@ -108,4 +144,28 @@ const JaglinkJaguarNetworkDefinition *jaglink_jaguar_profile_find_network(const 
 const JaglinkJaguarVehicleProfile *jaglink_jaguar_x400_profile(void)
 {
     return &x400_profile;
+}
+
+size_t jaglink_jaguar_x400_fuel_signal_count(void)
+{
+    return sizeof(x400_fuel_signals) / sizeof(x400_fuel_signals[0]);
+}
+
+const JaglinkJaguarFuelSignalDefinition *jaglink_jaguar_x400_fuel_signal_at(
+    size_t index)
+{
+    return index < jaglink_jaguar_x400_fuel_signal_count()
+        ? &x400_fuel_signals[index] : NULL;
+}
+
+const JaglinkJaguarFuelSignalDefinition *jaglink_jaguar_x400_find_fuel_signal(
+    const char *key)
+{
+    size_t index;
+    if (key == NULL || key[0] == '\0') return NULL;
+    for (index = 0U; index < jaglink_jaguar_x400_fuel_signal_count(); ++index) {
+        if (strcmp(x400_fuel_signals[index].key, key) == 0)
+            return &x400_fuel_signals[index];
+    }
+    return NULL;
 }

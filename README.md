@@ -26,6 +26,26 @@ JAGLINK pins one exact LINK commit at `src/link`. LINK owns the Common dependenc
 
 Shared workspace, Classical CAN/CAN-FD ISO-TP, transport, ELM327, standard OBD-II, generic DTC knowledge, the complete product-neutral UDS service catalogue/codecs, scheduler/telemetry, portable diagnostic sequencing, Discover safety/evidence and the Windows OpenPort/J2534 shell belong in LINK. Jaguar identity, X400 definitions and genuinely Jaguar-specific behaviour remain in JAGLINK.
 
+## Applications in this repository
+
+JAGLINK is one manufacturer product family with more than one application target. It is intentionally **not** split into separate `JAGLINK` and `JAGLINK-Reader` repositories.
+
+```text
+JAGLINK repository
+  |- JAGLINK
+  |    normal Jaguar diagnostic application
+  |
+  `- JAGLINK Discover
+       specialist Jaguar ECU/module discovery,
+       identification, read-only inventory and evidence/dump tool
+```
+
+The main application is the normal driver/technician diagnostic experience. Discover is the deeper engineering-oriented reader used to determine what control modules are present, identify them, read documented information and preserve raw evidence.
+
+The current Windows Discover implementation is the first stage of that role: passive CAN capture plus a bounded read-only standard OBD inventory. It should evolve in place into the deeper Jaguar ECU/module reader rather than spawning a separate repository or duplicate scanner implementation.
+
+Generic Discover mechanics belong in LINK. Jaguar/X400 network topology, module identities, verified endpoints, read-only probes and decoders belong here.
+
 ## Capabilities
 
 The current Jaguar layer represents the source-corroborated X400 network topology without inventing undocumented module addresses, PIDs or request formats:
@@ -35,7 +55,7 @@ The current Jaguar layer represents the source-corroborated X400 network topolog
 - ISO 9141 diagnostic serial link — 10.4 kbit/s; and
 - D2B optical infotainment network — 5.6 Mbit/s.
 
-The product uses LINK's shared ELM327/OBD-II/UDS engine, Classical CAN and CAN-FD ISO-TP support, portable diagnostic-flow controller and read-only Windows OpenPort/J2534 Discover scanner. Product-prefixed compatibility headers expose LINK's 64-byte CAN-FD contract and complete 27-service generic UDS catalogue without duplicating implementations.
+The product uses LINK's shared ELM327/OBD-II/UDS engine, Classical CAN and CAN-FD ISO-TP support, portable diagnostic-flow controller and JAGLINK Discover specialist reader target. Product-prefixed compatibility headers expose LINK's 64-byte CAN-FD contract and complete 27-service generic UDS catalogue without duplicating implementations.
 
 Manufacturer-specific meanings remain evidence-gated until documentation or reproducible vehicle captures establish them.
 
@@ -47,7 +67,9 @@ The Linux shell is C/GTK4 and embeds the canonical Jaguar+OBD emblem as a regist
 
 The native iOS UDS bridge compiles the exact pinned LINK core UDS and service-codec implementations. CI verifies that bridge explicitly so a new shared UDS implementation cannot disappear from iOS while remaining present in CMake builds.
 
-Windows Discover uses LINK's shared native shell with Common Controls v6 styling, DPI-aware layout, evidence annotations and UTF-8-safe status rendering. The executable uses the canonical iPhone app icon as its Windows product image, embeds version/copyright metadata and links the static MSVC runtime.
+Windows Discover uses LINK's shared native shell with Common Controls v6 styling, DPI-aware layout, evidence annotations and UTF-8-safe status rendering. It is the current platform implementation of the specialist Jaguar ECU/module reader. The executable uses the canonical iPhone app icon as its Windows product image, embeds version/copyright metadata and links the static MSVC runtime.
+
+As Discover gains manufacturer-aware depth, the boundary stays the same: reusable interrogation, transport, safety and evidence behaviour goes into LINK; Jaguar-specific topology, module definitions and evidence-backed read-only requests remain in JAGLINK.
 
 CI launches the built Windows executable, waits for the `JAGLINK Discover` main window, verifies that it remains alive and closes it cleanly. Compilation alone is not sufficient for release.
 
@@ -74,7 +96,7 @@ A successful numbered release is atomic across supported targets and publishes:
 | `JAGLINK-<version>-unsigned.ipa` | Unsigned physical-device iPhone package. |
 | `JAGLINK-<version>-linux-amd64.deb` | Generic Linux amd64 Debian package. |
 | `JAGLINK-<version>-linux-native.run` | Native local Linux build/test/install program. |
-| `JAGLINK-<version>-windows-discover.exe` | Read-only Windows OpenPort/J2534 Discover application. |
+| `JAGLINK-<version>-windows-discover.exe` | JAGLINK Discover specialist read-only ECU/module scanner and evidence application. |
 | `JAGLINK-<version>-source.zip` | Exact tested source archive including the pinned dependency tree. |
 | `SHA256SUMS.txt` | SHA-256 checksums for all project-owned release artifacts. |
 
@@ -95,9 +117,14 @@ Manually runnable build/smoke workflows are diagnostic helpers only and are not 
 - Broadly reusable non-automotive primitives belong in Infiltratr Common.
 - Shared automotive behaviour belongs in LINK.
 - Jaguar-only definitions and behaviour stay in JAGLINK.
+- A second JAGLINK application target does not require a second repository; Discover remains part of this manufacturer product family.
 - Public APIs document ownership, lifetime, failure behaviour and invariants.
 - Comments explain rationale and non-obvious state-machine constraints rather than obvious syntax.
 - Unknown or unsafe diagnostic services are denied before transport transmission.
+
+## Documentation
+
+See `docs/JAGUAR.md`, `docs/DISCOVER.md`, `docs/APPLE.md` and `docs/ROADMAP.md`.
 
 ## Licence
 

@@ -1,48 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#import <Foundation/Foundation.h>
-
-NS_ASSUME_NONNULL_BEGIN
-
-@class JagLinkBLETransport;
-
-typedef NS_ENUM(NSInteger, JagLinkBLETransportState) {
-    JagLinkBLETransportStateIdle = 0,
-    JagLinkBLETransportStateWaitingForBluetooth,
-    JagLinkBLETransportStateScanning,
-    JagLinkBLETransportStateConnecting,
-    JagLinkBLETransportStateDiscovering,
-    JagLinkBLETransportStateProbing,
-    JagLinkBLETransportStateReady,
-    JagLinkBLETransportStateDisconnected,
-    JagLinkBLETransportStateFailed
-};
-
-@protocol JagLinkBLETransportDelegate <NSObject>
-- (void)bleTransportDidUpdate:(JagLinkBLETransport *)transport;
-@end
-
 /**
- * CoreBluetooth implementation of the JAGLINK byte-stream transport boundary.
- *
- * The public Objective-C surface intentionally contains no OBD-II parsing.
- * BLE/GATT discovery remains a platform concern; diagnostic interpretation
- * remains in libjaglink.
+ * @file JagLinkBLETransport.h
+ * @brief Compatibility names for LINK's shared CoreBluetooth provider.
  */
-@interface JagLinkBLETransport : NSObject
+#import "../../src/link/platform/apple/LinkBLETransport.h"
 
-@property(nonatomic, weak, nullable) id<JagLinkBLETransportDelegate> delegate;
-@property(nonatomic, readonly) JagLinkBLETransportState state;
-@property(nonatomic, copy, readonly) NSString *statusText;
-@property(nonatomic, copy, readonly, nullable) NSString *peripheralName;
-@property(nonatomic, copy, readonly, nullable) NSString *adapterIdentifier;
-@property(nonatomic, copy, readonly, nullable) NSString *serviceUUID;
-@property(nonatomic, copy, readonly, nullable) NSString *writeCharacteristicUUID;
-@property(nonatomic, copy, readonly, nullable) NSString *notifyCharacteristicUUID;
-@property(nonatomic, readonly, getter=isReady) BOOL ready;
+#define JagLinkBLETransport LinkBLETransport
+#define JagLinkBLETransportDelegate LinkBLETransportDelegate
 
-- (void)start;
-- (void)disconnect;
+typedef LinkBLETransportState JagLinkBLETransportState;
 
-@end
-
-NS_ASSUME_NONNULL_END
+#define JagLinkBLETransportStateIdle LinkBLETransportStateIdle
+#define JagLinkBLETransportStateWaitingForBluetooth LinkBLETransportStateWaitingForBluetooth
+#define JagLinkBLETransportStateScanning LinkBLETransportStateScanning
+#define JagLinkBLETransportStateConnecting LinkBLETransportStateConnecting
+#define JagLinkBLETransportStateDiscovering LinkBLETransportStateDiscovering
+#define JagLinkBLETransportStateProbing LinkBLETransportStateProbing
+#define JagLinkBLETransportStateReady LinkBLETransportStateReady
+#define JagLinkBLETransportStateDisconnected LinkBLETransportStateDisconnected
+#define JagLinkBLETransportStateFailed LinkBLETransportStateFailed

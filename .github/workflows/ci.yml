@@ -89,13 +89,16 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - run: cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DJAGLINK_BUILD_LINUX_APP=ON -DBUILD_TESTING=OFF
       - run: cmake --build build-linux --parallel
-      - name: Verify deterministic Linux emblem and About
+      - name: Verify deterministic Linux emblem, About and shared diagnostics
         shell: bash
         run: |
           set -euo pipefail
           grep -q -- '--manual-register' CMakeLists.txt
           grep -q 'jaglink_linux_resources_register_resource' app/linux/main.c
-          grep -q 'gtk_image_new_from_resource' app/linux/main.c
+          grep -q 'gtk_image_new_from_resource' src/link/platform/linux/link-gtk-shell.c
+          grep -q 'link_diagnostic_flow_start' src/link/platform/linux/link-gtk-shell.c
+          grep -q 'link_elm327_session_begin' src/link/platform/linux/link-gtk-shell.c
+          grep -q 'diagnostic_changed' app/linux/main.c
           grep -Fq 'Xavier Wheaton' app/linux/about-dialog.c
           grep -Fq 'Shannon Smith' app/linux/about-dialog.c
           test -s app/linux/assets/jaglink-emblem.png

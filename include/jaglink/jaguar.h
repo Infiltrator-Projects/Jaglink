@@ -44,6 +44,24 @@ typedef struct {
     const char *provenance;
 } JaglinkJaguarNetworkDefinition;
 
+/**
+ * One manufacturer-specific fuel/trip signal known to exist on an X400 network.
+ *
+ * `decoder_verified == false` is an explicit safety/evidence boundary: JAGLINK
+ * may display the signal's documented existence and record raw evidence, but it
+ * must not invent byte offsets, scaling or engineering units until those have
+ * been corroborated and vehicle-verified.
+ */
+typedef struct {
+    const char *key;
+    const char *name;
+    const char *network_key;
+    uint32_t message_id;
+    JaglinkJaguarDefinitionStatus status;
+    bool decoder_verified;
+    const char *provenance;
+} JaglinkJaguarFuelSignalDefinition;
+
 typedef struct {
     const char *platform_code;
     const char *platform_family;
@@ -58,9 +76,22 @@ const char *jaglink_jaguar_definition_status_name(JaglinkJaguarDefinitionStatus 
 const char *jaglink_jaguar_network_kind_name(JaglinkJaguarNetworkKind kind);
 const char *jaglink_jaguar_network_role_name(JaglinkJaguarNetworkRole role);
 bool jaglink_jaguar_network_definition_is_valid(const JaglinkJaguarNetworkDefinition *definition);
+bool jaglink_jaguar_fuel_signal_definition_is_valid(
+    const JaglinkJaguarFuelSignalDefinition *definition);
 bool jaglink_jaguar_vehicle_profile_is_valid(const JaglinkJaguarVehicleProfile *profile);
 const JaglinkJaguarNetworkDefinition *jaglink_jaguar_profile_find_network(const JaglinkJaguarVehicleProfile *profile, const char *key);
 const JaglinkJaguarVehicleProfile *jaglink_jaguar_x400_profile(void);
+
+/** Number of documented X400 manufacturer fuel/trip signals. */
+size_t jaglink_jaguar_x400_fuel_signal_count(void);
+
+/** Returns a documented X400 manufacturer fuel/trip signal or NULL. */
+const JaglinkJaguarFuelSignalDefinition *jaglink_jaguar_x400_fuel_signal_at(
+    size_t index);
+
+/** Finds one documented X400 manufacturer fuel/trip signal by stable key. */
+const JaglinkJaguarFuelSignalDefinition *jaglink_jaguar_x400_find_fuel_signal(
+    const char *key);
 
 #ifdef __cplusplus
 }

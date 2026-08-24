@@ -104,6 +104,17 @@ if(JAGLINK_BUILD_WINDOWS_DISCOVER)
         PRODUCT_VERSION "${PROJECT_VERSION}" PRODUCT_COPYRIGHT "Copyright (C) 2026 Xavier Wheaton and Shannon Smith"
         PRODUCT_SUBTITLE "Jaguar X400 Diagnostics" PRODUCT_WEBSITE "https://github.com/The-First-Infiltrator/Jaglink"
         PRODUCT_ICON_PNG "${CMAKE_CURRENT_SOURCE_DIR}/app/ios/JAGLINK/Assets.xcassets/AppIcon.appiconset/AppIcon-60@3x.png")
+    if(MSVC)
+        target_compile_options(jaglink-discover PRIVATE "/FI${JAGLINK_LINK_DIR}/platform/windows/link-discover-theme.h")
+    endif()
+    target_compile_definitions(jaglink-discover PRIVATE
+        LINK_THEME_BACKGROUND=0x00131A06
+        LINK_THEME_PANEL=0x00212D0B
+        LINK_THEME_INPUT=0x001F2909
+        LINK_THEME_TEXT=0x00DAE8EE
+        LINK_THEME_MUTED=0x00A2A99F
+        LINK_THEME_ACCENT=0x00629AB7
+        LINK_THEME_ACCENT_TEXT=0x00141B07)
 endif()
 function(jaglink_add_test target source)
     add_executable(${target} ${source})

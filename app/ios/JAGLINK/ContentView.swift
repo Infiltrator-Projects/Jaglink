@@ -43,7 +43,7 @@ private struct JagStatusPill: View {
             Circle()
                 .fill(active ? JagPalette.racingGreen : JagPalette.chrome.opacity(0.72))
                 .frame(width: 7, height: 7)
-            Text(text.uppercased())
+            Text(LocalizedStringKey(text)).textCase(.uppercase)
                 .font(.caption2.weight(.bold))
                 .tracking(0.8)
                 .lineLimit(1)
@@ -69,7 +69,7 @@ private struct JagPanel<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label(title, systemImage: systemImage)
+            Label(LocalizedStringKey(title), systemImage: systemImage)
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(JagPalette.ivory)
             content
@@ -141,12 +141,12 @@ private struct JagTileFace: View {
                 .foregroundStyle(JagPalette.warmMetal)
                 .frame(width: 30, height: 30, alignment: .leading)
 
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.headline.weight(.semibold))
                 .foregroundStyle(JagPalette.ivory)
                 .lineLimit(1)
 
-            Text(subtitle)
+            Text(LocalizedStringKey(subtitle))
                 .font(.caption)
                 .foregroundStyle(JagPalette.mutedIvory)
                 .lineLimit(2)
@@ -187,7 +187,7 @@ private struct JagMetricTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack(alignment: .top, spacing: 6) {
-                Text(parameter.title)
+                Text(LocalizedStringKey(parameter.title))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(JagPalette.ivory)
                     .lineLimit(2)
@@ -230,7 +230,7 @@ private extension View {
     func jagDiagnosticScreen(_ title: String) -> some View {
         self
             .background(JagPalette.cockpit.ignoresSafeArea())
-            .navigationTitle(title)
+            .navigationTitle(LocalizedStringKey(title))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(JagPalette.cockpit, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -384,7 +384,7 @@ private struct JagModulesView: View {
                                         .font(.headline)
                                         .foregroundStyle(JagPalette.ivory)
                                     Spacer()
-                                    Text(network.status.uppercased())
+                                    Text(LocalizedStringKey(network.status)).textCase(.uppercase)
                                         .font(.caption2.bold())
                                         .foregroundStyle(JagPalette.racingGreen)
                                 }
@@ -423,7 +423,7 @@ private struct JagFaultsView: View {
             VStack(alignment: .leading, spacing: 15) {
                 JagPanel(title: "Fault Memory", systemImage: "exclamationmark.triangle.fill") {
                     HStack {
-                        Text(model.faultScanStatusText)
+                        Text(LocalizedStringKey(model.faultScanStatusText))
                             .font(.subheadline)
                             .foregroundStyle(JagPalette.mutedIvory)
                         Spacer()
@@ -554,6 +554,7 @@ private struct JagEvidenceView: View {
 
 private struct JagSettingsView: View {
     @ObservedObject var model: ConnectionViewModel
+    @AppStorage("jaglink.language") private var language = "en"
 
     private var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
@@ -568,6 +569,15 @@ private struct JagSettingsView: View {
                     jagValueRow("Identity", model.adapterIdentifier, icon: "cpu")
                     jagDivider
                     jagValueRow("Status", model.statusText, icon: "checkmark.seal")
+                }
+
+                JagPanel(title: "Language", systemImage: "globe") {
+                    Picker("Language", selection: $language) {
+                        Text("English").tag("en")
+                        Text("Deutsch").tag("de")
+                        Text("Polski").tag("pl")
+                    }
+                    .pickerStyle(.segmented)
                 }
 
                 JagPanel(title: "Application", systemImage: "gearshape.fill") {
@@ -595,11 +605,11 @@ private func jagValueRow(_ label: String, _ value: String, icon: String) -> some
         Image(systemName: icon)
             .frame(width: 21)
             .foregroundStyle(JagPalette.warmMetal)
-        Text(label)
+        Text(LocalizedStringKey(label))
             .font(.subheadline)
             .foregroundStyle(JagPalette.mutedIvory)
         Spacer()
-        Text(value)
+        Text(LocalizedStringKey(value))
             .font(.subheadline.weight(.semibold))
             .multilineTextAlignment(.trailing)
             .foregroundStyle(JagPalette.ivory)
@@ -614,7 +624,7 @@ private func faultRows(title: String, codes: [String]) -> some View {
             .frame(width: 8, height: 8)
             .padding(.top, 6)
         VStack(alignment: .leading, spacing: 4) {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(JagPalette.ivory)
             if codes.isEmpty {

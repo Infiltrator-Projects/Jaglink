@@ -28,6 +28,9 @@
 		A00000000000000000000030 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B00000000000000000000030 /* CoreBluetooth.framework */; };
 		A00000000000000000000031 /* libInfiltratrCommonPortable.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C0A110000000000000000005 /* libInfiltratrCommonPortable.a */; };
 		A00000000000000000000032 /* JAGLINK/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000032 /* JAGLINK/Assets.xcassets */; };
+		D2A900000000000000000001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = D2A900000000000000000005 /* Localizable.strings */; };
+		D2A900000000000000000006 /* link_i18n.c in Sources */ = {isa = PBXBuildFile; fileRef = D2A900000000000000000008 /* link_i18n.c */; };
+		D2A900000000000000000007 /* link_i18n_platform.c in Sources */ = {isa = PBXBuildFile; fileRef = D2A900000000000000000009 /* link_i18n_platform.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +75,11 @@
 		B00000000000000000000022 /* ../../src/obd2/obd2.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/obd2/obd2.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000030 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		B00000000000000000000032 /* JAGLINK/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = JAGLINK/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		D2A900000000000000000002 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = "JAGLINK/en.lproj/Localizable.strings"; sourceTree = SOURCE_ROOT; };
+		D2A900000000000000000003 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = "JAGLINK/de.lproj/Localizable.strings"; sourceTree = SOURCE_ROOT; };
+		D2A900000000000000000004 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = "JAGLINK/pl.lproj/Localizable.strings"; sourceTree = SOURCE_ROOT; };
+		D2A900000000000000000008 /* link_i18n.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = link_i18n.c; path = "../../src/link/src/core/i18n.c"; sourceTree = SOURCE_ROOT; };
+		D2A900000000000000000009 /* link_i18n_platform.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = link_i18n_platform.c; path = "../../src/link/src/core/i18n_platform.c"; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000040 /* JAGLINK.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JAGLINK.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0A110000000000000000004 /* InfiltratrCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = InfiltratrCommon.xcodeproj; path = "../../src/link/src/infiltratr-common/apple/InfiltratrCommon.xcodeproj"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -109,6 +117,7 @@
 				B00000000000000000000003 /* JAGLINK/ConnectionViewModel.swift */,
 				B00000000000000000000004 /* JAGLINK/JAGLINK-Bridging-Header.h */,
 				B00000000000000000000032 /* JAGLINK/Assets.xcassets */,
+				D2A900000000000000000005 /* Localizable.strings */,
 			);
 			name = App;
 			sourceTree = "<group>";
@@ -179,6 +188,19 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXVariantGroup section */
+		D2A900000000000000000005 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				D2A900000000000000000002 /* en */,
+				D2A900000000000000000003 /* de */,
+				D2A900000000000000000004 /* pl */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin PBXNativeTarget section */
 		C13732C8E715C9BEE4FA51C9 /* JAGLINK */ = {
 			isa = PBXNativeTarget;
@@ -219,6 +241,8 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				de,
+				pl,
 				Base,
 			);
 			mainGroup = E00000000000000000000001;
@@ -253,6 +277,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A00000000000000000000032 /* JAGLINK/Assets.xcassets in Resources */,
+				D2A900000000000000000001 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,6 +306,8 @@
 				A00000000000000000000020 /* ../../src/elm327/session.c in Sources */,
 				A00000000000000000000021 /* ../../src/elm327/probe.c in Sources */,
 				A00000000000000000000022 /* ../../src/obd2/obd2.c in Sources */,
+				D2A900000000000000000006 /* link_i18n.c in Sources */,
+				D2A900000000000000000007 /* link_i18n_platform.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

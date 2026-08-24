@@ -75,10 +75,12 @@ private enum JAGLINKAboutDetail: String, Identifiable {
 @main
 struct JAGLINKApp: App {
     @State private var showingAbout = false
+    @AppStorage("jaglink.language") private var language = "en"
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(\.locale, Locale(identifier: language))
                 .preferredColorScheme(.dark)
                 .tint(JAGLINKAboutStyle.warmMetal)
                 .safeAreaInset(edge: .bottom, spacing: 0) {

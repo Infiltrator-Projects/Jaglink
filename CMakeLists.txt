@@ -1,25 +1,21 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required(VERSION 3.20)
-
 if(POLICY CMP0091)
     cmake_policy(SET CMP0091 NEW)
 endif()
 if(MSVC OR WIN32)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
-
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" JAGLINK_PROJECT_VERSION)
 string(STRIP "${JAGLINK_PROJECT_VERSION}" JAGLINK_PROJECT_VERSION)
 if(NOT JAGLINK_PROJECT_VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+$")
     message(FATAL_ERROR "VERSION must contain a semantic major.minor.patch version.")
 endif()
 project(JAGLINK VERSION "${JAGLINK_PROJECT_VERSION}" LANGUAGES C)
-
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 option(JAGLINK_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer" OFF)
 option(JAGLINK_BUILD_LINUX_APP "Build the native GTK4 Linux front end" OFF)
 if(WIN32)
@@ -28,7 +24,6 @@ else()
     set(JAGLINK_WINDOWS_DISCOVER_DEFAULT OFF)
 endif()
 option(JAGLINK_BUILD_WINDOWS_DISCOVER "Build the Win32 OpenPort/J2534 discovery GUI" ${JAGLINK_WINDOWS_DISCOVER_DEFAULT})
-
 if(JAGLINK_ENABLE_SANITIZERS)
     if(NOT CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
         message(FATAL_ERROR "JAGLINK_ENABLE_SANITIZERS requires GCC or Clang.")
@@ -36,37 +31,21 @@ if(JAGLINK_ENABLE_SANITIZERS)
     add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
     add_link_options(-fsanitize=address,undefined)
 endif()
-
 include(CTest)
 include(GNUInstallDirs)
-
-# LINK is JAGLINK's only top-level implementation dependency. The superproject
-# gitlink is authoritative; LINK owns and validates the Common pin beneath it.
 set(JAGLINK_LINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src/link")
 if(NOT EXISTS "${JAGLINK_LINK_DIR}/VERSION")
-    message(FATAL_ERROR
-        "LINK is required. Clone with --recurse-submodules or initialise submodules recursively.")
+    message(FATAL_ERROR "LINK is required. Clone with --recurse-submodules or initialise submodules recursively.")
 endif()
 file(READ "${JAGLINK_LINK_DIR}/VERSION" JAGLINK_LINK_VERSION)
 string(STRIP "${JAGLINK_LINK_VERSION}" JAGLINK_LINK_VERSION)
 if(NOT JAGLINK_LINK_VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+$")
     message(FATAL_ERROR "Pinned LINK VERSION is not semantic: ${JAGLINK_LINK_VERSION}")
 endif()
-
 find_program(JAGLINK_GIT_EXECUTABLE git)
 if(JAGLINK_GIT_EXECUTABLE)
-    execute_process(
-        COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${CMAKE_CURRENT_SOURCE_DIR}" ls-tree HEAD src/link
-        OUTPUT_VARIABLE JAGLINK_LINK_GITLINK
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-        RESULT_VARIABLE JAGLINK_LINK_GITLINK_RESULT)
-    execute_process(
-        COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${JAGLINK_LINK_DIR}" rev-parse HEAD
-        OUTPUT_VARIABLE JAGLINK_LINK_FOUND_COMMIT
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-        RESULT_VARIABLE JAGLINK_LINK_COMMIT_RESULT)
+    execute_process(COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${CMAKE_CURRENT_SOURCE_DIR}" ls-tree HEAD src/link OUTPUT_VARIABLE JAGLINK_LINK_GITLINK OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET RESULT_VARIABLE JAGLINK_LINK_GITLINK_RESULT)
+    execute_process(COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${JAGLINK_LINK_DIR}" rev-parse HEAD OUTPUT_VARIABLE JAGLINK_LINK_FOUND_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET RESULT_VARIABLE JAGLINK_LINK_COMMIT_RESULT)
     if(JAGLINK_LINK_GITLINK_RESULT EQUAL 0 AND JAGLINK_LINK_COMMIT_RESULT EQUAL 0)
         string(REGEX MATCH "^160000 commit ([0-9a-fA-F]+)" JAGLINK_LINK_GITLINK_MATCH "${JAGLINK_LINK_GITLINK}")
         if(NOT JAGLINK_LINK_GITLINK_MATCH)
@@ -74,38 +53,23 @@ if(JAGLINK_GIT_EXECUTABLE)
         endif()
         set(JAGLINK_LINK_EXPECTED_COMMIT "${CMAKE_MATCH_1}")
         if(NOT JAGLINK_LINK_FOUND_COMMIT STREQUAL JAGLINK_LINK_EXPECTED_COMMIT)
-            message(FATAL_ERROR
-                "LINK checkout does not match the JAGLINK gitlink: expected ${JAGLINK_LINK_EXPECTED_COMMIT}, found ${JAGLINK_LINK_FOUND_COMMIT}.")
+            message(FATAL_ERROR "LINK checkout does not match the JAGLINK gitlink: expected ${JAGLINK_LINK_EXPECTED_COMMIT}, found ${JAGLINK_LINK_FOUND_COMMIT}.")
         endif()
     endif()
 endif()
-
 add_subdirectory("${JAGLINK_LINK_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/link" EXCLUDE_FROM_ALL)
-
 add_library(jaglink STATIC
-    src/core/jaglink.c
-    src/core/parameter.c
-    src/core/scheduler.c
-    src/core/telemetry_store.c
-    src/core/telemetry_csv.c
-    src/elm327/elm327.c
-    src/elm327/can.c
-    src/elm327/session.c
-    src/elm327/probe.c
-    src/obd2/obd2.c
-    src/uds/uds.c
-    src/jaguar/jaguar.c)
-
+    src/core/jaglink.c src/core/parameter.c src/core/scheduler.c src/core/telemetry_store.c src/core/telemetry_csv.c
+    src/elm327/elm327.c src/elm327/can.c src/elm327/session.c src/elm327/probe.c
+    src/obd2/obd2.c src/uds/uds.c src/jaguar/jaguar.c)
 add_library(JAGLINK::Core ALIAS jaglink)
 target_include_directories(jaglink PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_definitions(jaglink PRIVATE JAGLINK_VERSION="${PROJECT_VERSION}")
 target_link_libraries(jaglink PUBLIC LINK::Core)
-
 set(JAGLINK_WARNING_FLAGS -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wstrict-prototypes -Wmissing-prototypes)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     target_compile_options(jaglink PRIVATE ${JAGLINK_WARNING_FLAGS} -Werror)
 endif()
-
 if(JAGLINK_BUILD_LINUX_APP)
     if(NOT UNIX OR APPLE)
         message(FATAL_ERROR "JAGLINK_BUILD_LINUX_APP is supported on Linux only.")
@@ -113,58 +77,33 @@ if(JAGLINK_BUILD_LINUX_APP)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4>=4.6)
     find_program(GLIB_COMPILE_RESOURCES_EXECUTABLE NAMES glib-compile-resources REQUIRED)
-
     set(JAGLINK_LINUX_RESOURCE_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/jaglink-linux-resources.c")
-    add_custom_command(
-        OUTPUT "${JAGLINK_LINUX_RESOURCE_SOURCE}"
-        COMMAND "${GLIB_COMPILE_RESOURCES_EXECUTABLE}"
-            --generate-source
-            --manual-register
-            --c-name=jaglink_linux_resources
-            "--target=${JAGLINK_LINUX_RESOURCE_SOURCE}"
-            jaglink.gresource.xml
+    add_custom_command(OUTPUT "${JAGLINK_LINUX_RESOURCE_SOURCE}"
+        COMMAND "${GLIB_COMPILE_RESOURCES_EXECUTABLE}" --generate-source --manual-register --c-name=jaglink_linux_resources "--target=${JAGLINK_LINUX_RESOURCE_SOURCE}" jaglink.gresource.xml
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/app/linux"
-        DEPENDS
-            "${CMAKE_CURRENT_SOURCE_DIR}/app/linux/jaglink.gresource.xml"
-            "${CMAKE_CURRENT_SOURCE_DIR}/app/linux/assets/jaglink-emblem.png"
-        VERBATIM)
-
-    add_executable(jaglink-linux
-        app/linux/main.c
-        app/linux/about-dialog.c
-        "${JAGLINK_LINUX_RESOURCE_SOURCE}")
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/app/linux/jaglink.gresource.xml" "${CMAKE_CURRENT_SOURCE_DIR}/app/linux/assets/jaglink-emblem.png" VERBATIM)
+    add_executable(jaglink-linux app/linux/main.c app/linux/about-dialog.c "${JAGLINK_LINUX_RESOURCE_SOURCE}")
     set_source_files_properties("${JAGLINK_LINUX_RESOURCE_SOURCE}" PROPERTIES COMPILE_OPTIONS "-w")
     set_target_properties(jaglink-linux PROPERTIES OUTPUT_NAME jaglink)
     target_link_libraries(jaglink-linux PRIVATE jaglink PkgConfig::GTK4)
+    link_enable_linux_gtk_shell(jaglink-linux)
     if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
         target_compile_options(jaglink-linux PRIVATE ${JAGLINK_WARNING_FLAGS} -Werror)
     endif()
     install(TARGETS jaglink-linux RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
-    install(FILES app/linux/assets/jaglink-emblem.png
-            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps"
-            RENAME jaglink.png)
-    install(FILES app/linux/com.github.The-First-Infiltrator.Jaglink.desktop
-            DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
-    install(FILES README.md docs/JAGUAR.md docs/DISCOVER.md
-            DESTINATION "${CMAKE_INSTALL_DOCDIR}")
+    install(FILES app/linux/assets/jaglink-emblem.png DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps" RENAME jaglink.png)
+    install(FILES app/linux/com.github.The-First-Infiltrator.Jaglink.desktop DESTINATION "${CMAKE_INSTALL_DATADIR}/applications")
+    install(FILES README.md docs/JAGUAR.md docs/DISCOVER.md DESTINATION "${CMAKE_INSTALL_DOCDIR}")
 endif()
-
 if(JAGLINK_BUILD_WINDOWS_DISCOVER)
     if(NOT WIN32)
         message(FATAL_ERROR "JAGLINK_BUILD_WINDOWS_DISCOVER is supported on Windows only.")
     endif()
-
-    link_add_windows_discover(jaglink-discover
-        PRODUCT_NAME "JAGLINK"
-        PRODUCT_SLUG "jaglink"
-        WINDOW_CLASS "JAGLINKDiscoverWindow"
-        PRODUCT_VERSION "${PROJECT_VERSION}"
-        PRODUCT_COPYRIGHT "Copyright (C) 2026 Xavier Wheaton and Shannon Smith"
-        PRODUCT_SUBTITLE "Jaguar X400 Diagnostics"
-        PRODUCT_WEBSITE "https://github.com/The-First-Infiltrator/Jaglink"
+    link_add_windows_discover(jaglink-discover PRODUCT_NAME "JAGLINK" PRODUCT_SLUG "jaglink" WINDOW_CLASS "JAGLINKDiscoverWindow"
+        PRODUCT_VERSION "${PROJECT_VERSION}" PRODUCT_COPYRIGHT "Copyright (C) 2026 Xavier Wheaton and Shannon Smith"
+        PRODUCT_SUBTITLE "Jaguar X400 Diagnostics" PRODUCT_WEBSITE "https://github.com/The-First-Infiltrator/Jaglink"
         PRODUCT_ICON_PNG "${CMAKE_CURRENT_SOURCE_DIR}/app/ios/JAGLINK/Assets.xcassets/AppIcon.appiconset/AppIcon-60@3x.png")
 endif()
-
 function(jaglink_add_test target source)
     add_executable(${target} ${source})
     target_link_libraries(${target} PRIVATE jaglink)
@@ -173,7 +112,6 @@ function(jaglink_add_test target source)
     endif()
     add_test(NAME ${target} COMMAND ${target})
 endfunction()
-
 if(BUILD_TESTING)
     jaglink_add_test(jaglink-test-core tests/test_core.c)
     target_compile_definitions(jaglink-test-core PRIVATE JAGLINK_TEST_EXPECTED_VERSION="${PROJECT_VERSION}")
@@ -196,7 +134,6 @@ if(BUILD_TESTING)
     jaglink_add_test(jaglink-test-discover-safety tests/test_discover_safety.c)
     jaglink_add_test(jaglink-test-evidence tests/test_evidence.c)
 endif()
-
 set(CPACK_PACKAGE_NAME "jaglink")
 set(CPACK_PACKAGE_VENDOR "JAGLINK Project")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Jaguar X-Type X400 diagnostics platform")

@@ -83,6 +83,8 @@ if(JAGLINK_BUILD_LINUX_APP)
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/app/linux"
         DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/app/linux/jaglink.gresource.xml" "${CMAKE_CURRENT_SOURCE_DIR}/app/linux/assets/jaglink-emblem.png" VERBATIM)
     add_executable(jaglink-linux app/linux/main.c app/linux/about-dialog.c "${JAGLINK_LINUX_RESOURCE_SOURCE}")
+    set_source_files_properties(app/linux/main.c app/linux/about-dialog.c PROPERTIES
+        COMPILE_OPTIONS "-include;${JAGLINK_LINK_DIR}/platform/linux/link-gtk-i18n.h")
     set_source_files_properties("${JAGLINK_LINUX_RESOURCE_SOURCE}" PROPERTIES COMPILE_OPTIONS "-w")
     set_target_properties(jaglink-linux PROPERTIES OUTPUT_NAME jaglink)
     target_link_libraries(jaglink-linux PRIVATE jaglink PkgConfig::GTK4)

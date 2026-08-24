@@ -17,10 +17,15 @@ int main(void)
     bool passed = true;
     const JaglinkJaguarVehicleProfile *profile = jaglink_jaguar_x400_profile();
     const JaglinkJaguarNetworkDefinition *network;
+    const JaglinkJaguarFuelSignalDefinition *fuel_signal;
     JaglinkJaguarNetworkDefinition invalid = {
         "invalid", "Invalid", JAGLINK_JAGUAR_NETWORK_CAN,
         JAGLINK_JAGUAR_NETWORK_ROLE_POWERTRAIN, 0U,
         JAGLINK_JAGUAR_DEFINITION_CANDIDATE, "test"
+    };
+    JaglinkJaguarFuelSignalDefinition invalid_fuel = {
+        "bad", "Bad", "x400-powertrain-can", 0x800U,
+        JAGLINK_JAGUAR_DEFINITION_CANDIDATE, false, "test"
     };
 
     passed &= check(profile != NULL, "X400 profile missing");
@@ -38,8 +43,27 @@ int main(void)
     network = jaglink_jaguar_profile_find_network(profile, "x400-audio-d2b");
     passed &= check(network != NULL && network->kind == JAGLINK_JAGUAR_NETWORK_D2B && network->nominal_baud == 5600000U, "D2B definition mismatch");
 
+    passed &= check(jaglink_jaguar_x400_fuel_signal_count() == 1U,
+                    "factory fuel signal count mismatch");
+    fuel_signal = jaglink_jaguar_x400_find_fuel_signal("x400-can-fuel-used");
+    passed &= check(fuel_signal != NULL, "CAN FUEL USED signal missing");
+    passed &= check(fuel_signal != NULL && fuel_signal->message_id == 0x44dU,
+                    "CAN FUEL USED identifier mismatch");
+    passed &= check(fuel_signal != NULL &&
+                    fuel_signal->status == JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED,
+                    "CAN FUEL USED provenance status mismatch");
+    passed &= check(fuel_signal != NULL && !fuel_signal->decoder_verified,
+                    "unverified factory payload must not be treated as decoded");
+    passed &= check(fuel_signal != NULL &&
+                    jaglink_jaguar_fuel_signal_definition_is_valid(fuel_signal),
+                    "factory fuel signal definition invalid");
+    passed &= check(jaglink_jaguar_x400_fuel_signal_at(1U) == NULL,
+                    "out-of-range factory fuel signal should not resolve");
+
     passed &= check(jaglink_jaguar_profile_find_network(profile, "missing") == NULL, "unknown network should not resolve");
     passed &= check(!jaglink_jaguar_network_definition_is_valid(&invalid), "zero-baud definition should be invalid");
+    passed &= check(!jaglink_jaguar_fuel_signal_definition_is_valid(&invalid_fuel),
+                    "out-of-range CAN identifier should be invalid");
     passed &= check(strcmp(jaglink_jaguar_definition_status_name(JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED), "source-corroborated") == 0, "status name mismatch");
 
     return passed ? EXIT_SUCCESS : EXIT_FAILURE;

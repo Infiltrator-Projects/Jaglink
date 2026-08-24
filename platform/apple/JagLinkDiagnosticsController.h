@@ -23,6 +23,17 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly, getter=isReady) BOOL ready;
 @property(nonatomic, readonly) NSUInteger recordedSampleCount;
 
+@property(nonatomic, readonly) BOOL instantaneousFuelEconomyAvailable;
+@property(nonatomic, readonly) double instantaneousFuelEconomyLPer100km;
+@property(nonatomic, readonly) BOOL averageFuelEconomyAvailable;
+@property(nonatomic, readonly) double averageFuelEconomyLPer100km;
+@property(nonatomic, readonly) BOOL fuelRateAvailable;
+@property(nonatomic, readonly) double fuelRateLitresPerHour;
+@property(nonatomic, readonly) double tripFuelLitres;
+@property(nonatomic, readonly) double tripDistanceKilometres;
+@property(nonatomic, copy, readonly) NSString *fuelEconomySourceText;
+@property(nonatomic, copy, readonly) NSString *factoryFuelSignalStatusText;
+
 - (void)start;
 - (void)startSimulated;
 - (void)disconnect;

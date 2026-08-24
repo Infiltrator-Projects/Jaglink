@@ -5,11 +5,13 @@
 #include "jaglink/parameter.h"
 #include "link-gtk-shell.h"
 #include "link-gtk-widgets.h"
+#include "link/fuel_economy.h"
 #include "link/workspace.h"
 
 #include <gtk/gtk.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -26,6 +28,7 @@ typedef struct JaglinkLinuxContext {
     LinkDiagnosticFlow diagnostic;
     bool sample_valid[256];
     LinkObd2Sample samples[256];
+    LinkFuelEconomy fuel_economy;
 } JaglinkLinuxContext;
 
 static const char jaglink_css[] =
@@ -46,6 +49,12 @@ static const char jaglink_css[] =
     ".state-warning { color: #d9bc7b; border-color: #8c7141; }"
     ".state-success { color: #87c99f; border-color: #48775a; }";
 
+static uint64_t monotonic_ms(void)
+{
+    const gint64 value = g_get_monotonic_time();
+    return value <= 0 ? 0U : (uint64_t)(value / 1000);
+}
+
 static const char *connection_text(const JaglinkLinuxContext *context)
 {
     return context->connected ? "LINKED · ELM327 VERIFIED" : "NOT LINKED";
@@ -58,6 +67,20 @@ static const char *diagnostic_text(const JaglinkLinuxContext *context)
     if (context->diagnostic.stage == LINK_DIAGNOSTIC_FLOW_FAILED) return "DIAGNOSTIC SESSION FAILED";
     if (context->diagnostic_ready) return "LIVE DIAGNOSTICS ACTIVE";
     return link_diagnostic_flow_stage_name(context->diagnostic.stage);
+}
+
+static const char *fuel_source_text(LinkFuelEconomySource source)
+{
+    switch (source) {
+    case LINK_FUEL_ECONOMY_SOURCE_FACTORY_DIRECT: return "Jaguar factory direct";
+    case LINK_FUEL_ECONOMY_SOURCE_FACTORY_COUNTERS: return "Jaguar factory counters";
+    case LINK_FUEL_ECONOMY_SOURCE_FACTORY_RATE: return "Jaguar factory fuel rate";
+    case LINK_FUEL_ECONOMY_SOURCE_SAE_OBD2: return "SAE OBD-II PID 0x5E + 0x0D";
+    case LINK_FUEL_ECONOMY_SOURCE_ESTIMATED: return "Estimated";
+    case LINK_FUEL_ECONOMY_SOURCE_MIXED: return "Mixed measured sources";
+    case LINK_FUEL_ECONOMY_SOURCE_NONE: return "Unavailable";
+    }
+    return "Unavailable";
 }
 
 static void format_sample(const LinkObd2Sample *sample,
@@ -127,7 +150,7 @@ static void append_vehicle(GtkWidget *body, JaglinkLinuxContext *context)
                                     ? context->adapter_identity : "Select an adapter above and press LINK UP");
     link_gtk_card_append_detail(connection, "Diagnostic flow", diagnostic_text(context));
     link_gtk_card_append_note(connection,
-        "LINK now carries the Linux connection directly into ELM initialisation, supported-PID discovery, stored/pending/permanent OBD-II fault inventory and live polling.");
+        "LINK carries the Linux connection directly into ELM initialisation, supported-PID discovery, stored/pending/permanent OBD-II fault inventory and live polling.");
     gtk_box_append(GTK_BOX(body), identity);
     gtk_box_append(GTK_BOX(body), connection);
 }
@@ -215,7 +238,7 @@ static void append_parameters(GtkWidget *body,
         char value[96];
         uint8_t pid;
         if (definition == NULL) continue;
-        pid = definition->key.identifier;
+        pid = (uint8_t)definition->key.identifier;
         (void)snprintf(key, sizeof(key), "PID 0x%02X · %s",
                        (unsigned int)pid, definition->short_name);
         if (context->sample_valid[pid]) {
@@ -233,11 +256,78 @@ static void append_parameters(GtkWidget *body,
     gtk_box_append(GTK_BOX(body), card);
 }
 
+static void append_fuel_economy(GtkWidget *body,
+                                const JaglinkLinuxContext *context)
+{
+    LinkFuelEconomySnapshot snapshot =
+        link_fuel_economy_snapshot(&context->fuel_economy, monotonic_ms());
+    const JaglinkJaguarFuelSignalDefinition *factory =
+        jaglink_jaguar_x400_find_fuel_signal("x400-can-fuel-used");
+    GtkWidget *card = link_gtk_card_new("FUEL ECONOMY", "Fuel use and trip consumption");
+    char instantaneous[64];
+    char average[64];
+    char rate[64];
+    char trip[96];
+    char factory_status[160];
+    LinkFuelEconomySource display_source = snapshot.instantaneous_available
+        ? snapshot.instantaneous_source
+        : (snapshot.fuel_rate_available ? snapshot.fuel_rate_source : snapshot.average_source);
+
+    if (snapshot.instantaneous_available) {
+        (void)snprintf(instantaneous, sizeof(instantaneous), "%.1f L/100 km",
+                       snapshot.instantaneous_l_per_100km);
+    } else if (context->connected && !snapshot.moving) {
+        (void)snprintf(instantaneous, sizeof(instantaneous), "— · stationary / awaiting speed");
+    } else {
+        (void)snprintf(instantaneous, sizeof(instantaneous), "Waiting for measured fuel data");
+    }
+
+    if (snapshot.average_available) {
+        (void)snprintf(average, sizeof(average), "%.1f L/100 km",
+                       snapshot.average_l_per_100km);
+    } else {
+        (void)snprintf(average, sizeof(average), "Waiting for trip distance");
+    }
+
+    if (snapshot.fuel_rate_available) {
+        (void)snprintf(rate, sizeof(rate), "%.2f L/h", snapshot.fuel_rate_l_per_hour);
+    } else {
+        (void)snprintf(rate, sizeof(rate), "Not available");
+    }
+
+    (void)snprintf(trip, sizeof(trip), "%.2f L over %.1f km",
+                   snapshot.trip_fuel_litres, snapshot.trip_distance_km);
+
+    link_gtk_card_append_status(card,
+        snapshot.instantaneous_available || snapshot.fuel_rate_available
+            ? "MEASURED FUEL DATA ACTIVE" : "WAITING FOR FUEL DATA",
+        snapshot.instantaneous_available || snapshot.fuel_rate_available
+            ? "state-success" : "state-warning");
+    link_gtk_card_append_detail(card, "Instantaneous", instantaneous);
+    link_gtk_card_append_detail(card, "Trip average", average);
+    link_gtk_card_append_detail(card, "Fuel rate", rate);
+    link_gtk_card_append_detail(card, "Trip", trip);
+    link_gtk_card_append_detail(card, "Current source", fuel_source_text(display_source));
+
+    if (factory != NULL) {
+        (void)snprintf(factory_status, sizeof(factory_status),
+                       "CAN 0x%03X · %s · %s",
+                       (unsigned int)factory->message_id,
+                       jaglink_jaguar_definition_status_name(factory->status),
+                       factory->decoder_verified ? "decoder verified" : "decoder not yet vehicle-verified");
+        link_gtk_card_append_detail(card, "X400 factory signal", factory_status);
+        link_gtk_card_append_note(card, factory->provenance);
+    }
+    link_gtk_card_append_note(card,
+        "LINK prefers a verified Jaguar factory value when available, otherwise uses measured SAE PID 0x5E fuel rate with PID 0x0D vehicle speed. Estimates are never presented as measured data.");
+    gtk_box_append(GTK_BOX(body), card);
+}
+
 static void append_dashboard(GtkWidget *body, const JaglinkLinuxContext *context)
 {
     static const char *keys[] = {
         "obd2.engine.rpm", "obd2.vehicle.speed", "obd2.engine.coolant",
-        "obd2.intake.maf", "obd2.throttle.position", "obd2.control.module.voltage"
+        "obd2.engine.maf", "obd2.engine.throttle", "obd2.electrical.control_module_voltage"
     };
     GtkWidget *card = link_gtk_card_new("AT-A-GLANCE", "Jaguar powertrain dashboard");
     size_t index;
@@ -255,6 +345,7 @@ static void append_dashboard(GtkWidget *body, const JaglinkLinuxContext *context
         link_gtk_card_append_detail(card, definition->name, value);
     }
     gtk_box_append(GTK_BOX(body), card);
+    append_fuel_economy(body, context);
 }
 
 static void append_generic_status(GtkWidget *body,
@@ -282,7 +373,7 @@ static void render_section(size_t section, GtkWidget *body, void *opaque)
     case LINK_WORKSPACE_DASHBOARD: append_dashboard(body, context); break;
     case LINK_WORKSPACE_GRAPHS:
         append_generic_status(body, "INSTRUMENT TRACES", "Signal history",
-                              "Time-series traces now receive real LINK telemetry samples from the active Linux diagnostic flow.", context); break;
+                              "Time-series traces receive real LINK telemetry samples from the active Linux diagnostic flow.", context); break;
     case LINK_WORKSPACE_LOG:
         append_generic_status(body, "SESSION RECORDER", "Diagnostic evidence",
                               "Raw requests, responses and telemetry use the shared evidence path; no synthetic vehicle data is displayed.", context); break;
@@ -293,6 +384,7 @@ static void render_section(size_t section, GtkWidget *body, void *opaque)
         link_gtk_card_append_detail(card, "Portable core", jaglink_self_check() ? "Validated" : "Invalid metadata");
         link_gtk_card_append_detail(card, "Linux transport", "LINK serial ELM327 provider");
         link_gtk_card_append_detail(card, "Linux diagnostic flow", "Automatic PID + DTC + live polling");
+        link_gtk_card_append_detail(card, "Fuel economy", "Factory-priority + SAE measured fallback");
         gtk_box_append(GTK_BOX(body), card);
         break;
     }
@@ -316,6 +408,10 @@ static void connection_changed(LinkTransport *transport,
     context->transport = *transport;
     (void)snprintf(context->adapter_identity, sizeof(context->adapter_identity), "%s",
                    connected && adapter_identity != NULL ? adapter_identity : "");
+    if (connected)
+        link_fuel_economy_reset_trip(&context->fuel_economy, monotonic_ms());
+    else
+        link_fuel_economy_init(&context->fuel_economy);
 }
 
 static void diagnostic_changed(const LinkDiagnosticFlow *flow,
@@ -332,13 +428,18 @@ static void diagnostic_changed(const LinkDiagnosticFlow *flow,
         memset(&context->diagnostic, 0, sizeof(context->diagnostic));
         memset(context->sample_valid, 0, sizeof(context->sample_valid));
         memset(context->samples, 0, sizeof(context->samples));
+        link_fuel_economy_init(&context->fuel_economy);
         return;
     }
     context->diagnostic = *flow;
     context->diagnostic_valid = true;
     if (event != NULL && event->kind == LINK_DIAGNOSTIC_FLOW_EVENT_LIVE_SAMPLE) {
+        const uint64_t now_ms = monotonic_ms();
         context->samples[event->sample.pid] = event->sample;
         context->sample_valid[event->sample.pid] = true;
+        (void)link_fuel_economy_observe_obd2(
+            &context->fuel_economy, &event->sample, now_ms);
+        link_fuel_economy_tick(&context->fuel_economy, now_ms);
     }
 }
 
@@ -348,6 +449,7 @@ int main(int argc, char **argv)
     LinkGtkShellDescriptor descriptor = {0};
     int status;
 
+    link_fuel_economy_init(&context.fuel_economy);
     jaglink_linux_resources_register_resource();
     descriptor.app_id = "com.github.The-First-Infiltrator.Jaglink";
     descriptor.window_title = "JAGLINK · Jaguar X400 Diagnostics";

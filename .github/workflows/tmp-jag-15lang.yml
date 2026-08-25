@@ -1,0 +1,190 @@
+name: Temporary JAGLINK 15-language release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/tmp-jag-15lang.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Generate JAGLINK international interface and release commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/mblink
+          git clone --depth 1 https://github.com/The-First-Infiltrator/MBLINK.git /tmp/mblink
+
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+          ios = root / 'app/ios/JAGLINK'
+          mblink = Path('/tmp/mblink/app/ios/MBLINK')
+
+          locales = [
+              ('en-AU', 'English (Australia)'),
+              ('en-US', 'English (United States)'),
+              ('en-GB', 'English (United Kingdom)'),
+              ('de-DE', 'Deutsch'),
+              ('fr-FR', 'Français'),
+              ('es-419', 'Español (Latinoamérica)'),
+              ('it-IT', 'Italiano'),
+              ('pl-PL', 'Polski'),
+              ('pt-BR', 'Português (Brasil)'),
+              ('zh-CN', '简体中文'),
+              ('hi-IN', 'हिन्दी'),
+              ('ar', 'العربية'),
+              ('ja-JP', '日本語'),
+              ('ko-KR', '한국어'),
+              ('id-ID', 'Bahasa Indonesia'),
+          ]
+
+          line_re = re.compile(r'^"((?:\\.|[^"\\])*)"\s*=\s*"((?:\\.|[^"\\])*)";\s*$')
+
+          def parse_strings(path: Path):
+              entries = []
+              for line in path.read_text(encoding='utf-8').splitlines():
+                  m = line_re.match(line)
+                  if m:
+                      entries.append((m.group(1), m.group(2)))
+              if not entries:
+                  raise RuntimeError(f'No strings parsed from {path}')
+              return entries
+
+          def mapping(path: Path):
+              return dict(parse_strings(path))
+
+          jag_en = parse_strings(ios / 'en.lproj/Localizable.strings')
+          jag_de = mapping(ios / 'de.lproj/Localizable.strings')
+          jag_pl = mapping(ios / 'pl.lproj/Localizable.strings')
+
+          for locale, _native in locales:
+              if locale.startswith('en-'):
+                  translated = dict(jag_en)
+              elif locale == 'de-DE':
+                  translated = jag_de
+              elif locale == 'pl-PL':
+                  translated = jag_pl
+              else:
+                  source = mapping(mblink / f'{locale}.lproj/Localizable.strings')
+                  translated = {key: source.get(key, value) for key, value in jag_en}
+              target = ios / f'{locale}.lproj/Localizable.strings'
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_text(''.join(f'"{key}" = "{translated.get(key, value)}";\n' for key, value in jag_en), encoding='utf-8')
+
+          for old in ('en.lproj', 'de.lproj', 'pl.lproj'):
+              old_path = ios / old
+              if old_path.exists():
+                  for child in old_path.iterdir():
+                      child.unlink()
+                  old_path.rmdir()
+
+          pbx_path = root / 'app/ios/JAGLINK.xcodeproj/project.pbxproj'
+          pbx = pbx_path.read_text(encoding='utf-8')
+
+          old_refs = '''\t\tD2A900000000000000000002 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = "JAGLINK/en.lproj/Localizable.strings"; sourceTree = SOURCE_ROOT; };\n\t\tD2A900000000000000000003 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = "JAGLINK/de.lproj/Localizable.strings"; sourceTree = SOURCE_ROOT; };\n\t\tD2A900000000000000000004 /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = "JAGLINK/pl.lproj/Localizable.strings"; sourceTree = SOURCE_ROOT; };'''
+          new_refs = []
+          for index, (locale, _native) in enumerate(locales, start=20):
+              ident = f'D2A9000000000000000000{index:02d}'
+              new_refs.append(f'\t\t{ident} /* {locale} */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "{locale}"; path = "JAGLINK/{locale}.lproj/Localizable.strings"; sourceTree = SOURCE_ROOT; }};')
+          if old_refs not in pbx:
+              raise RuntimeError('JAGLINK project localisation file-reference block changed unexpectedly')
+          pbx = pbx.replace(old_refs, '\n'.join(new_refs), 1)
+
+          old_children = '''\t\t\tchildren = (\n\t\t\t\tD2A900000000000000000002 /* en */,\n\t\t\t\tD2A900000000000000000003 /* de */,\n\t\t\t\tD2A900000000000000000004 /* pl */,\n\t\t\t);'''
+          child_lines = ['\t\t\tchildren = (']
+          for index, (locale, _native) in enumerate(locales, start=20):
+              ident = f'D2A9000000000000000000{index:02d}'
+              child_lines.append(f'\t\t\t\t{ident} /* {locale} */,')
+          child_lines.append('\t\t\t);')
+          if old_children not in pbx:
+              raise RuntimeError('JAGLINK project localisation variant block changed unexpectedly')
+          pbx = pbx.replace(old_children, '\n'.join(child_lines), 1)
+
+          old_regions = '''\t\t\tdevelopmentRegion = en;\n\t\t\thasScannedForEncodings = 0;\n\t\t\tknownRegions = (\n\t\t\t\ten,\n\t\t\t\tde,\n\t\t\t\tpl,\n\t\t\t\tBase,\n\t\t\t);'''
+          region_lines = ['\t\t\tdevelopmentRegion = "en-AU";', '\t\t\thasScannedForEncodings = 0;', '\t\t\tknownRegions = (']
+          region_lines.extend(f'\t\t\t\t"{locale}",' for locale, _native in locales)
+          region_lines.extend(['\t\t\t\tBase,', '\t\t\t);'])
+          if old_regions not in pbx:
+              raise RuntimeError('JAGLINK knownRegions block changed unexpectedly')
+          pbx = pbx.replace(old_regions, '\n'.join(region_lines), 1)
+          pbx_path.write_text(pbx, encoding='utf-8')
+
+          bridge_path = ios / 'JAGLINK-Bridging-Header.h'
+          bridge = bridge_path.read_text(encoding='utf-8')
+          if '#include "link/i18n.h"' not in bridge:
+              bridge = bridge.rstrip() + '\n#include "link/i18n.h"\n'
+              bridge_path.write_text(bridge, encoding='utf-8')
+
+          app_path = ios / 'JAGLINKApp.swift'
+          app = app_path.read_text(encoding='utf-8')
+          marker = '@main\nstruct JAGLINKApp: App {'
+          language_type = '''struct JagInterfaceLanguage: Identifiable, Hashable {\n    let id: String\n    let nativeName: String\n\n    static let all: [JagInterfaceLanguage] = {\n        let count = Int(link_i18n_supported_locale_count())\n        return (0..<count).compactMap { index in\n            guard let locale = link_i18n_supported_locale(index),\n                  let name = link_i18n_supported_locale_name(index) else { return nil }\n            return JagInterfaceLanguage(id: String(cString: locale), nativeName: String(cString: name))\n        }\n    }()\n\n    static func canonical(_ stored: String) -> String {\n        switch stored {\n        case "en": return "en-AU"\n        case "de": return "de-DE"\n        case "pl": return "pl-PL"\n        default: return all.contains(where: { $0.id == stored }) ? stored : "en-AU"\n        }\n    }\n\n    static func displayName(for stored: String) -> String {\n        let code = canonical(stored)\n        return all.first(where: { $0.id == code })?.nativeName ?? "English (Australia)"\n    }\n}\n\n'''
+          if 'struct JagInterfaceLanguage:' not in app:
+              if marker not in app:
+                  raise RuntimeError('JAGLINK App entry marker changed unexpectedly')
+              app = app.replace(marker, language_type + marker, 1)
+          app = app.replace('@AppStorage("jaglink.language") private var language = "en"', '@AppStorage("jaglink.language") private var language = "en-AU"', 1)
+          old_env = '                .environment(\\.locale, Locale(identifier: language))'
+          new_env = '''                .environment(\\.locale, Locale(identifier: JagInterfaceLanguage.canonical(language)))\n                .environment(\\.layoutDirection, JagInterfaceLanguage.canonical(language).hasPrefix("ar") ? .rightToLeft : .leftToRight)\n                .onAppear {\n                    let canonical = JagInterfaceLanguage.canonical(language)\n                    if language != canonical { language = canonical }\n                }'''
+          if old_env not in app:
+              raise RuntimeError('JAGLINK App locale environment changed unexpectedly')
+          app = app.replace(old_env, new_env, 1)
+          app_path.write_text(app, encoding='utf-8')
+
+          content_path = ios / 'ContentView.swift'
+          content = content_path.read_text(encoding='utf-8')
+          content = content.replace('@AppStorage("jaglink.language") private var language = "en"', '@AppStorage("jaglink.language") private var language = "en-AU"', 1)
+          old_picker = '''                JagPanel(title: "Language", systemImage: "globe") {\n                    Picker("Language", selection: $language) {\n                        Text("English").tag("en")\n                        Text("Deutsch").tag("de")\n                        Text("Polski").tag("pl")\n                    }\n                    .pickerStyle(.segmented)\n                }'''
+          new_picker = '''                JagPanel(title: "Language", systemImage: "globe") {\n                    NavigationLink {\n                        JagLanguageSelectionView(selection: $language)\n                    } label: {\n                        HStack(spacing: 12) {\n                            Image(systemName: "globe")\n                                .foregroundStyle(JagPalette.warmMetal)\n                            Text("Language")\n                                .font(.headline)\n                                .foregroundStyle(JagPalette.ivory)\n                            Spacer()\n                            Text(JagInterfaceLanguage.displayName(for: language))\n                                .font(.subheadline)\n                                .foregroundStyle(JagPalette.mutedIvory)\n                            Image(systemName: "chevron.right")\n                                .font(.caption.weight(.bold))\n                                .foregroundStyle(JagPalette.chrome)\n                        }\n                        .contentShape(Rectangle())\n                    }\n                    .buttonStyle(.plain)\n                }'''
+          if old_picker not in content:
+              raise RuntimeError('JAGLINK Settings language picker changed unexpectedly')
+          content = content.replace(old_picker, new_picker, 1)
+
+          insert_marker = 'private var jagDivider: some View {'
+          language_view = '''private struct JagLanguageSelectionView: View {\n    @Binding var selection: String\n\n    var body: some View {\n        List {\n            ForEach(JagInterfaceLanguage.all) { item in\n                Button {\n                    selection = item.id\n                } label: {\n                    HStack(spacing: 12) {\n                        Text(item.nativeName)\n                            .font(.body.weight(.medium))\n                            .foregroundStyle(JagPalette.ivory)\n                        Spacer()\n                        if JagInterfaceLanguage.canonical(selection) == item.id {\n                            Image(systemName: "checkmark")\n                                .font(.body.weight(.bold))\n                                .foregroundStyle(JagPalette.warmMetal)\n                        }\n                    }\n                    .contentShape(Rectangle())\n                }\n                .buttonStyle(.plain)\n                .listRowBackground(JagPalette.panel)\n            }\n        }\n        .scrollContentBackground(.hidden)\n        .background(JagPalette.cockpit)\n        .jagDiagnosticScreen("Language")\n    }\n}\n\n'''
+          if 'private struct JagLanguageSelectionView:' not in content:
+              if insert_marker not in content:
+                  raise RuntimeError('JAGLINK language view insertion point changed unexpectedly')
+              content = content.replace(insert_marker, language_view + insert_marker, 1)
+          content_path.write_text(content, encoding='utf-8')
+
+          vm_path = ios / 'ConnectionViewModel.swift'
+          vm = vm_path.read_text(encoding='utf-8')
+          old_helper = '''private func jaglinkLocalized(_ key: String) -> String {\n    let language = UserDefaults.standard.string(forKey: "jaglink.language") ?? "en"\n    guard let path = Bundle.main.path(forResource: language, ofType: "lproj"),\n          let bundle = Bundle(path: path) else {\n        return key\n    }\n    return bundle.localizedString(forKey: key, value: key, table: nil)\n}'''
+          new_helper = '''private func jaglinkLocalized(_ key: String) -> String {\n    let stored = UserDefaults.standard.string(forKey: "jaglink.language") ?? "en-AU"\n    let language = JagInterfaceLanguage.canonical(stored)\n    guard let path = Bundle.main.path(forResource: language, ofType: "lproj"),\n          let bundle = Bundle(path: path) else {\n        return key\n    }\n    return bundle.localizedString(forKey: key, value: key, table: nil)\n}'''
+          if old_helper not in vm:
+              raise RuntimeError('JAGLINK connection localisation helper changed unexpectedly')
+          vm = vm.replace(old_helper, new_helper, 1)
+          vm_path.write_text(vm, encoding='utf-8')
+
+          Path('VERSION').write_text('0.2.27\n', encoding='utf-8')
+
+          assert len(list(ios.glob('*.lproj/Localizable.strings'))) == 15
+          assert 'D2A900000000000000000034 /* id-ID */' in pbx_path.read_text(encoding='utf-8')
+          assert 'JagInterfaceLanguage.all' in content_path.read_text(encoding='utf-8')
+          assert 'link/i18n.h' in bridge_path.read_text(encoding='utf-8')
+          PY
+
+          git -C src/link fetch origin 6b7236f9c2c23062a4b0347c244338ba3f7bcd48 --depth=1
+          git -C src/link checkout --detach 6b7236f9c2c23062a4b0347c244338ba3f7bcd48
+
+          rm -f .github/workflows/tmp-jag-15lang.yml
+          git diff --check
+          git add -A
+          git config user.name "Shannon Smith"
+          git config user.email "infiltratr@yandex.com"
+          git commit -m "Release 0.2.27: 15-language international interface"
+          git push origin HEAD:main

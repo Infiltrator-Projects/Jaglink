@@ -138,9 +138,13 @@ static void append_vehicle(GtkWidget *body, JaglinkLinuxContext *context)
     link_gtk_card_append_detail(identity, "Profile", profile != NULL ? profile->display_name : "Unavailable");
     link_gtk_card_append_detail(identity, "Model years", years);
     if (profile != NULL) {
-        char networks[32];
+        char networks[40];
+        char factory[64];
         (void)snprintf(networks, sizeof(networks), "%zu defined networks", profile->network_count);
+        (void)snprintf(factory, sizeof(factory), "%zu diagnostic routes · %zu factory DTC identities",
+                       profile->diagnostic_endpoint_count, profile->factory_dtc_count);
         link_gtk_card_append_detail(identity, "Network map", networks);
+        link_gtk_card_append_detail(identity, "Factory layer", factory);
     }
 
     link_gtk_card_append_status(connection, connection_text(context),
@@ -150,7 +154,7 @@ static void append_vehicle(GtkWidget *body, JaglinkLinuxContext *context)
                                     ? context->adapter_identity : "Select an adapter above and press LINK UP");
     link_gtk_card_append_detail(connection, "Diagnostic flow", diagnostic_text(context));
     link_gtk_card_append_note(connection,
-        "LINK carries the Linux connection directly into ELM initialisation, supported-PID discovery, stored/pending/permanent OBD-II fault inventory and live polling.");
+        "The live shared pass remains SAE OBD-II. JAGLINK separately carries source-corroborated X400 factory diagnostic routes and Jaguar-only DTC identities so factory information is never confused with the legislated generic layer.");
     gtk_box_append(GTK_BOX(body), identity);
     gtk_box_append(GTK_BOX(body), connection);
 }
@@ -158,10 +162,12 @@ static void append_vehicle(GtkWidget *body, JaglinkLinuxContext *context)
 static void append_modules(GtkWidget *body)
 {
     const JaglinkJaguarVehicleProfile *profile = jaglink_jaguar_x400_profile();
-    GtkWidget *card = link_gtk_card_new("X400 NETWORK TOPOLOGY", "Diagnostic networks and module paths");
+    GtkWidget *topology = link_gtk_card_new("X400 NETWORK TOPOLOGY", "Diagnostic networks and module paths");
+    GtkWidget *factory = link_gtk_card_new("FACTORY DIAGNOSTIC ROUTES", "Jaguar documented CAN request / response channels");
     size_t index;
+
     if (profile == NULL || profile->network_count == 0U) {
-        link_gtk_card_append_status(card, "NO NETWORK DEFINITIONS", "state-warning");
+        link_gtk_card_append_status(topology, "NO NETWORK DEFINITIONS", "state-warning");
     } else {
         for (index = 0U; index < profile->network_count; ++index) {
             const JaglinkJaguarNetworkDefinition *network = &profile->networks[index];
@@ -177,18 +183,56 @@ static void append_modules(GtkWidget *body)
                                jaglink_jaguar_network_kind_name(network->kind),
                                jaglink_jaguar_network_role_name(network->role),
                                jaglink_jaguar_definition_status_name(network->status));
-            link_gtk_card_append_detail(card, network->name, detail);
+            link_gtk_card_append_detail(topology, network->name, detail);
         }
     }
-    link_gtk_card_append_note(card,
-        "Jaguar-specific topology remains in JAGLINK while the standard transport, fault and live-data engine is shared through LINK.");
-    gtk_box_append(GTK_BOX(body), card);
+    link_gtk_card_append_note(topology,
+        "Jaguar-specific topology remains in JAGLINK while the standards transport, fault and live-data engine is shared through LINK.");
+
+    if (profile == NULL || profile->diagnostic_endpoint_count == 0U) {
+        link_gtk_card_append_status(factory, "NO FACTORY ROUTES", "state-warning");
+    } else {
+        link_gtk_card_append_status(factory, "SOURCE-CORROBORATED X400 ROUTES LOADED", "state-success");
+        for (index = 0U; index < profile->diagnostic_endpoint_count; ++index) {
+            const JaglinkJaguarDiagnosticEndpointDefinition *endpoint = &profile->diagnostic_endpoints[index];
+            char detail[128];
+            (void)snprintf(detail, sizeof(detail),
+                           "%s · CAN 0x%03X → 0x%03X · %s",
+                           jaglink_jaguar_module_kind_name(endpoint->module),
+                           (unsigned int)endpoint->request_message_id,
+                           (unsigned int)endpoint->response_message_id,
+                           jaglink_jaguar_definition_status_name(endpoint->status));
+            link_gtk_card_append_detail(factory, endpoint->name, detail);
+        }
+    }
+    link_gtk_card_append_note(factory,
+        "These identifiers describe Jaguar's documented factory diagnostic routing. JAGLINK does not assume that a modern UDS payload is valid for X400; the read payload remains disabled until its request format is independently corroborated.");
+
+    gtk_box_append(GTK_BOX(body), topology);
+    gtk_box_append(GTK_BOX(body), factory);
+}
+
+static void append_factory_catalogue(GtkWidget *card,
+                                     const JaglinkJaguarVehicleProfile *profile)
+{
+    size_t index;
+    if (card == NULL || profile == NULL) return;
+    for (index = 0U; index < profile->factory_dtc_count; ++index) {
+        const JaglinkJaguarFactoryDtcDefinition *dtc = &profile->factory_dtcs[index];
+        char detail[128];
+        (void)snprintf(detail, sizeof(detail), "%s · %s · %s",
+                       jaglink_jaguar_module_kind_name(dtc->module),
+                       dtc->category,
+                       dtc->generic_obd2_accessible ? "generic OBD accessible" : "Jaguar factory/WDS layer");
+        link_gtk_card_append_detail(card, dtc->code, detail);
+    }
 }
 
 static void append_faults(GtkWidget *body, const JaglinkLinuxContext *context)
 {
-    GtkWidget *standard = link_gtk_card_new("STANDARD OBD-II", "Stored, pending and permanent faults");
-    GtkWidget *jaguar = link_gtk_card_new("JAGUAR MODULES", "Manufacturer profile status");
+    const JaglinkJaguarVehicleProfile *profile = jaglink_jaguar_x400_profile();
+    GtkWidget *standard = link_gtk_card_new("STANDARD SAE OBD-II", "Stored, pending and permanent faults");
+    GtkWidget *jaguar = link_gtk_card_new("JAGUAR FACTORY DTC CATALOGUE", "Manufacturer-only X400 fault identities");
     char summary[160];
 
     if (!context->connected) {
@@ -213,13 +257,19 @@ static void append_faults(GtkWidget *body, const JaglinkLinuxContext *context)
         link_gtk_card_append_status(standard, summary, "state-warning");
     }
     link_gtk_card_append_note(standard,
-        "Standards-based powertrain DTC decoding is provided by LINK and remains read-only.");
+        "These are live standards-based powertrain DTCs from LINK. They are not used as a substitute for Jaguar's factory/module diagnostic view.");
 
-    link_gtk_card_append_status(jaguar,
-        context->connected ? "X400 PROFILE READY" : "LINK OFFLINE",
-        context->connected ? "state-success" : "state-warning");
+    if (profile != NULL && profile->factory_dtc_count != 0U) {
+        (void)snprintf(summary, sizeof(summary), "%zu SOURCE-CORROBORATED FACTORY CODE IDENTITIES LOADED",
+                       profile->factory_dtc_count);
+        link_gtk_card_append_status(jaguar, summary, "state-success");
+        append_factory_catalogue(jaguar, profile);
+    } else {
+        link_gtk_card_append_status(jaguar, "NO FACTORY CATALOGUE", "state-warning");
+    }
     link_gtk_card_append_note(jaguar,
-        "Jaguar-specific module acquisition remains gated by verified X400 module addresses and safe read-only requests.");
+        "Catalogue entries are known Jaguar factory DTC identities, not claims that those faults are present on the connected car. Jaguar's 2002 documentation distinguishes generic OBD-II codes from JAG codes read through WDS; live factory acquisition will only be enabled when the X400 read request itself is evidence-backed.");
+
     gtk_box_append(GTK_BOX(body), standard);
     gtk_box_append(GTK_BOX(body), jaguar);
 }
@@ -383,7 +433,8 @@ static void render_section(size_t section, GtkWidget *body, void *opaque)
         link_gtk_card_append_detail(card, "Product", "Jaguar X-Type X400 diagnostics");
         link_gtk_card_append_detail(card, "Portable core", jaglink_self_check() ? "Validated" : "Invalid metadata");
         link_gtk_card_append_detail(card, "Linux transport", "LINK serial ELM327 provider");
-        link_gtk_card_append_detail(card, "Linux diagnostic flow", "Automatic PID + DTC + live polling");
+        link_gtk_card_append_detail(card, "Linux live flow", "Automatic SAE PID + DTC + live polling");
+        link_gtk_card_append_detail(card, "Jaguar factory layer", "X400 routes + module-specific DTC catalogue");
         link_gtk_card_append_detail(card, "Fuel economy", "Factory-priority + SAE measured fallback");
         gtk_box_append(GTK_BOX(body), card);
         break;

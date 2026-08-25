@@ -31,6 +31,7 @@
 		D2A900000000000000000001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = D2A900000000000000000005 /* Localizable.strings */; };
 		D2A900000000000000000006 /* link_i18n.c in Sources */ = {isa = PBXBuildFile; fileRef = D2A900000000000000000008 /* link_i18n.c */; };
 		D2A900000000000000000007 /* link_i18n_platform.c in Sources */ = {isa = PBXBuildFile; fileRef = D2A900000000000000000009 /* link_i18n_platform.c */; };
+		D2A900000000000000000010 /* language_pack.c in Sources */ = {isa = PBXBuildFile; fileRef = D2A900000000000000000011 /* language_pack.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -92,6 +93,7 @@
 		D2A900000000000000000034 /* id-ID */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "id-ID"; path = "JAGLINK/id-ID.lproj/Localizable.strings"; sourceTree = SOURCE_ROOT; };
 		D2A900000000000000000008 /* link_i18n.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = link_i18n.c; path = "../../src/link/src/core/i18n.c"; sourceTree = SOURCE_ROOT; };
 		D2A900000000000000000009 /* link_i18n_platform.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = link_i18n_platform.c; path = "../../src/link/src/core/i18n_platform.c"; sourceTree = SOURCE_ROOT; };
+		D2A900000000000000000011 /* language_pack.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = language_pack.c; path = "../../src/link/src/core/language_pack.c"; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000040 /* JAGLINK.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JAGLINK.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0A110000000000000000004 /* InfiltratrCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = InfiltratrCommon.xcodeproj; path = "../../src/link/src/infiltratr-common/apple/InfiltratrCommon.xcodeproj"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -344,6 +346,7 @@
 				A00000000000000000000022 /* ../../src/obd2/obd2.c in Sources */,
 				D2A900000000000000000006 /* link_i18n.c in Sources */,
 				D2A900000000000000000007 /* link_i18n_platform.c in Sources */,
+				D2A900000000000000000010 /* language_pack.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

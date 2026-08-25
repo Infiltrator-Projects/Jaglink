@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * @file jaguar.h
- * @brief Jaguar manufacturer profile and provenance contracts.
+ * @brief Jaguar manufacturer profile, factory diagnostic and provenance contracts.
  */
 #ifndef JAGLINK_JAGUAR_H
 #define JAGLINK_JAGUAR_H
@@ -34,6 +34,18 @@ typedef enum {
     JAGLINK_JAGUAR_NETWORK_ROLE_INFOTAINMENT
 } JaglinkJaguarNetworkRole;
 
+typedef enum {
+    JAGLINK_JAGUAR_MODULE_ECM = 0,
+    JAGLINK_JAGUAR_MODULE_TCM,
+    JAGLINK_JAGUAR_MODULE_INSTRUMENT_CLUSTER,
+    JAGLINK_JAGUAR_MODULE_ABS_DSC,
+    JAGLINK_JAGUAR_MODULE_CLIMATE,
+    JAGLINK_JAGUAR_MODULE_GECM,
+    JAGLINK_JAGUAR_MODULE_RESTRAINTS,
+    JAGLINK_JAGUAR_MODULE_AUDIO,
+    JAGLINK_JAGUAR_MODULE_OTHER
+} JaglinkJaguarModuleKind;
+
 typedef struct {
     const char *key;
     const char *name;
@@ -43,6 +55,43 @@ typedef struct {
     JaglinkJaguarDefinitionStatus status;
     const char *provenance;
 } JaglinkJaguarNetworkDefinition;
+
+/**
+ * Source-corroborated factory diagnostic CAN path.
+ *
+ * The request/response identifiers describe Jaguar's documented diagnostic
+ * message routing only. They do not authorize any particular payload or imply
+ * that a modern UDS/ISO-TP request format is valid for the X400 module.
+ */
+typedef struct {
+    const char *key;
+    const char *name;
+    JaglinkJaguarModuleKind module;
+    const char *network_key;
+    uint32_t request_message_id;
+    uint32_t response_message_id;
+    JaglinkJaguarDefinitionStatus status;
+    const char *provenance;
+} JaglinkJaguarDiagnosticEndpointDefinition;
+
+/**
+ * Identity for one documented Jaguar factory DTC.
+ *
+ * These records intentionally keep only compact identity/category metadata.
+ * The raw code remains authoritative and full workshop-manual prose is not
+ * copied into the program. `generic_obd2_accessible` is false for definitions
+ * that belong to Jaguar's factory/module diagnostic view rather than the
+ * legislated generic OBD-II retrieval path.
+ */
+typedef struct {
+    const char *code;
+    const char *stable_key;
+    JaglinkJaguarModuleKind module;
+    const char *category;
+    bool generic_obd2_accessible;
+    JaglinkJaguarDefinitionStatus status;
+    const char *provenance;
+} JaglinkJaguarFactoryDtcDefinition;
 
 /**
  * One manufacturer-specific fuel/trip signal known to exist on an X400 network.
@@ -70,16 +119,33 @@ typedef struct {
     uint16_t last_model_year;
     const JaglinkJaguarNetworkDefinition *networks;
     size_t network_count;
+    const JaglinkJaguarDiagnosticEndpointDefinition *diagnostic_endpoints;
+    size_t diagnostic_endpoint_count;
+    const JaglinkJaguarFactoryDtcDefinition *factory_dtcs;
+    size_t factory_dtc_count;
 } JaglinkJaguarVehicleProfile;
 
 const char *jaglink_jaguar_definition_status_name(JaglinkJaguarDefinitionStatus status);
 const char *jaglink_jaguar_network_kind_name(JaglinkJaguarNetworkKind kind);
 const char *jaglink_jaguar_network_role_name(JaglinkJaguarNetworkRole role);
+const char *jaglink_jaguar_module_kind_name(JaglinkJaguarModuleKind module);
 bool jaglink_jaguar_network_definition_is_valid(const JaglinkJaguarNetworkDefinition *definition);
+bool jaglink_jaguar_diagnostic_endpoint_definition_is_valid(
+    const JaglinkJaguarDiagnosticEndpointDefinition *definition);
+bool jaglink_jaguar_factory_dtc_definition_is_valid(
+    const JaglinkJaguarFactoryDtcDefinition *definition);
 bool jaglink_jaguar_fuel_signal_definition_is_valid(
     const JaglinkJaguarFuelSignalDefinition *definition);
 bool jaglink_jaguar_vehicle_profile_is_valid(const JaglinkJaguarVehicleProfile *profile);
-const JaglinkJaguarNetworkDefinition *jaglink_jaguar_profile_find_network(const JaglinkJaguarVehicleProfile *profile, const char *key);
+const JaglinkJaguarNetworkDefinition *jaglink_jaguar_profile_find_network(
+    const JaglinkJaguarVehicleProfile *profile, const char *key);
+const JaglinkJaguarDiagnosticEndpointDefinition *
+jaglink_jaguar_profile_find_diagnostic_endpoint(
+    const JaglinkJaguarVehicleProfile *profile, JaglinkJaguarModuleKind module);
+const JaglinkJaguarFactoryDtcDefinition *jaglink_jaguar_profile_find_factory_dtc(
+    const JaglinkJaguarVehicleProfile *profile,
+    JaglinkJaguarModuleKind module,
+    const char *code);
 const JaglinkJaguarVehicleProfile *jaglink_jaguar_x400_profile(void);
 
 /** Number of documented X400 manufacturer fuel/trip signals. */

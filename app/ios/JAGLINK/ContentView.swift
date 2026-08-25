@@ -554,7 +554,7 @@ private struct JagEvidenceView: View {
 
 private struct JagSettingsView: View {
     @ObservedObject var model: ConnectionViewModel
-    @AppStorage("jaglink.language") private var language = "en"
+    @AppStorage("jaglink.language") private var language = "en-AU"
 
     private var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
@@ -572,12 +572,26 @@ private struct JagSettingsView: View {
                 }
 
                 JagPanel(title: "Language", systemImage: "globe") {
-                    Picker("Language", selection: $language) {
-                        Text("English").tag("en")
-                        Text("Deutsch").tag("de")
-                        Text("Polski").tag("pl")
+                    NavigationLink {
+                        JagLanguageSelectionView(selection: $language)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "globe")
+                                .foregroundStyle(JagPalette.warmMetal)
+                            Text("Language")
+                                .font(.headline)
+                                .foregroundStyle(JagPalette.ivory)
+                            Spacer()
+                            Text(JagInterfaceLanguage.displayName(for: language))
+                                .font(.subheadline)
+                                .foregroundStyle(JagPalette.mutedIvory)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(JagPalette.chrome)
+                        }
+                        .contentShape(Rectangle())
                     }
-                    .pickerStyle(.segmented)
+                    .buttonStyle(.plain)
                 }
 
                 JagPanel(title: "Application", systemImage: "gearshape.fill") {
@@ -591,6 +605,38 @@ private struct JagSettingsView: View {
             .padding(16)
         }
         .jagDiagnosticScreen("Settings")
+    }
+}
+
+private struct JagLanguageSelectionView: View {
+    @Binding var selection: String
+
+    var body: some View {
+        List {
+            ForEach(JagInterfaceLanguage.all) { item in
+                Button {
+                    selection = item.id
+                } label: {
+                    HStack(spacing: 12) {
+                        Text(item.nativeName)
+                            .font(.body.weight(.medium))
+                            .foregroundStyle(JagPalette.ivory)
+                        Spacer()
+                        if JagInterfaceLanguage.canonical(selection) == item.id {
+                            Image(systemName: "checkmark")
+                                .font(.body.weight(.bold))
+                                .foregroundStyle(JagPalette.warmMetal)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .listRowBackground(JagPalette.panel)
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(JagPalette.cockpit)
+        .jagDiagnosticScreen("Language")
     }
 }
 

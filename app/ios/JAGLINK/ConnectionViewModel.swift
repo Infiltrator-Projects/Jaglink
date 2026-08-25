@@ -29,7 +29,8 @@ struct JaguarNetworkInfo: Identifiable {
 }
 
 private func jaglinkLocalized(_ key: String) -> String {
-    let language = UserDefaults.standard.string(forKey: "jaglink.language") ?? "en"
+    let stored = UserDefaults.standard.string(forKey: "jaglink.language") ?? "en-AU"
+    let language = JagInterfaceLanguage.canonical(stored)
     guard let path = Bundle.main.path(forResource: language, ofType: "lproj"),
           let bundle = Bundle(path: path) else {
         return key

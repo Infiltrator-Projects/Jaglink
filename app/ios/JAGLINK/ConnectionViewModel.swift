@@ -28,6 +28,15 @@ struct JaguarNetworkInfo: Identifiable {
     let provenance: String
 }
 
+private func jaglinkLocalized(_ key: String) -> String {
+    let language = UserDefaults.standard.string(forKey: "jaglink.language") ?? "en"
+    guard let path = Bundle.main.path(forResource: language, ofType: "lproj"),
+          let bundle = Bundle(path: path) else {
+        return key
+    }
+    return bundle.localizedString(forKey: key, value: key, table: nil)
+}
+
 @MainActor
 final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency JagLinkDiagnosticsControllerDelegate {
     @Published private(set) var statusText = "Idle"
@@ -62,25 +71,25 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         if isActive { return }
 
         let alert = UIAlertController(
-            title: "Connection Test",
-            message: "Real Adapter uses Bluetooth. Simulated ELM327 runs the same diagnostic stack against an in-process ELM327 byte-stream emulator.",
+            title: jaglinkLocalized("Connection Test"),
+            message: jaglinkLocalized("Real Adapter uses Bluetooth. Simulated ELM327 runs the same diagnostic stack against an in-process ELM327 byte-stream emulator."),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "Real Adapter", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: jaglinkLocalized("Real Adapter"), style: .default) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.isSimulationActive = false
                 self.controller.start()
             }
         })
-        alert.addAction(UIAlertAction(title: "Simulated ELM327", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: jaglinkLocalized("Simulated ELM327"), style: .default) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.isSimulationActive = true
                 self.controller.startSimulated()
             }
         })
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: jaglinkLocalized("Cancel"), style: .cancel))
 
         guard let presenter = presentingViewController() else {
             isSimulationActive = false

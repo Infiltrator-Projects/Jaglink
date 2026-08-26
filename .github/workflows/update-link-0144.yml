@@ -1,0 +1,74 @@
+name: Temporary JAGLINK LINK 0.14.4 update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/update-link-0144.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Install Linux build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential cmake dpkg-dev libgtk-4-dev libbluetooth-dev pkg-config
+      - name: Pin LINK 0.14.4 and update Linux prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C src/link fetch origin main
+          git -C src/link checkout 0de26c06085f421dff4cfb554e153991c739aeb3
+          git -C src/link submodule update --init --recursive
+          printf '0.2.34\n' > VERSION
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('scripts/build-linux-run.sh')
+          s = p.read_text()
+          gtk = "if ! pkg-config --exists 'gtk4 >= 4.6' 2>/dev/null; then need+=(\"libgtk-4-dev\"); fi\n"
+          if gtk not in s:
+              raise SystemExit('JAGLINK GTK dependency check missing')
+          s = s.replace(gtk, gtk + "if ! pkg-config --exists bluez 2>/dev/null; then need+=(\"libbluetooth-dev\"); fi\n", 1)
+          s = s.replace('build-essential cmake pkg-config libgtk-4-dev',
+                        'build-essential cmake pkg-config libgtk-4-dev libbluetooth-dev')
+          p.write_text(s)
+
+          p = Path('.github/workflows/ci.yml')
+          s = p.read_text()
+          old = 'build-essential cmake dpkg-dev libgtk-4-dev pkg-config'
+          new = 'build-essential cmake dpkg-dev libgtk-4-dev libbluetooth-dev pkg-config'
+          if old not in s:
+              raise SystemExit('JAGLINK CI Linux dependency line missing')
+          p.write_text(s.replace(old, new, 1))
+          PY
+          git config user.name 'Shannon Smith'
+          git config user.email 'infiltratr@yandex.com'
+          git add VERSION scripts/build-linux-run.sh .github/workflows/ci.yml src/link
+          git commit -m 'Release 0.2.34: dual-mode Bluetooth transport'
+      - name: Build and test updated JAGLINK Linux app
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(tr -d '[:space:]' < src/link/VERSION)" = '0.14.4'
+          cmake -S . -B build-update -DCMAKE_BUILD_TYPE=Release -DJAGLINK_BUILD_LINUX_APP=ON -DBUILD_TESTING=ON
+          cmake --build build-update --parallel 2
+          ctest --test-dir build-update --output-on-failure
+          mkdir -p "$RUNNER_TEMP/jaglink-release"
+          bash scripts/build-linux-run.sh "$RUNNER_TEMP/jaglink-release"
+          "$RUNNER_TEMP/jaglink-release/JAGLINK-0.2.34-linux-native.run" --help >/dev/null
+      - name: Publish staged source update to main
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/update-link-0144.yml
+          git add -u .github/workflows/update-link-0144.yml
+          git commit --amend --no-edit
+          git push origin HEAD:main

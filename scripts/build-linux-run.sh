@@ -43,15 +43,16 @@ for cmd in cmake cc pkg-config tar; do
   command -v "$cmd" >/dev/null 2>&1 || need+=("$cmd")
 done
 if ! pkg-config --exists 'gtk4 >= 4.6' 2>/dev/null; then need+=("libgtk-4-dev"); fi
+if ! pkg-config --exists bluez 2>/dev/null; then need+=("libbluetooth-dev"); fi
 if [[ ${#need[@]} -ne 0 ]]; then
   if command -v apt-get >/dev/null 2>&1; then
-    echo "Installing native build dependencies: build-essential cmake pkg-config libgtk-4-dev"
+    echo "Installing native build dependencies: build-essential cmake pkg-config libgtk-4-dev libbluetooth-dev"
     if [[ $EUID -eq 0 ]]; then
       apt-get update
-      apt-get install -y build-essential cmake pkg-config libgtk-4-dev
+      apt-get install -y build-essential cmake pkg-config libgtk-4-dev libbluetooth-dev
     else
       sudo apt-get update
-      sudo apt-get install -y build-essential cmake pkg-config libgtk-4-dev
+      sudo apt-get install -y build-essential cmake pkg-config libgtk-4-dev libbluetooth-dev
     fi
   else
     echo "Missing build dependencies: ${need[*]}" >&2

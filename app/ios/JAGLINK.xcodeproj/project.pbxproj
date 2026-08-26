@@ -14,6 +14,7 @@
 		A00000000000000000000005 /* ../../platform/apple/JagLinkDiagnosticsController.m in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000009 /* ../../platform/apple/JagLinkDiagnosticsController.m */; };
 		A00000000000000000000010 /* ../../src/core/jaglink.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000010 /* ../../src/core/jaglink.c */; };
 		A00000000000000000000011 /* ../../src/jaguar/jaguar.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000011 /* ../../src/jaguar/jaguar.c */; };
+		A00000000000000000000023 /* ../../src/jaguar/vin.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000023 /* ../../src/jaguar/vin.c */; };
 		A00000000000000000000012 /* ../../src/core/parameter.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000012 /* ../../src/core/parameter.c */; };
 		A00000000000000000000013 /* ../../src/core/scheduler.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000013 /* ../../src/core/scheduler.c */; };
 		A00000000000000000000014 /* ../../src/core/telemetry_store.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000014 /* ../../src/core/telemetry_store.c */; };
@@ -63,6 +64,7 @@
 		B00000000000000000000009 /* ../../platform/apple/JagLinkDiagnosticsController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ../../platform/apple/JagLinkDiagnosticsController.m; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000010 /* ../../src/core/jaglink.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/jaglink.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000011 /* ../../src/jaguar/jaguar.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/jaguar/jaguar.c; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000023 /* ../../src/jaguar/vin.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/jaguar/vin.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000012 /* ../../src/core/parameter.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/parameter.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000013 /* ../../src/core/scheduler.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/scheduler.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000014 /* ../../src/core/telemetry_store.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/telemetry_store.c; sourceTree = SOURCE_ROOT; };
@@ -153,6 +155,7 @@
 			children = (
 				B00000000000000000000010 /* ../../src/core/jaglink.c */,
 				B00000000000000000000011 /* ../../src/jaguar/jaguar.c */,
+				B00000000000000000000023 /* ../../src/jaguar/vin.c */,
 				B00000000000000000000012 /* ../../src/core/parameter.c */,
 				B00000000000000000000013 /* ../../src/core/scheduler.c */,
 				B00000000000000000000014 /* ../../src/core/telemetry_store.c */,
@@ -333,6 +336,7 @@
 				A00000000000000000000005 /* ../../platform/apple/JagLinkDiagnosticsController.m in Sources */,
 				A00000000000000000000010 /* ../../src/core/jaglink.c in Sources */,
 				A00000000000000000000011 /* ../../src/jaguar/jaguar.c in Sources */,
+				A00000000000000000000023 /* ../../src/jaguar/vin.c in Sources */,
 				A00000000000000000000012 /* ../../src/core/parameter.c in Sources */,
 				A00000000000000000000013 /* ../../src/core/scheduler.c in Sources */,
 				A00000000000000000000014 /* ../../src/core/telemetry_store.c in Sources */,
@@ -415,7 +419,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.12;
+				MARKETING_VERSION = 0.2.36;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.The-First-Infiltrator.Jaglink";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -457,7 +461,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.2.12;
+				MARKETING_VERSION = 0.2.36;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.The-First-Infiltrator.Jaglink";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

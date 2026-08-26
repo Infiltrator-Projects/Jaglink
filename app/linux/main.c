@@ -122,39 +122,145 @@ static void append_dtc_list(GtkWidget *card,
 static void append_vehicle(GtkWidget *body, JaglinkLinuxContext *context)
 {
     const JaglinkJaguarVehicleProfile *profile = jaglink_jaguar_x400_profile();
-    GtkWidget *identity = link_gtk_card_new("VEHICLE PROFILE", "Jaguar X-Type X400");
-    GtkWidget *connection = link_gtk_card_new("CONNECTION", "Linux diagnostic link");
-    char years[32];
+    const char *vin = context->diagnostic_valid
+        ? link_diagnostic_flow_standard_vin(&context->diagnostic) : NULL;
+    JaglinkJaguarVinDecode decoded;
+    const bool vin_decoded =
+        vin != NULL && jaglink_jaguar_vin_decode(vin, &decoded);
+    GtkWidget *identity = link_gtk_card_new(
+        "VEHICLE IDENTITY", "Jaguar VIN / X400 decoding");
+    GtkWidget *connection = link_gtk_card_new(
+        "CONNECTION", "Linux diagnostic link");
+    char value[160];
 
-    if (profile != NULL)
-        (void)snprintf(years, sizeof(years), "%u–%u",
-                       (unsigned int)profile->first_model_year,
-                       (unsigned int)profile->last_model_year);
-    else
-        (void)snprintf(years, sizeof(years), "Unavailable");
+    if (vin_decoded) {
+        link_gtk_card_append_detail(identity, "VIN", decoded.vin);
+        link_gtk_card_append_detail(
+            identity, "Manufacturer",
+            decoded.jaguar_wmi ? "Jaguar · SAJ" : decoded.wmi);
+        link_gtk_card_append_detail(
+            identity, "Platform",
+            decoded.x400 ? "X400 · X-TYPE" : "Jaguar VIN · X400 not confirmed");
 
-    link_gtk_card_append_detail(identity, "Platform", profile != NULL ? profile->platform_code : "Unavailable");
-    link_gtk_card_append_detail(identity, "Family", profile != NULL ? profile->platform_family : "Unavailable");
-    link_gtk_card_append_detail(identity, "Profile", profile != NULL ? profile->display_name : "Unavailable");
-    link_gtk_card_append_detail(identity, "Model years", years);
-    if (profile != NULL) {
-        char networks[40];
-        char factory[64];
-        (void)snprintf(networks, sizeof(networks), "%zu defined networks", profile->network_count);
-        (void)snprintf(factory, sizeof(factory), "%zu diagnostic routes · %zu factory DTC identities",
-                       profile->diagnostic_endpoint_count, profile->factory_dtc_count);
-        link_gtk_card_append_detail(identity, "Network map", networks);
-        link_gtk_card_append_detail(identity, "Factory layer", factory);
+        if (decoded.market != NULL)
+            link_gtk_card_append_detail(
+                identity, "Market / restraint",
+                decoded.market->market);
+
+        if (decoded.body != NULL) {
+            (void)snprintf(value, sizeof(value), "%s · %s",
+                           jaglink_jaguar_body_style_name(
+                               decoded.body->body_style),
+                           decoded.body->series_class);
+            link_gtk_card_append_detail(identity, "Body", value);
+        } else {
+            link_gtk_card_append_detail(
+                identity, "Body code", decoded.body_code);
+        }
+
+        if (decoded.model_year != 0U) {
+            (void)snprintf(value, sizeof(value), "%u",
+                           (unsigned int)decoded.model_year);
+            link_gtk_card_append_detail(identity, "Model year", value);
+        }
+
+        if (decoded.transmission_steering != NULL) {
+            link_gtk_card_append_detail(
+                identity, "Drivetrain",
+                jaglink_jaguar_drivetrain_name(
+                    decoded.transmission_steering->drivetrain));
+            link_gtk_card_append_detail(
+                identity, "Transmission",
+                jaglink_jaguar_transmission_name(
+                    decoded.transmission_steering->transmission));
+            link_gtk_card_append_detail(
+                identity, "Steering",
+                jaglink_jaguar_steering_name(
+                    decoded.transmission_steering->steering));
+        }
+
+        if (decoded.plant_engine != NULL) {
+            link_gtk_card_append_detail(
+                identity, "Engine",
+                decoded.plant_engine->engine_description);
+            link_gtk_card_append_detail(
+                identity, "Engine family",
+                decoded.plant_engine->engine_family);
+            link_gtk_card_append_detail(
+                identity, "Fuel",
+                jaglink_jaguar_fuel_type_name(
+                    decoded.plant_engine->fuel));
+            (void)snprintf(value, sizeof(value), "%u cc",
+                           decoded.plant_engine->displacement_cc);
+            link_gtk_card_append_detail(identity, "Displacement", value);
+            if (decoded.plant_engine->rated_power_kw != 0U) {
+                (void)snprintf(value, sizeof(value), "%u kW",
+                               decoded.plant_engine->rated_power_kw);
+                link_gtk_card_append_detail(
+                    identity, "Catalogue power", value);
+            }
+            (void)snprintf(value, sizeof(value), "%s, %s",
+                           decoded.plant_engine->assembly_plant,
+                           decoded.plant_engine->assembly_country);
+            link_gtk_card_append_detail(identity, "Assembly", value);
+        } else {
+            value[0] = decoded.plant_engine_code;
+            value[1] = '\0';
+            link_gtk_card_append_detail(
+                identity, "Plant / engine-line code", value);
+        }
+
+        if (decoded.emission != NULL) {
+            (void)snprintf(value, sizeof(value), "ECS %u",
+                           decoded.emission->ecs_number);
+            link_gtk_card_append_detail(identity, "Emissions", value);
+        } else {
+            value[0] = decoded.emission_code;
+            value[1] = '\0';
+            link_gtk_card_append_detail(identity, "Emissions code", value);
+        }
+        link_gtk_card_append_detail(
+            identity, "Production serial", decoded.production_serial);
+    } else if (context->diagnostic_valid &&
+               context->diagnostic.standard_vin_attempted) {
+        link_gtk_card_append_status(
+            identity,
+            "STANDARD VIN NOT RETURNED · DIAGNOSTICS CONTINUE",
+            "state-warning");
+        link_gtk_card_append_note(
+            identity,
+            "Some early X400 vehicles may not return SAE Mode 09 PID 02. "
+            "JAGLINK treats that as missing identity evidence, not a diagnostic failure.");
+    } else {
+        link_gtk_card_append_status(
+            identity, "WAITING FOR SAE MODE 09 VIN", "state-warning");
     }
 
-    link_gtk_card_append_status(connection, connection_text(context),
-                                context->connected ? "state-success" : "state-warning");
-    link_gtk_card_append_detail(connection, "Adapter",
-                                context->connected && context->adapter_identity[0] != '\0'
-                                    ? context->adapter_identity : "Select an adapter above and press LINK UP");
-    link_gtk_card_append_detail(connection, "Diagnostic flow", diagnostic_text(context));
-    link_gtk_card_append_note(connection,
-        "The live shared pass remains SAE OBD-II. JAGLINK separately carries source-corroborated X400 factory diagnostic routes and Jaguar-only DTC identities so factory information is never confused with the legislated generic layer.");
+    if (profile != NULL) {
+        (void)snprintf(value, sizeof(value), "%u–%u · %zu networks · %zu factory routes",
+                       (unsigned int)profile->first_model_year,
+                       (unsigned int)profile->last_model_year,
+                       profile->network_count,
+                       profile->diagnostic_endpoint_count);
+        link_gtk_card_append_detail(identity, "X400 knowledge", value);
+    }
+
+    link_gtk_card_append_status(
+        connection, connection_text(context),
+        context->connected ? "state-success" : "state-warning");
+    link_gtk_card_append_detail(
+        connection, "Adapter",
+        context->connected && context->adapter_identity[0] != '\0'
+            ? context->adapter_identity
+            : "Select an adapter above and press LINK UP");
+    link_gtk_card_append_detail(
+        connection, "Diagnostic flow", diagnostic_text(context));
+    link_gtk_card_append_note(
+        connection,
+        "LINK acquires the standard VIN and owns generic OBD-II transport. "
+        "JAGLINK decodes Jaguar's X400-specific market, body, drivetrain, "
+        "steering, model-year and Halewood engine-line fields offline.");
+
     gtk_box_append(GTK_BOX(body), identity);
     gtk_box_append(GTK_BOX(body), connection);
 }

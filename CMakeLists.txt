@@ -61,7 +61,7 @@ add_subdirectory("${JAGLINK_LINK_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/link" EXCLUD
 add_library(jaglink STATIC
     src/core/jaglink.c src/core/parameter.c src/core/scheduler.c src/core/telemetry_store.c src/core/telemetry_csv.c
     src/elm327/elm327.c src/elm327/can.c src/elm327/session.c src/elm327/probe.c
-    src/obd2/obd2.c src/uds/uds.c src/jaguar/jaguar.c)
+    src/obd2/obd2.c src/uds/uds.c src/jaguar/jaguar.c src/jaguar/vin.c)
 add_library(JAGLINK::Core ALIAS jaglink)
 target_include_directories(jaglink PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_definitions(jaglink PRIVATE JAGLINK_VERSION="${PROJECT_VERSION}")
@@ -145,6 +145,7 @@ if(BUILD_TESTING)
     jaglink_add_test(jaglink-test-uds tests/test_uds.c)
     jaglink_add_test(jaglink-test-uds-dtc tests/test_uds_dtc.c)
     jaglink_add_test(jaglink-test-jaguar tests/test_jaguar.c)
+    jaglink_add_test(jaglink-test-jaguar-vin tests/test_jaguar_vin.c)
     jaglink_add_test(jaglink-test-discover-safety tests/test_discover_safety.c)
     jaglink_add_test(jaglink-test-evidence tests/test_evidence.c)
 endif()

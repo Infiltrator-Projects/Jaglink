@@ -4,6 +4,7 @@
 #import "JagLinkBLETransport+JAGLINK.h"
 #import "jaglink/elm327.h"
 #import "jaglink/elm327_session.h"
+#import "jaglink/jaguar_vin.h"
 #import "jaglink/telemetry.h"
 #import "link/diagnostic_flow.h"
 #import "link/elm327_simulator.h"
@@ -14,6 +15,11 @@
 @property(nonatomic, copy, readwrite) NSString *statusText;
 @property(nonatomic, copy, readwrite, nullable) NSString *peripheralName;
 @property(nonatomic, copy, readwrite, nullable) NSString *adapterIdentifier;
+@property(nonatomic, copy, readwrite, nullable) NSString *vehicleVINText;
+@property(nonatomic, copy, readwrite) NSString *vehiclePlatformText;
+@property(nonatomic, copy, readwrite) NSString *vehicleConfigurationText;
+@property(nonatomic, copy, readwrite) NSString *vehiclePowertrainText;
+@property(nonatomic, copy, readwrite) NSString *vehicleBuildText;
 @property(nonatomic, copy, readwrite) NSString *faultScanStatusText;
 @property(nonatomic, copy, readwrite) NSArray<NSString *> *storedDTCs;
 @property(nonatomic, copy, readwrite) NSArray<NSString *> *pendingDTCs;
@@ -118,6 +124,10 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
         _provider = [[JagLinkBLETransport alloc] init];
         _provider.delegate = self;
         _statusText = @"Idle";
+        _vehiclePlatformText = @"Jaguar X400 identity pending";
+        _vehicleConfigurationText = @"Waiting for standard VIN";
+        _vehiclePowertrainText = @"Waiting for standard VIN";
+        _vehicleBuildText = @"Waiting for standard VIN";
         _faultScanStatusText = @"Not scanned";
         _storedDTCs = @[];
         _pendingDTCs = @[];
@@ -169,6 +179,11 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
     _pollGeneration++;
     self.active = YES;
     self.ready = NO;
+    self.vehicleVINText = nil;
+    self.vehiclePlatformText = @"Jaguar X400 identity pending";
+    self.vehicleConfigurationText = @"Waiting for standard VIN";
+    self.vehiclePowertrainText = @"Waiting for standard VIN";
+    self.vehicleBuildText = @"Waiting for standard VIN";
     self.faultScanStatusText = @"Waiting for vehicle connection";
     self.storedDTCs = @[];
     self.pendingDTCs = @[];
@@ -438,6 +453,8 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
             self.statusText = _flow.supported_pid_base == 0U
                 ? @"Checking standard OBD-II capabilities"
                 : [NSString stringWithFormat:@"Checking OBD-II PID block 0x%02X", (unsigned int)_flow.supported_pid_base];
+        } else if (_flow.stage == LINK_DIAGNOSTIC_FLOW_READING_STANDARD_VIN) {
+            self.statusText = @"Reading standard VIN for Jaguar X400 identification";
         } else if (_flow.stage == LINK_DIAGNOSTIC_FLOW_SCANNING_STORED_DTCS) {
             self.faultScanStatusText = @"Scanning stored, pending and permanent OBD-II faults";
             self.statusText = @"Scanning stored OBD-II fault codes";
@@ -497,6 +514,80 @@ static BOOL JagLinkFlowIsFaultScan(const LinkDiagnosticFlow *flow)
     }
     case LINK_DIAGNOSTIC_FLOW_EVENT_PID_DISCOVERY_COMPLETE:
         return YES;
+    case LINK_DIAGNOSTIC_FLOW_EVENT_STANDARD_VIN: {
+        if (!event->vin_available || event->vin == NULL) {
+            self.vehicleVINText = nil;
+            self.vehiclePlatformText = @"Jaguar identity · standard VIN unavailable";
+            self.vehicleConfigurationText = @"VIN not returned by SAE Mode 09 PID 02";
+            self.vehiclePowertrainText = @"Powertrain remains unclassified from VIN";
+            self.vehicleBuildText = @"Build identity unavailable from VIN";
+            [self notifyDelegate];
+            return YES;
+        }
+
+        self.vehicleVINText = JagLinkStringFromCString(event->vin);
+        jaglink_telemetry_session_metadata_set_vehicle(
+            &_sessionMetadata, event->vin);
+
+        JaglinkJaguarVinDecode decoded;
+        if (!jaglink_jaguar_vin_decode(event->vin, &decoded)) {
+            self.vehiclePlatformText = @"VIN received · not a decodable Jaguar X400 VIN";
+            self.vehicleConfigurationText = @"Jaguar-specific VIN fields unavailable";
+            self.vehiclePowertrainText = @"Powertrain not inferred";
+            self.vehicleBuildText = @"Build identity not inferred";
+            [self notifyDelegate];
+            return YES;
+        }
+
+        if (decoded.x400) {
+            self.vehiclePlatformText = [NSString stringWithFormat:
+                @"Jaguar X-TYPE · X400 · %u",
+                (unsigned int)decoded.model_year];
+        } else {
+            self.vehiclePlatformText = @"Jaguar VIN decoded · X400 profile not confirmed";
+        }
+
+        if (decoded.body != NULL && decoded.transmission_steering != NULL) {
+            self.vehicleConfigurationText = [NSString stringWithFormat:
+                @"%@ · %@ · %@ · %@ · %@",
+                JagLinkStringFromCString(
+                    jaglink_jaguar_body_style_name(decoded.body->body_style)),
+                JagLinkStringFromCString(decoded.body->series_class),
+                JagLinkStringFromCString(
+                    jaglink_jaguar_drivetrain_name(
+                        decoded.transmission_steering->drivetrain)),
+                JagLinkStringFromCString(
+                    jaglink_jaguar_transmission_name(
+                        decoded.transmission_steering->transmission)),
+                JagLinkStringFromCString(
+                    jaglink_jaguar_steering_name(
+                        decoded.transmission_steering->steering))];
+        } else {
+            self.vehicleConfigurationText = @"X400 configuration codes not fully recognised";
+        }
+
+        if (decoded.plant_engine != NULL) {
+            self.vehiclePowertrainText = [NSString stringWithFormat:
+                @"%@ · %@ · %u cc · %u kW",
+                JagLinkStringFromCString(decoded.plant_engine->engine_description),
+                JagLinkStringFromCString(
+                    jaglink_jaguar_fuel_type_name(decoded.plant_engine->fuel)),
+                decoded.plant_engine->displacement_cc,
+                decoded.plant_engine->rated_power_kw];
+            self.vehicleBuildText = [NSString stringWithFormat:
+                @"%@, %@ · serial %@",
+                JagLinkStringFromCString(decoded.plant_engine->assembly_plant),
+                JagLinkStringFromCString(decoded.plant_engine->assembly_country),
+                JagLinkStringFromCString(decoded.production_serial)];
+        } else {
+            self.vehiclePowertrainText = @"Engine-line code not yet catalogued";
+            self.vehicleBuildText = [NSString stringWithFormat:
+                @"Production serial %@",
+                JagLinkStringFromCString(decoded.production_serial)];
+        }
+        [self notifyDelegate];
+        return YES;
+    }
     case LINK_DIAGNOSTIC_FLOW_EVENT_DTC_LIST: {
         NSArray<NSString *> *codes = JagLinkDTCStrings(event->dtc_list);
         switch (event->dtc_kind) {

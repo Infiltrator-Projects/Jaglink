@@ -351,6 +351,16 @@ private struct JagVehicleView: View {
                 JagPanel(title: "Vehicle", systemImage: "car.side.fill") {
                     jagValueRow("Profile", model.profileDisplayName, icon: "shield.lefthalf.filled")
                     jagDivider
+                    jagValueRow("VIN", model.vehicleVINText, icon: "number")
+                    jagDivider
+                    jagValueRow("Platform", model.vehiclePlatformText, icon: "car.side")
+                    jagDivider
+                    jagValueRow("Configuration", model.vehicleConfigurationText, icon: "slider.horizontal.3")
+                    jagDivider
+                    jagValueRow("Powertrain", model.vehiclePowertrainText, icon: "engine.combustion")
+                    jagDivider
+                    jagValueRow("Build", model.vehicleBuildText, icon: "building.2")
+                    jagDivider
                     jagValueRow("Adapter", model.peripheralName, icon: "antenna.radiowaves.left.and.right")
                     jagDivider
                     jagValueRow("ELM identity", model.adapterIdentifier, icon: "cpu")

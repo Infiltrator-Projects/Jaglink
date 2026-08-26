@@ -43,6 +43,11 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var statusText = "Idle"
     @Published private(set) var peripheralName = "No adapter"
     @Published private(set) var adapterIdentifier = "Unknown"
+    @Published private(set) var vehicleVINText = "Waiting for VIN"
+    @Published private(set) var vehiclePlatformText = "Jaguar X400 identity pending"
+    @Published private(set) var vehicleConfigurationText = "Waiting for standard VIN"
+    @Published private(set) var vehiclePowertrainText = "Waiting for standard VIN"
+    @Published private(set) var vehicleBuildText = "Waiting for standard VIN"
     @Published private(set) var faultScanStatusText = "Not scanned"
     @Published private(set) var storedDTCs = [String]()
     @Published private(set) var pendingDTCs = [String]()
@@ -230,6 +235,11 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         statusText = controller.statusText
         peripheralName = controller.peripheralName ?? "No adapter"
         adapterIdentifier = controller.adapterIdentifier ?? "Unknown"
+        vehicleVINText = controller.vehicleVINText ?? "Not returned by SAE Mode 09"
+        vehiclePlatformText = controller.vehiclePlatformText
+        vehicleConfigurationText = controller.vehicleConfigurationText
+        vehiclePowertrainText = controller.vehiclePowertrainText
+        vehicleBuildText = controller.vehicleBuildText
         faultScanStatusText = controller.faultScanStatusText
         storedDTCs = controller.storedDTCs
         pendingDTCs = controller.pendingDTCs

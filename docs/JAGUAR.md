@@ -4,6 +4,28 @@
 
 JAGLINK's first manufacturer target is the Jaguar X-Type, platform code X400, covering model years 2001–2009. The platform is Jaguar's Ford CD132-derived architecture related to the contemporary Mondeo.
 
+## Offline X400 VIN decoder
+
+JAGLINK now decodes the X-TYPE/X400 VIN offline before applying manufacturer-specific diagnostic assumptions. This uses Jaguar Cars' own global X400 VIN layout rather than Mercedes-style Baumuster rules.
+
+For X400, the fields are distributed across the VIN:
+
+- positions 1-3: `SAJ` Jaguar WMI;
+- position 4: market / airbag specification;
+- position 5: drivetrain, transmission and steering combination;
+- positions 6-7: X-TYPE body/series code (saloon/estate and High/Entry/Sport);
+- position 8: Jaguar ECS emissions code;
+- position 9: check digit;
+- position 10: model year code;
+- position 11: Halewood assembly/engine-line code;
+- positions 12-17: production serial.
+
+The position-11 engine-line codes documented by Jaguar distinguish 3.0 V6, 2.5 V6, 2.0 V6, 2.0 inline-four diesel and 2.2 TDCi inline-four diesel. Engine capacities and catalogue power are stored from Jaguar's published X-TYPE engine-data tables. Unknown or later codes are preserved but never guessed.
+
+The normal diagnostic flow obtains a standard SAE Mode 09 PID 02 VIN through LINK. LINK owns only that generic acquisition. JAGLINK owns the Jaguar-specific interpretation and presents the resulting X400 body, drivetrain, transmission, steering, engine, model year, Halewood build identity and production serial. If an early vehicle returns `NO DATA` for Mode 09, diagnostics continue normally without treating VIN absence as a fault.
+
+Jaguar's published Heritage Trust X400 development VIN `SAJAD56L64WD78435` is used as one regression example: Rest-of-World market, AWD/manual/RHD, Sport Series estate, 2004 model year, Halewood 3.0 V6 line, serial `D78435`.
+
 ## Network evidence
 
 Jaguar's 2002 `Introduction to X-TYPE` service-training material gives the following communication-speed summary:

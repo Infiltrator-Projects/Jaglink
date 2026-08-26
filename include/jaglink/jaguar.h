@@ -10,6 +10,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "jaglink/jaguar_vin.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

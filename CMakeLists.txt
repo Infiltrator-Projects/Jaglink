@@ -105,7 +105,9 @@ if(JAGLINK_BUILD_WINDOWS_DISCOVER)
     link_add_windows_discover(jaglink-discover PRODUCT_NAME "JAGLINK" PRODUCT_SLUG "jaglink" WINDOW_CLASS "JAGLINKDiscoverWindow"
         PRODUCT_VERSION "${PROJECT_VERSION}" PRODUCT_COPYRIGHT "Copyright (C) 2026 Xavier Wheaton and Shannon Smith"
         PRODUCT_SUBTITLE "Jaguar X400 Diagnostics" PRODUCT_WEBSITE "https://github.com/The-First-Infiltrator/Jaglink"
-        PRODUCT_ICON_PNG "${CMAKE_CURRENT_SOURCE_DIR}/app/ios/JAGLINK/Assets.xcassets/AppIcon.appiconset/AppIcon-60@3x.png")
+        PRODUCT_ICON_PNG "${CMAKE_CURRENT_SOURCE_DIR}/app/ios/JAGLINK/Assets.xcassets/AppIcon.appiconset/AppIcon-60@3x.png"
+        INVENTORY_VIN_FORMATTER_FUNCTION jaglink_jaguar_vin_format_summary)
+    target_link_libraries(jaglink-discover PRIVATE jaglink)
     if(MSVC)
         target_compile_options(jaglink-discover PRIVATE "/FI${JAGLINK_LINK_DIR}/platform/windows/link-discover-theme.h")
     endif()

@@ -134,6 +134,15 @@ bool jaglink_jaguar_vin_decode(
     const char *vin,
     JaglinkJaguarVinDecode *decoded);
 
+/**
+ * Format a concise product-facing identity from a decoded Jaguar VIN.
+ * Returns non-zero only when the VIN is a recognised X400 configuration.
+ */
+int jaglink_jaguar_vin_format_summary(
+    const char *vin,
+    char *buffer,
+    size_t capacity);
+
 #ifdef __cplusplus
 }
 #endif

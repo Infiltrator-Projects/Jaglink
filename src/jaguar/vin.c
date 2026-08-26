@@ -2,6 +2,7 @@
 #include "jaglink/jaguar_vin.h"
 
 #include <ctype.h>
+#include <stdio.h>
 #include <string.h>
 
 #define ARRAY_LENGTH(values) (sizeof(values) / sizeof((values)[0]))
@@ -242,4 +243,45 @@ bool jaglink_jaguar_vin_decode(
 
     decoded->valid = true;
     return true;
+}
+
+int jaglink_jaguar_vin_format_summary(
+    const char *vin,
+    char *buffer,
+    size_t capacity)
+{
+    JaglinkJaguarVinDecode decoded;
+    int written;
+
+    if (buffer == NULL || capacity == 0U) return 0;
+    buffer[0] = '\0';
+    if (!jaglink_jaguar_vin_decode(vin, &decoded) ||
+        !decoded.x400 ||
+        decoded.body == NULL ||
+        decoded.transmission_steering == NULL ||
+        decoded.plant_engine == NULL) {
+        return 0;
+    }
+
+    written = snprintf(
+        buffer, capacity,
+        "Jaguar X-TYPE X400 · %u · %s %s · %s · %s · %s · %s · %s, %s · serial %s",
+        (unsigned int)decoded.model_year,
+        jaglink_jaguar_body_style_name(decoded.body->body_style),
+        decoded.body->series_class,
+        jaglink_jaguar_drivetrain_name(
+            decoded.transmission_steering->drivetrain),
+        jaglink_jaguar_transmission_name(
+            decoded.transmission_steering->transmission),
+        jaglink_jaguar_steering_name(
+            decoded.transmission_steering->steering),
+        decoded.plant_engine->engine_description,
+        decoded.plant_engine->assembly_plant,
+        decoded.plant_engine->assembly_country,
+        decoded.production_serial);
+    if (written < 0 || (size_t)written >= capacity) {
+        buffer[0] = '\0';
+        return 0;
+    }
+    return 1;
 }

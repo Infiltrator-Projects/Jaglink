@@ -34,6 +34,20 @@ static int test_jaguar_heritage_x400_estate(void)
     CHECK(decoded.plant_engine->fuel == JAGLINK_JAGUAR_FUEL_PETROL);
     CHECK(decoded.plant_engine->displacement_cc == 2967U);
     CHECK(strcmp(decoded.production_serial, "D78435") == 0);
+    {
+        char summary[384];
+        CHECK(jaglink_jaguar_vin_format_summary(
+                  "SAJAD56L64WD78435", summary, sizeof(summary)));
+        CHECK(strstr(summary, "Jaguar X-TYPE X400") != NULL);
+        CHECK(strstr(summary, "2004") != NULL);
+        CHECK(strstr(summary, "estate Sport Series") != NULL);
+        CHECK(strstr(summary, "all-wheel drive") != NULL);
+        CHECK(strstr(summary, "manual") != NULL);
+        CHECK(strstr(summary, "right-hand drive") != NULL);
+        CHECK(strstr(summary, "3.0 V6 petrol") != NULL);
+        CHECK(strstr(summary, "Halewood, United Kingdom") != NULL);
+        CHECK(strstr(summary, "serial D78435") != NULL);
+    }
     return 0;
 }
 

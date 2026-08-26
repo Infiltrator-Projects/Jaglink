@@ -35,25 +35,32 @@ jobs:
           p = Path('scripts/build-linux-run.sh')
           s = p.read_text()
           gtk = "if ! pkg-config --exists 'gtk4 >= 4.6' 2>/dev/null; then need+=(\"libgtk-4-dev\"); fi\n"
-          if gtk not in s:
-              raise SystemExit('JAGLINK GTK dependency check missing')
-          s = s.replace(gtk, gtk + "if ! pkg-config --exists bluez 2>/dev/null; then need+=(\"libbluetooth-dev\"); fi\n", 1)
-          s = s.replace('build-essential cmake pkg-config libgtk-4-dev',
-                        'build-essential cmake pkg-config libgtk-4-dev libbluetooth-dev')
+          bluez = "if ! pkg-config --exists bluez 2>/dev/null; then need+=(\"libbluetooth-dev\"); fi\n"
+          if bluez not in s:
+              if gtk not in s:
+                  raise SystemExit('JAGLINK GTK dependency check missing')
+              s = s.replace(gtk, gtk + bluez, 1)
+          if 'build-essential cmake pkg-config libgtk-4-dev libbluetooth-dev' not in s:
+              s = s.replace('build-essential cmake pkg-config libgtk-4-dev',
+                            'build-essential cmake pkg-config libgtk-4-dev libbluetooth-dev')
           p.write_text(s)
 
           p = Path('.github/workflows/ci.yml')
           s = p.read_text()
           old = 'build-essential cmake dpkg-dev libgtk-4-dev pkg-config'
           new = 'build-essential cmake dpkg-dev libgtk-4-dev libbluetooth-dev pkg-config'
-          if old not in s:
-              raise SystemExit('JAGLINK CI Linux dependency line missing')
-          p.write_text(s.replace(old, new, 1))
+          if new not in s:
+              if old not in s:
+                  raise SystemExit('JAGLINK CI Linux dependency line missing')
+              s = s.replace(old, new, 1)
+          p.write_text(s)
           PY
           git config user.name 'Shannon Smith'
           git config user.email 'infiltratr@yandex.com'
           git add VERSION scripts/build-linux-run.sh .github/workflows/ci.yml src/link
-          git commit -m 'Release 0.2.34: dual-mode Bluetooth transport'
+          if ! git diff --cached --quiet; then
+            git commit -m 'Release 0.2.34: dual-mode Bluetooth transport'
+          fi
       - name: Build and test updated JAGLINK Linux app
         run: |
           set -euo pipefail
@@ -65,10 +72,19 @@ jobs:
           mkdir -p "$RUNNER_TEMP/jaglink-release"
           bash scripts/build-linux-run.sh "$RUNNER_TEMP/jaglink-release"
           "$RUNNER_TEMP/jaglink-release/JAGLINK-0.2.34-linux-native.run" --help >/dev/null
-      - name: Publish staged source update to main
+      - name: Handoff validated release commit
         run: |
           set -euo pipefail
+          handoff='tmp-jaglink-0144-handoff'
           rm -f .github/workflows/update-link-0144.yml
           git add -u .github/workflows/update-link-0144.yml
-          git commit --amend --no-edit
-          git push origin HEAD:main
+          if git diff --cached --quiet; then
+            git commit --allow-empty --amend --no-edit
+          else
+            git commit --amend --no-edit
+          fi
+          echo "HANDOFF_COMMIT_SHA=$(git rev-parse HEAD)"
+          git push --force origin "HEAD:refs/heads/${handoff}"
+          echo 'Validated handoff published; allowing time for main ref adoption.'
+          sleep 240
+          git push origin --delete "${handoff}" || true

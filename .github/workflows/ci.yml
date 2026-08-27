@@ -80,7 +80,7 @@ jobs:
           submodules: recursive
       - run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential cmake dpkg-dev libgtk-4-dev libbluetooth-dev pkg-config
+          sudo apt-get install -y --no-install-recommends build-essential cmake dpkg-dev libgtk-4-dev libbluetooth-dev libusb-1.0-0-dev pkg-config
       - id: version
         shell: bash
         run: |
@@ -90,6 +90,12 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - run: cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DJAGLINK_BUILD_LINUX_APP=ON -DJAGLINK_BUILD_PROFILE=generic -DBUILD_TESTING=OFF
       - run: cmake --build build-linux --parallel
+      - name: Verify native Tactrix provider is linked
+        shell: bash
+        run: |
+          set -euo pipefail
+          ldd ./build-linux/jaglink | grep -F 'libusb-1.0.so' >/dev/null
+          grep -aF 'OP2:Tactrix OpenPort 2.0' ./build-linux/jaglink >/dev/null
       - name: Verify deterministic Linux emblem, About and shared diagnostics
         shell: bash
         run: |
@@ -115,6 +121,8 @@ jobs:
           cpack --config build-linux/CPackConfig.cmake -G DEB -B "$RUNNER_TEMP/cpack"
           deb_src="$(find "$RUNNER_TEMP/cpack" -maxdepth 1 -type f -name '*.deb' -print -quit)"
           test -n "$deb_src"
+          dpkg-deb -c "$deb_src" | grep -F './usr/lib/udev/rules.d/60-link-openport2.rules' >/dev/null
+          dpkg-deb -f "$deb_src" Depends | grep -E '(^|, )libusb-1\.0-0([ (]|,|$)' >/dev/null
           install -m 0644 "$deb_src" "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-amd64.deb"
           bash scripts/build-linux-run.sh "$RUNNER_TEMP/release"
           "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-native.run" --help >/dev/null
@@ -122,6 +130,8 @@ jobs:
           "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-native.run" --build-only --output "$native_deb"
           test "$(dpkg-deb -f "$native_deb" Package)" = jaglink
           test "$(dpkg-deb -f "$native_deb" Version)" = "${VERSION}+native1"
+          dpkg-deb -c "$native_deb" | grep -F './usr/lib/udev/rules.d/60-link-openport2.rules' >/dev/null
+          dpkg-deb -f "$native_deb" Depends | grep -E '(^|, )libusb-1\.0-0([ (]|,|$)' >/dev/null
           dpkg --compare-versions "${VERSION}+native1" gt "${VERSION}"
           test -s "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-amd64.deb"
           test -s "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-native.run"
@@ -205,9 +215,13 @@ jobs:
           retention-days: 30
 
   apple-ios:
-    name: iOS / simulator
+    name: iOS / Xcode / ${{ matrix.configuration }}
     runs-on: macos-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -231,7 +245,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          xcodebuild -project app/ios/JAGLINK.xcodeproj -scheme JAGLINK -configuration Release \
+          xcodebuild -project app/ios/JAGLINK.xcodeproj -scheme JAGLINK -configuration "${{ matrix.configuration }}" \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO \
             MARKETING_VERSION="$VERSION" build
 

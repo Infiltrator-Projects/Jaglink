@@ -50,6 +50,7 @@ for cmd in cmake cpack cc pkg-config tar dpkg dpkg-deb dpkg-query; do
 done
 if ! pkg-config --exists 'gtk4 >= 4.6' 2>/dev/null; then need+=("libgtk-4-dev"); fi
 if ! pkg-config --exists bluez 2>/dev/null; then need+=("libbluetooth-dev"); fi
+if ! pkg-config --exists libusb-1.0 2>/dev/null; then need+=("libusb-1.0-0-dev"); fi
 
 run_as_root()
 {
@@ -65,9 +66,9 @@ run_as_root()
 
 if [[ ${#need[@]} -ne 0 ]]; then
   if command -v apt-get >/dev/null 2>&1; then
-    echo "Installing native build dependencies: build-essential cmake dpkg-dev pkg-config libgtk-4-dev libbluetooth-dev"
+    echo "Installing native build dependencies: build-essential cmake dpkg-dev pkg-config libgtk-4-dev libbluetooth-dev libusb-1.0-0-dev"
     run_as_root apt-get update
-    run_as_root apt-get install -y build-essential cmake dpkg-dev pkg-config libgtk-4-dev libbluetooth-dev
+    run_as_root apt-get install -y build-essential cmake dpkg-dev pkg-config libgtk-4-dev libbluetooth-dev libusb-1.0-0-dev
   else
     echo "Missing build dependencies: ${need[*]}" >&2
     exit 3

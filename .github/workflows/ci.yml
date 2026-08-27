@@ -239,6 +239,8 @@ jobs:
           grep -Fq '#include "../link/src/uds/uds_services.c"' src/uds/uds.c
           grep -q 'link_diagnostic_flow_accept_response' src/link/platform/apple/LinkDiagnosticsController.m
           grep -q 'LinkDiagnosticsController' platform/apple/JagLinkDiagnosticsController.m
+          grep -q 'didReceiveFlowEvent' platform/apple/JagLinkDiagnosticsController.m
+          grep -q 'didReceiveFlowEvent' src/link/platform/apple/LinkDiagnosticsController.m
           grep -Fq 'Xavier Wheaton' app/ios/JAGLINK/JAGLINKApp.swift
           grep -Fq 'Shannon Smith' app/ios/JAGLINK/JAGLINKApp.swift
       - name: Build simulator

@@ -4,6 +4,10 @@
 
 JAGLINK's first manufacturer target is the Jaguar X-Type, platform code X400, covering model years 2001–2009. The platform is Jaguar's Ford CD132-derived architecture related to the contemporary Mondeo.
 
+## Shared Apple session architecture
+
+The iPhone face no longer owns a separate copy of the ELM327/diagnostic-session engine. LINK 0.14.9 owns CoreBluetooth session lifecycle, ELM command scheduling, standard VIN/PID/DTC flow, telemetry history/favourites, CSV recording, simulation, timeouts and reconnect behaviour. JAGLINK's Apple controller is now a thin product adapter that keeps only Jaguar VIN interpretation and Jaguar-facing presentation.
+
 ## Offline X400 VIN decoder
 
 JAGLINK now decodes the X-TYPE/X400 VIN offline before applying manufacturer-specific diagnostic assumptions. This uses Jaguar Cars' own global X400 VIN layout rather than Mercedes-style Baumuster rules.

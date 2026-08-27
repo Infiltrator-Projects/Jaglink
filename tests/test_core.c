@@ -125,7 +125,11 @@ int main(void)
         !check(strcmp(project_info->license_id, "GPL-3.0-or-later") == 0,
                "project info licence mismatch") ||
         !check(strcmp(project_info->icon_name, "jaglink") == 0,
-               "project info icon mismatch")) {
+               "project info icon mismatch") ||
+        !check(strcmp(project_info->source_id, "The-First-Infiltrator/JAGLINK") == 0,
+               "project info source identity mismatch") ||
+        !check(strcmp(project_info->build_profile, jaglink_build_profile()) == 0,
+               "project info build profile mismatch")) {
         passed = false;
     }
     if (!check_workspace()) {

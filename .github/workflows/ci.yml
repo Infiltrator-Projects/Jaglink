@@ -45,7 +45,8 @@ jobs:
           grep -q 'link_uds_decode_response' src/link/src/uds/uds.c
           grep -q 'link_diagnostic_flow_next_action' src/link/src/core/diagnostic_flow.c
           grep -q 'return link_elm327_parser_feed' src/elm327/elm327.c
-          grep -q 'link_diagnostic_flow_accept_response' platform/apple/JagLinkDiagnosticsController.m
+          grep -q 'link_diagnostic_flow_accept_response' src/link/platform/apple/LinkDiagnosticsController.m
+          grep -q 'LinkDiagnosticsController' platform/apple/JagLinkDiagnosticsController.m
           grep -q 'src/core/diagnostic_flow.c' src/core/jaglink.c
           ! grep -q 'JagLinkDiagnosticsPhase' platform/apple/JagLinkDiagnosticsController.m
           test "$(wc -c < src/obd2/obd2.c)" -lt 1024
@@ -213,7 +214,8 @@ jobs:
           status="$(git submodule status --recursive)"
           ! grep -Eq '^[+-U]' <<<"$status"
           grep -Fq '#include "../link/src/uds/uds_services.c"' src/uds/uds.c
-          grep -q 'link_diagnostic_flow_accept_response' platform/apple/JagLinkDiagnosticsController.m
+          grep -q 'link_diagnostic_flow_accept_response' src/link/platform/apple/LinkDiagnosticsController.m
+          grep -q 'LinkDiagnosticsController' platform/apple/JagLinkDiagnosticsController.m
           grep -Fq 'Xavier Wheaton' app/ios/JAGLINK/JAGLINKApp.swift
           grep -Fq 'Shannon Smith' app/ios/JAGLINK/JAGLINKApp.swift
       - name: Build simulator

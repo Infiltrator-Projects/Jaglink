@@ -59,7 +59,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var jaguarNetworks = [JaguarNetworkInfo]()
     @Published private(set) var profileDisplayName = "Jaguar X-Type (X400)"
     @Published private(set) var recordedSampleCount = 0
-    @Published private(set) var versionText = "0.1.0"
+    @Published private(set) var versionText = "Unknown"
     @Published private(set) var csvExportURL: URL?
 
     private let controller = JagLinkDiagnosticsController()

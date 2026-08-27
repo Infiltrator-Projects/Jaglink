@@ -19,6 +19,10 @@
 #error "JAGLINK_VERSION must be supplied by the build system"
 #endif
 
+#ifndef JAGLINK_BUILD_PROFILE
+#define JAGLINK_BUILD_PROFILE "source"
+#endif
+
 /*
  * Normal CMake builds consume shared engines through LINK::Core.  The native
  * iPhone target compiles portable C sources directly, so include the exact
@@ -47,7 +51,7 @@ static const InfiltratrProjectInfo jaglink_project_info_record = {
     .application_id = "com.github.The-First-Infiltrator.Jaglink",
     .version = JAGLINK_VERSION,
     .source_id = "jaglink-" JAGLINK_VERSION,
-    .build_profile = "portable-c11",
+    .build_profile = JAGLINK_BUILD_PROFILE,
     .author = "Xavier Wheaton and Shannon Smith",
     .website = "https://github.com/The-First-Infiltrator/Jaglink",
     .license_id = "GPL-3.0-or-later",

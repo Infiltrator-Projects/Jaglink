@@ -9,6 +9,15 @@ static gboolean destroy_about_on_close(GtkWindow *window, gpointer user_data)
     return TRUE;
 }
 
+static const char *jaglink_linux_build_label(const char *profile)
+{
+    if (g_strcmp0(profile, "native") == 0)
+        return "Native / local machine compile";
+    if (g_strcmp0(profile, "generic") == 0)
+        return "Generic / APT package";
+    return "Source / development build";
+}
+
 void jaglink_linux_show_about(GtkWindow *parent)
 {
     static const char *authors[] = {
@@ -23,6 +32,10 @@ void jaglink_linux_show_about(GtkWindow *parent)
         "See LICENSE in the source package for the complete licence text.";
     const InfiltratrProjectInfo *info = jaglink_project_info();
     GtkWidget *widget = gtk_about_dialog_new();
+    char *comments = g_strdup_printf(
+        "%s\n\nBuild: %s",
+        info->comments,
+        jaglink_linux_build_label(info->build_profile));
     GtkAboutDialog *about = GTK_ABOUT_DIALOG(widget);
 
     gtk_window_set_title(GTK_WINDOW(widget), "About JAGLINK");
@@ -32,13 +45,14 @@ void jaglink_linux_show_about(GtkWindow *parent)
     gtk_about_dialog_set_program_name(about, info->program_name);
     gtk_about_dialog_set_version(about, info->version);
     gtk_about_dialog_set_logo_icon_name(about, info->icon_name);
-    gtk_about_dialog_set_comments(about, info->comments);
+    gtk_about_dialog_set_comments(about, comments);
     gtk_about_dialog_set_authors(about, authors);
     gtk_about_dialog_set_website(about, info->website);
     gtk_about_dialog_set_website_label(about, "Website");
     gtk_about_dialog_set_copyright(about, info->copyright_text);
     gtk_about_dialog_set_license(about, license_text);
     gtk_about_dialog_set_wrap_license(about, TRUE);
+    g_free(comments);
     g_signal_connect(widget, "close-request",
                      G_CALLBACK(destroy_about_on_close), NULL);
     gtk_window_present(GTK_WINDOW(widget));

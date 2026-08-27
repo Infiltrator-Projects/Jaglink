@@ -70,6 +70,7 @@ tail -n +"$line" "$self" | tar -xzf - -C "$work"
 cmake -S "$work" -B "$work/build" \
   -DCMAKE_BUILD_TYPE=Release \
   -DJAGLINK_BUILD_LINUX_APP=ON \
+  -DJAGLINK_BUILD_PROFILE=native \
   -DBUILD_TESTING=ON \
   -DCMAKE_INSTALL_PREFIX="$prefix"
 cmake --build "$work/build" --parallel

@@ -88,7 +88,7 @@ jobs:
           version="$(tr -d '[:space:]' < VERSION)"
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
           echo "version=$version" >> "$GITHUB_OUTPUT"
-      - run: cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DJAGLINK_BUILD_LINUX_APP=ON -DBUILD_TESTING=OFF
+      - run: cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DJAGLINK_BUILD_LINUX_APP=ON -DJAGLINK_BUILD_PROFILE=generic -DBUILD_TESTING=OFF
       - run: cmake --build build-linux --parallel
       - name: Verify deterministic Linux emblem, About and shared diagnostics
         shell: bash
@@ -102,6 +102,8 @@ jobs:
           grep -q 'diagnostic_changed' app/linux/main.c
           grep -Fq 'Xavier Wheaton' app/linux/about-dialog.c
           grep -Fq 'Shannon Smith' app/linux/about-dialog.c
+          grep -Fq 'Generic / APT package' app/linux/about-dialog.c
+          grep -Fq 'Native / local machine compile' app/linux/about-dialog.c
           test -s app/linux/assets/jaglink-emblem.png
       - name: Package DEB and native RUN
         shell: bash

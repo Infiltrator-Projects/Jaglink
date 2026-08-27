@@ -57,7 +57,7 @@ static uint64_t monotonic_ms(void)
 
 static const char *connection_text(const JaglinkLinuxContext *context)
 {
-    return context->connected ? "LINKED · ELM327 VERIFIED" : "NOT LINKED";
+    return context->connected ? "LINKED · DIAGNOSTIC ADAPTER VERIFIED" : "NOT LINKED";
 }
 
 static const char *diagnostic_text(const JaglinkLinuxContext *context)
@@ -538,7 +538,7 @@ static void render_section(size_t section, GtkWidget *body, void *opaque)
         link_gtk_card_append_detail(card, "Version", jaglink_version());
         link_gtk_card_append_detail(card, "Product", "Jaguar X-Type X400 diagnostics");
         link_gtk_card_append_detail(card, "Portable core", jaglink_self_check() ? "Validated" : "Invalid metadata");
-        link_gtk_card_append_detail(card, "Linux transport", "LINK serial ELM327 provider");
+        link_gtk_card_append_detail(card, "Linux transport", "LINK native ELM/Bluetooth + Tactrix OpenPort 2.0 USB");
         link_gtk_card_append_detail(card, "Linux live flow", "Automatic SAE PID + DTC + live polling");
         link_gtk_card_append_detail(card, "Jaguar factory layer", "X400 routes + module-specific DTC catalogue");
         link_gtk_card_append_detail(card, "Fuel economy", "Factory-priority + SAE measured fallback");

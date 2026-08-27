@@ -57,6 +57,8 @@ The current Jaguar layer represents the source-corroborated X400 network topolog
 
 The product uses LINK's shared ELM327/OBD-II/UDS engine, Classical CAN and CAN-FD ISO-TP support, portable diagnostic-flow controller and JAGLINK Discover specialist reader target. Product-prefixed compatibility headers expose LINK's 64-byte CAN-FD contract and complete 27-service generic UDS catalogue without duplicating implementations.
 
+Linux adapter discovery is also shared: tty/RFCOMM ELM327, Vgate-style BLE/GATT, Bluetooth Classic/SPP and direct USB Tactrix OpenPort 2.0 all come from LINK rather than JAGLINK-specific transport code. The native OpenPort bridge currently covers the CAN/ISO-15765 modes used by the present LINK-family diagnostics; K-line is not claimed until LINK exposes it through that bridge.
+
 Manufacturer-specific meanings remain evidence-gated until documentation or reproducible vehicle captures establish them.
 
 ## Architecture
@@ -82,6 +84,8 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
+
+On Linux, a connected Tactrix appears as `OP2:Tactrix OpenPort 2.0` in the same LINK-owned adapter chooser as Vgate/ELM interfaces. It is driven directly through LINK/libusb and does not require the Windows J2534 DLL.
 
 GitHub CI verifies the exact recursive dependency tree, portable core, product-to-LINK facade, sanitizer coverage, Linux application/package path, Windows Discover executable and launch smoke test, Apple/iOS build and unsigned physical-device IPA before any release job can run.
 

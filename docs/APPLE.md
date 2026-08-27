@@ -4,9 +4,13 @@
 
 The JAGLINK iPhone project is `app/ios/JAGLINK.xcodeproj`.
 
-JAGLINK owns its `JagLinkBLETransport` CoreBluetooth byte-stream provider and `JagLinkDiagnosticsController`. Together they perform adapter/GATT discovery, ELM327 initialisation, standard OBD-II capability discovery, generic stored/pending/permanent DTC reads and generic live-data scheduling. The target contains no external vehicle-diagnostics source dependency.
+## Ownership boundary
 
-The SwiftUI app exposes the X400 network profile, generic faults, live OBD-II parameters, favourites and diagnostic CSV export. Jaguar manufacturer-specific module requests remain disabled until they are supported by reproducible evidence.
+LINK owns the shared CoreBluetooth byte-stream provider and the product-neutral diagnostic-flow controller. JAGLINK's `JagLinkBLETransport` source is a compatibility compilation shim over LINK's `LinkBLETransport`; it is not a second Bluetooth implementation. `JagLinkDiagnosticsController` owns the Jaguar/X400 presentation edge and VIN-derived Jaguar identity while delegating ELM327 framing, standard OBD-II capability discovery, stored/pending/permanent DTC reads and live-data scheduling to LINK.
+
+The SwiftUI application exposes the X400 network profile, generic faults, live OBD-II parameters, favourites and diagnostic CSV export. Jaguar manufacturer-specific module requests remain evidence-gated and are not enabled merely to match Mercedes feature depth.
+
+## Build
 
 Build an unsigned simulator target with:
 
@@ -19,14 +23,12 @@ xcodebuild -project app/ios/JAGLINK.xcodeproj \
   CODE_SIGNING_ALLOWED=NO build
 ```
 
-For an unsigned physical-device IPA on macOS, use the repository script:
+For an unsigned physical-device IPA on macOS, use:
 
 ```sh
 bash ./scripts/build-ios-ipa.sh
 ```
 
-It builds the `iphoneos` target for generic physical iOS hardware with code signing disabled, confirms the app executable contains arm64, packages `Payload/JAGLINK.app`, validates the ZIP/IPA, and writes both the IPA and a SHA-256 checksum under `dist/` by default.
+The main JAGLINK CI workflow builds both Debug and Release simulator configurations and also builds the unsigned physical-device IPA used by numbered releases. There is no separate release-capable IPA workflow to drift from the main quality gate.
 
-The manually runnable GitHub Actions workflow **Build unsigned iPhone IPA** performs the same physical-device build and uploads exactly `JAGLINK-unsigned.ipa` plus `JAGLINK-unsigned.ipa.sha256` as a workflow artifact.
-
-A recursive Git checkout is required so the directly pinned `src/infiltratr-common` shared-library submodule is present.
+A recursive Git checkout is required so the exact `src/link` gitlink and LINK's nested Infiltratr Common dependency are present.

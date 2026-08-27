@@ -32,6 +32,8 @@ void jaglink_linux_show_about(GtkWindow *parent)
         "See LICENSE in the source package for the complete licence text.";
     const InfiltratrProjectInfo *info = jaglink_project_info();
     GtkWidget *widget = gtk_about_dialog_new();
+    GdkTexture *logo = gdk_texture_new_from_resource(
+        "/com/github/The-First-Infiltrator/Jaglink/jaglink-emblem.png");
     char *comments = g_strdup_printf(
         "%s\n\nBuild: %s",
         info->comments,
@@ -44,7 +46,10 @@ void jaglink_linux_show_about(GtkWindow *parent)
     gtk_window_set_destroy_with_parent(GTK_WINDOW(widget), TRUE);
     gtk_about_dialog_set_program_name(about, info->program_name);
     gtk_about_dialog_set_version(about, info->version);
-    gtk_about_dialog_set_logo_icon_name(about, info->icon_name);
+    if (logo != NULL) {
+        gtk_about_dialog_set_logo(about, GDK_PAINTABLE(logo));
+        g_object_unref(logo);
+    }
     gtk_about_dialog_set_comments(about, comments);
     gtk_about_dialog_set_authors(about, authors);
     gtk_about_dialog_set_website(about, info->website);

@@ -40,6 +40,9 @@ typedef LinkWorkspaceSectionDescriptor JaglinkWorkspaceSectionDescriptor;
 /** Return the semantic version of the linked JAGLINK core. */
 const char *jaglink_version(void);
 
+/** Return the build identity used by the current binary. */
+const char *jaglink_build_profile(void);
+
 /** Validate the core's shared project-metadata contract. */
 bool jaglink_self_check(void);
 

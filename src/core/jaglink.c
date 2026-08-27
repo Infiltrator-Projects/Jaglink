@@ -50,7 +50,7 @@ static const InfiltratrProjectInfo jaglink_project_info_record = {
     .executable_name = "jaglink",
     .application_id = "com.github.The-First-Infiltrator.Jaglink",
     .version = JAGLINK_VERSION,
-    .source_id = "jaglink-" JAGLINK_VERSION,
+    .source_id = "The-First-Infiltrator/JAGLINK",
     .build_profile = JAGLINK_BUILD_PROFILE,
     .author = "Xavier Wheaton and Shannon Smith",
     .website = "https://github.com/The-First-Infiltrator/Jaglink",
@@ -70,6 +70,11 @@ const InfiltratrProjectInfo *jaglink_project_info(void)
 const char *jaglink_version(void)
 {
     return JAGLINK_VERSION;
+}
+
+const char *jaglink_build_profile(void)
+{
+    return JAGLINK_BUILD_PROFILE;
 }
 
 bool jaglink_self_check(void)

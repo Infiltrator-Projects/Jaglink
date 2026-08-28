@@ -44,6 +44,7 @@ typedef LinkTelemetryRecorder JaglinkTelemetryRecorder;
 bool jaglink_telemetry_store_record(JaglinkTelemetryStore *store, uint64_t timestamp_ms, const JaglinkObd2Sample *measurement);
 bool jaglink_telemetry_store_record_transcript(JaglinkTelemetryStore *store, uint64_t timestamp_ms, const char *command, const JaglinkElm327Response *response);
 bool jaglink_telemetry_recorder_begin(JaglinkTelemetryRecorder *recorder, const JaglinkTelemetrySessionMetadata *metadata, JaglinkTelemetryTextSink sink, void *context);
+bool jaglink_telemetry_recorder_continue(JaglinkTelemetryRecorder *recorder, const JaglinkTelemetrySessionMetadata *metadata, JaglinkTelemetryTextSink sink, void *context);
 bool jaglink_telemetry_recorder_record_sample(JaglinkTelemetryRecorder *recorder, const JaglinkTelemetrySample *sample, bool favourite);
 bool jaglink_telemetry_recorder_record_response(JaglinkTelemetryRecorder *recorder, uint64_t timestamp_ms, const char *command, const JaglinkElm327Response *response);
 bool jaglink_telemetry_export_csv(const JaglinkTelemetryStore *store, const JaglinkTelemetrySessionMetadata *metadata, JaglinkTelemetryTextSink sink, void *context);

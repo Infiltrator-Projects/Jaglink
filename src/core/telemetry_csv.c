@@ -21,6 +21,16 @@ bool jaglink_telemetry_recorder_begin(
         recorder, metadata, "jaglink", sink, context);
 }
 
+bool jaglink_telemetry_recorder_continue(
+    JaglinkTelemetryRecorder *recorder,
+    const JaglinkTelemetrySessionMetadata *metadata,
+    JaglinkTelemetryTextSink sink,
+    void *context)
+{
+    return link_telemetry_recorder_continue(
+        recorder, metadata, "jaglink", sink, context);
+}
+
 bool jaglink_telemetry_recorder_record_sample(
     JaglinkTelemetryRecorder *recorder,
     const JaglinkTelemetrySample *sample,

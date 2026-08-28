@@ -238,6 +238,17 @@ static int test_telemetry(void)
     CHECK(strstr(stream.data, "sample,") != NULL);
     CHECK(strstr(stream.data, "transcript,,2000,") != NULL);
     CHECK(strstr(stream.data, "# session_ended_epoch_ms,9000\n") != NULL);
+    jaglink_telemetry_recorder_init(&recorder);
+    CHECK(jaglink_telemetry_recorder_continue(
+              &recorder, &metadata, text_sink, &stream));
+    CHECK(jaglink_telemetry_recorder_record_response(
+              &recorder, 3000U, "ATI", &response));
+    CHECK(jaglink_telemetry_recorder_finish(&recorder, 10000U));
+    const char *stream_header = strstr(
+        stream.data, "# jaglink_session_stream_version,1\n");
+    CHECK(stream_header != NULL);
+    CHECK(strstr(stream_header + 1,
+                 "# jaglink_session_stream_version,1\n") == NULL);
 
     FailingTextBuffer failing = { .fail_on_write = SIZE_MAX };
     jaglink_telemetry_recorder_init(&recorder);

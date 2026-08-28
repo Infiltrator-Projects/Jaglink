@@ -124,6 +124,7 @@ jobs:
           deb_src="$(find "$RUNNER_TEMP/cpack" -maxdepth 1 -type f -name '*.deb' -print -quit)"
           test -n "$deb_src"
           dpkg-deb -c "$deb_src" | grep -F './usr/lib/udev/rules.d/60-jaglink-openport2.rules' >/dev/null
+          dpkg-deb -c "$deb_src" | grep -F './usr/share/doc/jaglink/copyright' >/dev/null
           dpkg-deb -f "$deb_src" Depends | grep -E '(^|, )libusb-1\.0-0([ (]|,|$)' >/dev/null
           install -m 0644 "$deb_src" "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-amd64.deb"
           bash scripts/build-linux-run.sh "$RUNNER_TEMP/release"
@@ -137,7 +138,7 @@ jobs:
           dpkg --compare-versions "${VERSION}+native1" gt "${VERSION}"
           test -s "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-amd64.deb"
           test -s "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-native.run"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: JAGLINK-${{ steps.version.outputs.version }}-linux-packages
           path: ${{ runner.temp }}/release/*
@@ -208,7 +209,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path release-assets | Out-Null
           Copy-Item build-win32/Release/jaglink-discover.exe "release-assets/JAGLINK-${{ steps.version.outputs.version }}-windows-discover.exe"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: JAGLINK-${{ steps.version.outputs.version }}-windows-discover
           path: release-assets/JAGLINK-${{ steps.version.outputs.version }}-windows-discover.exe
@@ -281,7 +282,7 @@ jobs:
           test -s "$ipa"
           cp "$ipa" "$RUNNER_TEMP/JAGLINK-${VERSION}-unsigned.ipa"
           unzip -tq "$RUNNER_TEMP/JAGLINK-${VERSION}-unsigned.ipa"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: JAGLINK-${{ steps.version.outputs.version }}-unsigned-iphone-ipa
           path: ${{ runner.temp }}/JAGLINK-${{ steps.version.outputs.version }}-unsigned.ipa
@@ -317,15 +318,15 @@ jobs:
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
           echo "link_version=$link_version" >> "$GITHUB_OUTPUT"
           echo "common_version=$common_version" >> "$GITHUB_OUTPUT"
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: JAGLINK-${{ steps.release.outputs.version }}-unsigned-iphone-ipa
           path: release-assets
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: JAGLINK-${{ steps.release.outputs.version }}-linux-packages
           path: release-assets
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: JAGLINK-${{ steps.release.outputs.version }}-windows-discover
           path: release-assets

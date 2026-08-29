@@ -405,6 +405,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"JAGLINK_VERSION=\\\"$(MARKETING_VERSION)\\\"",
+					"JAGLINK_BUILD_REVISION=\\\"$(JAGLINK_SOURCE_REVISION)\\\"",
 				);
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -424,6 +425,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.2.49;
+				JAGLINK_SOURCE_REVISION = unavailable;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.The-First-Infiltrator.Jaglink";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -447,6 +449,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"JAGLINK_VERSION=\\\"$(MARKETING_VERSION)\\\"",
+					"JAGLINK_BUILD_REVISION=\\\"$(JAGLINK_SOURCE_REVISION)\\\"",
 				);
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -466,6 +469,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.2.49;
+				JAGLINK_SOURCE_REVISION = unavailable;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.github.The-First-Infiltrator.Jaglink";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

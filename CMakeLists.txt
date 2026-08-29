@@ -52,7 +52,18 @@ if(NOT JAGLINK_LINK_VERSION MATCHES "^[0-9]+\.[0-9]+\.[0-9]+$")
     message(FATAL_ERROR "Pinned LINK VERSION is not semantic: ${JAGLINK_LINK_VERSION}")
 endif()
 find_program(JAGLINK_GIT_EXECUTABLE git)
+set(JAGLINK_SOURCE_REVISION "")
 if(JAGLINK_GIT_EXECUTABLE)
+    execute_process(
+        COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${CMAKE_CURRENT_SOURCE_DIR}" rev-parse HEAD
+        OUTPUT_VARIABLE JAGLINK_SOURCE_REVISION_CANDIDATE
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        RESULT_VARIABLE JAGLINK_SOURCE_REVISION_RESULT)
+    if(JAGLINK_SOURCE_REVISION_RESULT EQUAL 0 AND
+       JAGLINK_SOURCE_REVISION_CANDIDATE MATCHES "^[0-9a-fA-F]{40}$")
+        set(JAGLINK_SOURCE_REVISION "${JAGLINK_SOURCE_REVISION_CANDIDATE}")
+    endif()
     execute_process(COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${CMAKE_CURRENT_SOURCE_DIR}" ls-tree HEAD src/link OUTPUT_VARIABLE JAGLINK_LINK_GITLINK OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET RESULT_VARIABLE JAGLINK_LINK_GITLINK_RESULT)
     execute_process(COMMAND "${JAGLINK_GIT_EXECUTABLE}" -C "${JAGLINK_LINK_DIR}" rev-parse HEAD OUTPUT_VARIABLE JAGLINK_LINK_FOUND_COMMIT OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET RESULT_VARIABLE JAGLINK_LINK_COMMIT_RESULT)
     if(JAGLINK_LINK_GITLINK_RESULT EQUAL 0 AND JAGLINK_LINK_COMMIT_RESULT EQUAL 0)
@@ -74,6 +85,10 @@ if(TARGET link-core)
     target_compile_definitions(link-core PRIVATE
         JAGLINK_VERSION="${PROJECT_VERSION}"
         JAGLINK_BUILD_PROFILE="${JAGLINK_BUILD_PROFILE}")
+    if(JAGLINK_SOURCE_REVISION)
+        target_compile_definitions(link-core PRIVATE
+            JAGLINK_BUILD_REVISION="${JAGLINK_SOURCE_REVISION}")
+    endif()
 endif()
 add_library(jaglink STATIC
     src/core/jaglink.c src/core/parameter.c src/core/scheduler.c src/core/telemetry_store.c src/core/telemetry_csv.c
@@ -82,6 +97,10 @@ add_library(jaglink STATIC
 add_library(JAGLINK::Core ALIAS jaglink)
 target_include_directories(jaglink PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_definitions(jaglink PRIVATE JAGLINK_VERSION="${PROJECT_VERSION}" JAGLINK_BUILD_PROFILE="${JAGLINK_BUILD_PROFILE}")
+if(JAGLINK_SOURCE_REVISION)
+    target_compile_definitions(jaglink PRIVATE
+        JAGLINK_BUILD_REVISION="${JAGLINK_SOURCE_REVISION}")
+endif()
 target_link_libraries(jaglink PUBLIC LINK::Core)
 set(JAGLINK_WARNING_FLAGS -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wstrict-prototypes -Wmissing-prototypes)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")

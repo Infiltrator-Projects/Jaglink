@@ -244,6 +244,16 @@ jobs:
           grep -q 'LinkDiagnosticsController' platform/apple/JagLinkDiagnosticsController.m
           grep -q 'didReceiveFlowEvent' platform/apple/JagLinkDiagnosticsController.m
           grep -q 'didReceiveFlowEvent' src/link/platform/apple/LinkDiagnosticsController.m
+          test "$(tr -d '[:space:]' < src/link/VERSION)" = "0.14.37"
+          grep -Fq '#define JAGLINK_EMBEDDED_LINK_REVISION' src/core/jaglink.c
+          grep -Fq '"b10ee3264904f9cf09af20f749b71315a1d6029a"' src/core/jaglink.c
+          grep -Fq '.source_id = "Infiltrator-Projects/Jaglink"' src/core/jaglink.c
+          grep -Fq '#include "../link/src/core/diagnostic_request.c"' src/core/jaglink.c
+          grep -Fq '#include "../link/src/core/mercedes_me_diagnostic.c"' src/core/jaglink.c
+          grep -Fq '#include "../link/src/kwp2000/kwp2000.c"' src/core/jaglink.c
+          grep -Fq '#include "link/version.h"' src/link/src/core/telemetry.c
+          ! grep -Fq 'LINK_TELEMETRY_LINK_VERSION' src/link/src/core/telemetry.c
+          ! grep -Fq '"0.14.26"' src/link/src/core/telemetry.c
           grep -Fq 'Xavier Wheaton' app/ios/JAGLINK/JAGLINKApp.swift
           grep -Fq 'Shannon Smith' app/ios/JAGLINK/JAGLINKApp.swift
       - name: Build simulator
@@ -254,7 +264,7 @@ jobs:
           set -euo pipefail
           xcodebuild -project app/ios/JAGLINK.xcodeproj -scheme JAGLINK -configuration "${{ matrix.configuration }}" \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO \
-            MARKETING_VERSION="$VERSION" build
+            MARKETING_VERSION="$VERSION" JAGLINK_SOURCE_REVISION="$GITHUB_SHA" build
 
   iphone-device-ipa:
     name: iPhone / unsigned device IPA

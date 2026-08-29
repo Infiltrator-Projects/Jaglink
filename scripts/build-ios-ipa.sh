@@ -7,6 +7,7 @@ out_dir="${1:-$repo_root/dist}"
 out_name="${2:-}"
 version="$(tr -d '[:space:]' < "$repo_root/VERSION")"
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+revision="$(git -C "$repo_root" rev-parse HEAD 2>/dev/null || printf '%s' unavailable)"
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "build-ios-ipa.sh requires macOS with Xcode." >&2
@@ -30,6 +31,7 @@ xcodebuild \
   -destination 'generic/platform=iOS' \
   -derivedDataPath "$derived" \
   MARKETING_VERSION="$version" \
+  JAGLINK_SOURCE_REVISION="$revision" \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO \
   CODE_SIGN_IDENTITY='' \

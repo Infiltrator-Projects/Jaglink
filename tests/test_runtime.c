@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "jaglink/scheduler.h"
 #include "jaglink/telemetry.h"
+#include "link/version.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -211,6 +212,14 @@ static int test_telemetry(void)
     CHECK(jaglink_telemetry_export_csv(
               &store, &metadata, text_sink, &output));
     CHECK(strstr(output.data, "# jaglink_csv_version,1\n") != NULL);
+    {
+        char expected_link_version[96];
+        (void)snprintf(expected_link_version, sizeof(expected_link_version),
+                       "# link_version,\"%s\"\n", LINK_VERSION_STRING);
+        CHECK(strstr(output.data, expected_link_version) != NULL);
+        CHECK(strstr(output.data, "# jaglink_version,\"") != NULL);
+        CHECK(strstr(output.data, "# jaglink_build_profile,\"") != NULL);
+    }
     CHECK(strstr(output.data,
                  "# adapter_identifier,\"ELM327, test \"\"adapter\"\"\"\n") != NULL);
     CHECK(strstr(output.data,
@@ -233,7 +242,15 @@ static int test_telemetry(void)
               &recorder, 2000U, "010C", &response));
     CHECK(jaglink_telemetry_recorder_finish(&recorder, 9000U));
     CHECK(strstr(stream.data, "# jaglink_session_stream_version,1\n") != NULL);
-    CHECK(strstr(stream.data, "# link_version,\"") != NULL);
+    {
+        char expected_link_version[96];
+        const char *first_link_version;
+        (void)snprintf(expected_link_version, sizeof(expected_link_version),
+                       "# link_version,\"%s\"\n", LINK_VERSION_STRING);
+        first_link_version = strstr(stream.data, expected_link_version);
+        CHECK(first_link_version != NULL);
+        CHECK(strstr(first_link_version + 1, "# link_version,") == NULL);
+    }
     CHECK(strstr(stream.data, "# build_id,\"") != NULL);
     {
         char expected_version[128];

@@ -2,7 +2,7 @@
 
 # JAGLINK
 
-[![JAGLINK CI](https://github.com/The-First-Infiltrator/Jaglink/actions/workflows/ci.yml/badge.svg)](https://github.com/The-First-Infiltrator/Jaglink/actions/workflows/ci.yml)
+[![JAGLINK CI](https://github.com/Infiltrator-Projects/Jaglink/actions/workflows/ci.yml/badge.svg)](https://github.com/Infiltrator-Projects/Jaglink/actions/workflows/ci.yml)
 
 JAGLINK is the Jaguar X-Type X400 product face built on the shared LINK vehicle-diagnostics engine.
 
@@ -78,7 +78,7 @@ CI launches the built Windows executable, waits for the `JAGLINK Discover` main 
 ## Build and test
 
 ```bash
-git clone --recurse-submodules https://github.com/The-First-Infiltrator/Jaglink.git
+git clone --recurse-submodules https://github.com/Infiltrator-Projects/Jaglink.git
 cd Jaglink
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel

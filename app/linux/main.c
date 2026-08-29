@@ -613,7 +613,7 @@ int main(int argc, char **argv)
     descriptor.brand_name = "JAGLINK";
     descriptor.brand_subtitle = "JAGUAR X-TYPE · X400";
     descriptor.version = jaglink_version();
-    descriptor.emblem_resource = "/com/github/The-First-Infiltrator/Jaglink/jaglink-emblem.png";
+    descriptor.emblem_resource = "/com/github/Infiltrator-Projects/Jaglink/jaglink-emblem.png";
     descriptor.css = jaglink_css;
     descriptor.render_section = render_section;
     descriptor.show_about = show_about;

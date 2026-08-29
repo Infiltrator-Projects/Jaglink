@@ -202,7 +202,7 @@ private struct JAGLINKAboutView: View {
 
                         Link(
                             "Project Website",
-                            destination: URL(string: "https://github.com/The-First-Infiltrator/Jaglink")!
+                            destination: URL(string: "https://github.com/Infiltrator-Projects/Jaglink")!
                         )
                         .font(.body.weight(.semibold))
                         .foregroundStyle(JAGLINKAboutStyle.warmMetal)

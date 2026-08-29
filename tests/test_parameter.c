@@ -30,14 +30,15 @@ int main(void)
     const JaglinkParameterDefinition *dpf_pressure =
         jaglink_parameter_obd2_definition(0x7aU);
 
-    passed &= check(jaglink_parameter_obd2_definition_count() == 20U,
+    const size_t descriptor_count = jaglink_parameter_obd2_definition_count();
+    passed &= check(descriptor_count == 28U,
                     "standard descriptor count mismatch");
     passed &= check(rpm != NULL && maf != NULL && rail != NULL &&
                     dpf_pressure != NULL,
                     "expected OBD descriptors missing");
     passed &= check(jaglink_parameter_obd2_definition(0xffU) == NULL,
                     "unknown PID unexpectedly has a descriptor");
-    passed &= check(jaglink_parameter_obd2_definition_at(20U) == NULL,
+    passed &= check(jaglink_parameter_obd2_definition_at(descriptor_count) == NULL,
                     "out-of-range descriptor index should fail");
     passed &= check(
         jaglink_parameter_obd2_definition_for_stable_key("obd2.engine.rpm") == rpm,
@@ -94,7 +95,7 @@ int main(void)
     passed &= check(parameter.definition == rail &&
                     jaglink_parameter_format_sample(
                         &parameter, buffer, sizeof(buffer)) &&
-                    strcmp(buffer, "123400 kPa") == 0,
+                    strcmp(buffer, "123.4 MPa") == 0,
                     "rail-pressure formatting mismatch");
 
     obd.pid = 0x7aU;

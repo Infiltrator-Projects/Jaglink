@@ -244,9 +244,9 @@ jobs:
           grep -q 'LinkDiagnosticsController' platform/apple/JagLinkDiagnosticsController.m
           grep -q 'didReceiveFlowEvent' platform/apple/JagLinkDiagnosticsController.m
           grep -q 'didReceiveFlowEvent' src/link/platform/apple/LinkDiagnosticsController.m
-          test "$(tr -d '[:space:]' < src/link/VERSION)" = "0.14.37"
+          test "$(tr -d '[:space:]' < src/link/VERSION)" = "0.14.38"
           grep -Fq '#define JAGLINK_EMBEDDED_LINK_REVISION' src/core/jaglink.c
-          grep -Fq '"b10ee3264904f9cf09af20f749b71315a1d6029a"' src/core/jaglink.c
+          grep -Fq '"73d9ad358831b3689a80c399ecf5eaeedd45aba6"' src/core/jaglink.c
           grep -Fq '.source_id = "Infiltrator-Projects/Jaglink"' src/core/jaglink.c
           grep -Fq '#include "../link/src/core/diagnostic_request.c"' src/core/jaglink.c
           grep -Fq '#include "../link/src/core/mercedes_me_diagnostic.c"' src/core/jaglink.c

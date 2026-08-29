@@ -45,6 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<NSNumber *> *)recentValuesForPID:(uint8_t)pid limit:(NSUInteger)limit;
 - (BOOL)favouriteForPID:(uint8_t)pid;
 - (void)setFavourite:(BOOL)favourite forPID:(uint8_t)pid;
+- (nullable NSData *)csvDataSnapshot;
 - (nullable NSString *)csvSnapshot;
 
 @end

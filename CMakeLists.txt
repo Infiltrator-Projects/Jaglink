@@ -67,6 +67,14 @@ if(JAGLINK_GIT_EXECUTABLE)
     endif()
 endif()
 add_subdirectory("${JAGLINK_LINK_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/link" EXCLUDE_FROM_ALL)
+# The shared telemetry recorder is compiled inside LINK::Core for CMake builds.
+# Give that target the owning product identity so Linux/Windows evidence carries
+# the same JAGLINK version/profile metadata as the direct-source Apple build.
+if(TARGET link-core)
+    target_compile_definitions(link-core PRIVATE
+        JAGLINK_VERSION="${PROJECT_VERSION}"
+        JAGLINK_BUILD_PROFILE="${JAGLINK_BUILD_PROFILE}")
+endif()
 add_library(jaglink STATIC
     src/core/jaglink.c src/core/parameter.c src/core/scheduler.c src/core/telemetry_store.c src/core/telemetry_csv.c
     src/elm327/elm327.c src/elm327/can.c src/elm327/session.c src/elm327/probe.c
@@ -148,6 +156,9 @@ if(BUILD_TESTING)
     jaglink_add_test(jaglink-test-obd2 tests/test_obd2.c)
     jaglink_add_test(jaglink-test-dtc-knowledge tests/test_dtc_knowledge.c)
     jaglink_add_test(jaglink-test-runtime tests/test_runtime.c)
+    target_compile_definitions(jaglink-test-runtime PRIVATE
+        JAGLINK_TEST_EXPECTED_VERSION="${PROJECT_VERSION}"
+        JAGLINK_TEST_EXPECTED_BUILD_PROFILE="${JAGLINK_BUILD_PROFILE}")
     jaglink_add_test(jaglink-test-parameter tests/test_parameter.c)
     jaglink_add_test(jaglink-test-parameter-store tests/test_parameter_store.c)
     jaglink_add_test(jaglink-test-scheduler-parameters tests/test_scheduler_parameters.c)

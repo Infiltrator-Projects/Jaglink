@@ -29,6 +29,8 @@ static NSString *JagLinkStringFromCString(const char *value)
     if (self == nil) return nil;
 
     LinkDiagnosticFlowConfig flowConfig = LINK_DIAGNOSTIC_FLOW_CONFIG_INIT;
+    /* Keep live CAN responder IDs (for example 7E8/7E9) in evidence. */
+    flowConfig.preserve_live_response_headers = true;
     _shared = [[LinkDiagnosticsController alloc]
         initWithProductSlug:@"jaglink"
         flowConfig:flowConfig
@@ -113,6 +115,11 @@ static NSString *JagLinkStringFromCString(const char *value)
 - (void)setFavourite:(BOOL)favourite forPID:(uint8_t)pid
 {
     [_shared setFavourite:favourite forPID:pid];
+}
+
+- (nullable NSData *)csvDataSnapshot
+{
+    return [_shared csvDataSnapshot];
 }
 
 - (nullable NSString *)csvSnapshot

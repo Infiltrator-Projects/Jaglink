@@ -61,6 +61,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var recordedSampleCount = 0
     @Published private(set) var versionText = "Unknown"
     @Published private(set) var csvExportURL: URL?
+    @Published private(set) var isPreparingCSV = false
 
     private let controller = JagLinkDiagnosticsController()
 
@@ -121,18 +122,36 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     }
 
     func prepareCSVExport() {
-        guard let csv = controller.csvSnapshot(), let data = csv.data(using: .utf8) else {
+        guard !isPreparingCSV else { return }
+        /*
+         * Copy the recorder bytes while on the main actor, then perform the
+         * filesystem write away from CoreBluetooth/session scheduling. Evidence
+         * preparation must not pause or disconnect a live diagnostic session.
+         */
+        guard let data = controller.csvDataSnapshot() else {
             clearPreparedExport()
             return
         }
-        clearPreparedExport()
+
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("JAGLINK-diagnostic-evidence-\(UUID().uuidString).csv")
-        do {
-            try data.write(to: url, options: .atomic)
-            csvExportURL = url
-        } catch {
-            csvExportURL = nil
+        isPreparingCSV = true
+
+        Task { [weak self] in
+            do {
+                try await Task.detached(priority: .utility) {
+                    try data.write(to: url, options: .atomic)
+                }.value
+                guard let self else {
+                    try? FileManager.default.removeItem(at: url)
+                    return
+                }
+                self.clearPreparedExport()
+                self.csvExportURL = url
+            } catch {
+                try? FileManager.default.removeItem(at: url)
+            }
+            self?.isPreparingCSV = false
         }
     }
 

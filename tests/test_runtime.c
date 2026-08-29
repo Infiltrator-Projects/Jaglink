@@ -233,6 +233,20 @@ static int test_telemetry(void)
               &recorder, 2000U, "010C", &response));
     CHECK(jaglink_telemetry_recorder_finish(&recorder, 9000U));
     CHECK(strstr(stream.data, "# jaglink_session_stream_version,1\n") != NULL);
+    CHECK(strstr(stream.data, "# link_version,\"") != NULL);
+    CHECK(strstr(stream.data, "# build_id,\"") != NULL);
+    {
+        char expected_version[128];
+        char expected_profile[128];
+        (void)snprintf(expected_version, sizeof(expected_version),
+                       "# jaglink_version,\"%s\"\n",
+                       JAGLINK_TEST_EXPECTED_VERSION);
+        (void)snprintf(expected_profile, sizeof(expected_profile),
+                       "# jaglink_build_profile,\"%s\"\n",
+                       JAGLINK_TEST_EXPECTED_BUILD_PROFILE);
+        CHECK(strstr(stream.data, expected_version) != NULL);
+        CHECK(strstr(stream.data, expected_profile) != NULL);
+    }
     CHECK(strstr(stream.data,
                  "record_type,sequence,timestamp_ms,pid,name,value,unit,favourite,command,result,response\n") != NULL);
     CHECK(strstr(stream.data, "sample,") != NULL);

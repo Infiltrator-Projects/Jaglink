@@ -128,7 +128,11 @@ Manually runnable build/smoke workflows are diagnostic helpers only and are not 
 
 ## Documentation
 
-See `docs/JAGUAR.md`, `docs/DISCOVER.md`, `docs/APPLE.md` and `docs/ROADMAP.md`.
+- [`docs/ORIGIN.md`](docs/ORIGIN.md) owns repository and dependency boundaries.
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) owns current completion status and priorities.
+- [`docs/JAGUAR.md`](docs/JAGUAR.md), [`docs/DISCOVER.md`](docs/DISCOVER.md) and [`docs/APPLE.md`](docs/APPLE.md) are scoped vehicle, specialist-reader and platform notes; they do not override LINK's shared contracts.
+
+The committed gitlinks and `VERSION` files are the sole authorities for dependency and source versions.
 
 ## Licence
 

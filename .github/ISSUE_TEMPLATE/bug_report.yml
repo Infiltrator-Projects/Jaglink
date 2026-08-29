@@ -13,7 +13,7 @@ body:
     attributes:
       label: JAGLINK version or commit
       description: Release number, tag, or commit SHA.
-      placeholder: "0.2.49 or b291fec..."
+      placeholder: "0.2.50 or 155afae..."
     validations:
       required: true
 

@@ -8,4 +8,7 @@ LINK owns the shared workspace, ISO-TP, byte-stream transport ABI, ELM327 framin
 
 JAGLINK owns Jaguar identity, X400-specific definitions, evidence-gated Jaguar behaviour, branding and product presentation. Product compatibility façades preserve the historical `jaglink_*` API while delegating shared runtime behaviour to LINK.
 
-As of JAGLINK 0.2.6, standard OBD-II and UDS remain the next major shared-code migration candidates.
+Standard OBD-II, UDS and generic diagnostic sequencing have now migrated to
+LINK. JAGLINK keeps only compatibility façades over those shared APIs; future
+migration work is limited to genuinely reusable shell/packaging mechanics that
+can move without carrying Jaguar definitions or branding into LINK.

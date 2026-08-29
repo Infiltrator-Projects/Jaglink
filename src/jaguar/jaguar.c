@@ -13,6 +13,9 @@ static const char x400_dtc_provenance[] =
 static const char x400_fuel_used_provenance[] =
     "Jaguar X-TYPE Electrical Guide CAN message matrix: ID 0x44D, CAN FUEL USED, ECM to instrument cluster, data for trip computer calculations. Numerical byte layout/scaling is not yet vehicle-verified.";
 
+/* These catalogues describe evidence, not transmit authority.  Active
+ * requests still pass through LINK's read-only service policy. */
+
 static const JaglinkJaguarNetworkDefinition x400_networks[] = {
     { "x400-powertrain-can", "Powertrain CAN", JAGLINK_JAGUAR_NETWORK_CAN,
       JAGLINK_JAGUAR_NETWORK_ROLE_POWERTRAIN, 500000U,
@@ -75,6 +78,9 @@ static const JaglinkJaguarFactoryDtcDefinition x400_factory_dtcs[] = {
       "network", false, JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_dtc_provenance },
     { "U1262", "x400.gecm.scp-network", JAGLINK_JAGUAR_MODULE_GECM,
       "network", false, JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_dtc_provenance },
+    /* Factory manuals assign U1900 independently per reporting module.  Keep
+     * both records and require module-aware lookup instead of collapsing the
+     * code into one misleading vehicle-wide definition. */
     { "U1900", "x400.abs.can-network", JAGLINK_JAGUAR_MODULE_ABS_DSC,
       "network", false, JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_dtc_provenance },
     { "U1900", "x400.ic.can-network", JAGLINK_JAGUAR_MODULE_INSTRUMENT_CLUSTER,
@@ -82,6 +88,8 @@ static const JaglinkJaguarFactoryDtcDefinition x400_factory_dtcs[] = {
 };
 
 static const JaglinkJaguarFuelSignalDefinition x400_fuel_signals[] = {
+    /* Message identity is corroborated; byte layout is intentionally withheld
+     * until a capture can make the decoder vehicle-verifiable. */
     { "x400-can-fuel-used", "CAN FUEL USED", "x400-powertrain-can", 0x44dU,
       JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, false, x400_fuel_used_provenance }
 };
@@ -211,6 +219,8 @@ bool jaglink_jaguar_fuel_signal_definition_is_valid(
         definition->network_key == NULL || definition->network_key[0] == '\0' ||
         definition->provenance == NULL || definition->provenance[0] == '\0' ||
         definition->message_id > 0x7ffU || !valid_status(definition->status)) return false;
+    /* A decoder is a stronger claim than message identity, so it may only be
+     * advertised after vehicle verification. */
     return !definition->decoder_verified ||
            definition->status == JAGLINK_JAGUAR_DEFINITION_VEHICLE_VERIFIED;
 }

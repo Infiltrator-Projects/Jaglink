@@ -126,7 +126,7 @@ int main(void)
                "project info licence mismatch") ||
         !check(strcmp(project_info->icon_name, "jaglink") == 0,
                "project info icon mismatch") ||
-        !check(strcmp(project_info->source_id, "The-First-Infiltrator/JAGLINK") == 0,
+        !check(strcmp(project_info->source_id, "Infiltrator-Projects/Jaglink") == 0,
                "project info source identity mismatch") ||
         !check(strcmp(project_info->build_profile, jaglink_build_profile()) == 0,
                "project info build profile mismatch")) {

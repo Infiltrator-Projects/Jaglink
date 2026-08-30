@@ -82,7 +82,7 @@ jobs:
           submodules: recursive
       - run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential cmake dpkg-dev libgtk-4-dev libbluetooth-dev libusb-1.0-0-dev pkg-config
+          sudo apt-get install -y --no-install-recommends build-essential cmake dpkg-dev libgtk-4-dev libbluetooth-dev libusb-1.0-0-dev pkg-config xvfb
       - id: version
         shell: bash
         run: |
@@ -98,6 +98,14 @@ jobs:
           set -euo pipefail
           ldd ./build-linux/jaglink | grep -F 'libusb-1.0.so' >/dev/null
           grep -aF 'OP2:Tactrix OpenPort 2.0' ./build-linux/jaglink >/dev/null
+      - name: Stress disconnected sidebar navigation
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/navigation-stress.log"
+          timeout 20s xvfb-run -a ./build-linux/jaglink --ui-navigation-stress | tee "$log"
+          grep -Fq 'LINK GTK navigation stress verified:' "$log"
+          grep -Fq 'sidebar selections while disconnected' "$log"
       - name: Verify deterministic Linux emblem, About and shared diagnostics
         shell: bash
         run: |
@@ -244,9 +252,9 @@ jobs:
           grep -q 'LinkDiagnosticsController' platform/apple/JagLinkDiagnosticsController.m
           grep -q 'didReceiveFlowEvent' platform/apple/JagLinkDiagnosticsController.m
           grep -q 'didReceiveFlowEvent' src/link/platform/apple/LinkDiagnosticsController.m
-          test "$(tr -d '[:space:]' < src/link/VERSION)" = "0.14.40"
+          test "$(tr -d '[:space:]' < src/link/VERSION)" = "0.14.42"
           grep -Fq '#define JAGLINK_EMBEDDED_LINK_REVISION' src/core/jaglink.c
-          grep -Fq '"cc0a56936a587a3a7d5c297a0e4b10237c0fd055"' src/core/jaglink.c
+          grep -Fq '"00633cce9173be4ad93cb13f935d03c6669dc988"' src/core/jaglink.c
           grep -Fq '.source_id = "Infiltrator-Projects/Jaglink"' src/core/jaglink.c
           grep -Fq '#include "../link/src/core/diagnostic_request.c"' src/core/jaglink.c
           grep -Fq '#include "../link/src/core/mercedes_me_diagnostic.c"' src/core/jaglink.c

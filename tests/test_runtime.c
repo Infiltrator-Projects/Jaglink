@@ -241,7 +241,7 @@ static int test_telemetry(void)
     CHECK(jaglink_telemetry_recorder_record_response(
               &recorder, 2000U, "010C", &response));
     CHECK(jaglink_telemetry_recorder_finish(&recorder, 9000U));
-    CHECK(strstr(stream.data, "# jaglink_session_stream_version,1\n") != NULL);
+    CHECK(strstr(stream.data, "# jaglink_session_stream_version,2\n") != NULL);
     {
         char expected_link_version[96];
         const char *first_link_version;
@@ -265,7 +265,7 @@ static int test_telemetry(void)
         CHECK(strstr(stream.data, expected_profile) != NULL);
     }
     CHECK(strstr(stream.data,
-                 "record_type,sequence,timestamp_ms,pid,name,value,unit,favourite,command,result,response\n") != NULL);
+                 "record_type,sequence,timestamp_ms,pid,name,value,unit,favourite,responder_can_id,responder_extended,command,result,response\n") != NULL);
     CHECK(strstr(stream.data, "sample,") != NULL);
     CHECK(strstr(stream.data, "transcript,,2000,") != NULL);
     CHECK(strstr(stream.data, "# session_ended_epoch_ms,9000\n") != NULL);
@@ -276,10 +276,10 @@ static int test_telemetry(void)
               &recorder, 3000U, "ATI", &response));
     CHECK(jaglink_telemetry_recorder_finish(&recorder, 10000U));
     const char *stream_header = strstr(
-        stream.data, "# jaglink_session_stream_version,1\n");
+        stream.data, "# jaglink_session_stream_version,2\n");
     CHECK(stream_header != NULL);
     CHECK(strstr(stream_header + 1,
-                 "# jaglink_session_stream_version,1\n") == NULL);
+                 "# jaglink_session_stream_version,2\n") == NULL);
 
     FailingTextBuffer failing = { .fail_on_write = SIZE_MAX };
     jaglink_telemetry_recorder_init(&recorder);

@@ -101,8 +101,9 @@ A successful numbered release is atomic across supported targets and publishes:
 | `JAGLINK-<version>-linux-amd64.deb` | Generic Linux amd64 Debian package. |
 | `JAGLINK-<version>-linux-native.run` | Native local Linux build/test/install program. |
 | `JAGLINK-<version>-windows-discover.exe` | JAGLINK Discover specialist read-only ECU/module scanner and evidence application. |
-| `JAGLINK-<version>-source.zip` | Exact tested source archive including the pinned dependency tree. |
 | `SHA256SUMS.txt` | SHA-256 checksums for all project-owned release artifacts. |
+
+GitHub automatically provides Source code (zip) and Source code (tar.gz) archives for every tagged release; JAGLINK does not publish a duplicate project-owned source archive.
 
 Release notes derive the LINK and Common versions from that exact dependency tree instead of maintaining separate hard-coded version strings.
 

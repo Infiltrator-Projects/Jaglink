@@ -252,9 +252,9 @@ jobs:
           grep -q 'LinkDiagnosticsController' platform/apple/JagLinkDiagnosticsController.m
           grep -q 'didReceiveFlowEvent' platform/apple/JagLinkDiagnosticsController.m
           grep -q 'didReceiveFlowEvent' src/link/platform/apple/LinkDiagnosticsController.m
-          test "$(tr -d '[:space:]' < src/link/VERSION)" = "0.14.43"
+          test "$(tr -d '[:space:]' < src/link/VERSION)" = "0.14.58"
           grep -Fq '#define JAGLINK_EMBEDDED_LINK_REVISION' src/core/jaglink.c
-          grep -Fq '"f894a88d3a63de08b6c13b9fb3ad69d32ed6c78f"' src/core/jaglink.c
+          grep -Fq '"539f6416c23901608bab2c0ddb6db47be2b98c31"' src/core/jaglink.c
           grep -Fq '.source_id = "Infiltrator-Projects/Jaglink"' src/core/jaglink.c
           grep -Fq '#include "../link/src/core/diagnostic_request.c"' src/core/jaglink.c
           grep -Fq '#include "../link/src/core/mercedes_me_diagnostic.c"' src/core/jaglink.c
@@ -348,7 +348,7 @@ jobs:
         with:
           name: JAGLINK-${{ steps.release.outputs.version }}-windows-discover
           path: release-assets
-      - name: Build complete source archive and checksums
+      - name: Verify release artifacts and build checksums
         shell: bash
         env:
           VERSION: ${{ steps.release.outputs.version }}
@@ -361,10 +361,6 @@ jobs:
             "JAGLINK-${VERSION}-windows-discover.exe"; do
             test -s "release-assets/$file"
           done
-          staging="$RUNNER_TEMP/JAGLINK-${VERSION}"
-          mkdir -p "$staging"
-          rsync -a --exclude='.git' --exclude='release-assets' ./ "$staging/"
-          (cd "$RUNNER_TEMP" && zip -qry "$GITHUB_WORKSPACE/release-assets/JAGLINK-${VERSION}-source.zip" "JAGLINK-${VERSION}")
           (cd release-assets && sha256sum JAGLINK-* > SHA256SUMS.txt)
       - name: Stage complete draft and publish exact immutable release
         shell: bash
@@ -403,7 +399,6 @@ jobs:
             "JAGLINK-${VERSION}-linux-amd64.deb" \
             "JAGLINK-${VERSION}-linux-native.run" \
             "JAGLINK-${VERSION}-windows-discover.exe" \
-            "JAGLINK-${VERSION}-source.zip" \
             "SHA256SUMS.txt"; do
             grep -Fxq "$expected" <<<"$assets"
           done

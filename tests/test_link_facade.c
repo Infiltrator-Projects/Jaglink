@@ -28,6 +28,28 @@ int main(void)
         fputs("JAGLINK did not inherit the completed LINK J1979 catalogue\n", stderr);
         return 1;
     }
+    if (jaglink_obd2_parameter_identifier_namespace_count(0x01U) != 256U ||
+        jaglink_obd2_parameter_identifier_namespace_count(0x05U) != 256U ||
+        jaglink_obd2_parameter_identifier_namespace_count(0x06U) != 256U ||
+        jaglink_obd2_parameter_identifier_namespace_count(0x09U) != 256U ||
+        strcmp(jaglink_obd2_obdonuds_revision(), "J1979-2_202604") != 0) {
+        fputs("JAGLINK did not inherit complete parameterized OBD namespaces\n", stderr);
+        return 1;
+    }
+    {
+        const JaglinkElm327ProtocolDefinition *legacy =
+            jaglink_elm327_protocol_definition(JAGLINK_ELM327_PROTOCOL_SAE_J1850_PWM);
+        char protocol_command[8];
+        if (jaglink_elm327_protocol_definition_count() != 13U ||
+            legacy == NULL || !legacy->classic_j1979_obd ||
+            jaglink_elm327_build_set_protocol_command(
+                JAGLINK_ELM327_PROTOCOL_ISO_9141_2,
+                protocol_command, sizeof(protocol_command)) != JAGLINK_ELM327_RESULT_OK ||
+            strcmp(protocol_command, "ATSP3") != 0) {
+            fputs("JAGLINK did not inherit the legacy OBD transport model\n", stderr);
+            return 1;
+        }
+    }
     if (jaglink_dtc_catalogue_definition_count() != 9533U ||
         strcmp(jaglink_dtc_range_model_revision(), "J2012_202509") != 0 ||
         strcmp(jaglink_dtc_catalogue_audit_revision(), "J2012DA_202607") != 0) {

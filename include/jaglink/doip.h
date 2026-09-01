@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+/** @file doip.h @brief JAGLINK aliases for LINK's shared ISO 13400 DoIP codec. */
+#ifndef JAGLINK_DOIP_H
+#define JAGLINK_DOIP_H
+#include "link/doip.h"
+typedef LinkDoipResult JaglinkDoipResult;
+typedef LinkDoipHeader JaglinkDoipHeader;
+#define JAGLINK_DOIP_HEADER_SIZE LINK_DOIP_HEADER_SIZE
+#define JAGLINK_DOIP_RESULT_OK LINK_DOIP_RESULT_OK
+#define JAGLINK_DOIP_RESULT_INVALID_ARGUMENT LINK_DOIP_RESULT_INVALID_ARGUMENT
+#define JAGLINK_DOIP_RESULT_BUFFER_TOO_SMALL LINK_DOIP_RESULT_BUFFER_TOO_SMALL
+#define JAGLINK_DOIP_RESULT_MALFORMED_FRAME LINK_DOIP_RESULT_MALFORMED_FRAME
+#define JAGLINK_DOIP_RESULT_UNEXPECTED_PAYLOAD LINK_DOIP_RESULT_UNEXPECTED_PAYLOAD
+#define JAGLINK_DOIP_PAYLOAD_ROUTING_ACTIVATION_REQUEST LINK_DOIP_PAYLOAD_ROUTING_ACTIVATION_REQUEST
+#define JAGLINK_DOIP_PAYLOAD_ALIVE_CHECK_RESPONSE LINK_DOIP_PAYLOAD_ALIVE_CHECK_RESPONSE
+#define JAGLINK_DOIP_PAYLOAD_DIAGNOSTIC_MESSAGE LINK_DOIP_PAYLOAD_DIAGNOSTIC_MESSAGE
+#define jaglink_doip_result_name link_doip_result_name
+#define jaglink_doip_encode_frame link_doip_encode_frame
+#define jaglink_doip_decode_frame link_doip_decode_frame
+#define jaglink_doip_build_routing_activation_request link_doip_build_routing_activation_request
+#define jaglink_doip_build_alive_check_response link_doip_build_alive_check_response
+#define jaglink_doip_build_diagnostic_message link_doip_build_diagnostic_message
+#define jaglink_doip_decode_diagnostic_message link_doip_decode_diagnostic_message
+#endif

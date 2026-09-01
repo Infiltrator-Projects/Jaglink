@@ -30,8 +30,23 @@ extern "C" {
 #define JAGLINK_ELM327_RESULT_UNSUPPORTED_COMMAND LINK_ELM327_RESULT_UNSUPPORTED_COMMAND
 #define JAGLINK_ELM327_RESULT_ADAPTER_ERROR LINK_ELM327_RESULT_ADAPTER_ERROR
 #define JAGLINK_ELM327_RESULT_MALFORMED_RESPONSE LINK_ELM327_RESULT_MALFORMED_RESPONSE
+#define JAGLINK_ELM327_PROTOCOL_AUTOMATIC LINK_ELM327_PROTOCOL_AUTOMATIC
+#define JAGLINK_ELM327_PROTOCOL_SAE_J1850_PWM LINK_ELM327_PROTOCOL_SAE_J1850_PWM
+#define JAGLINK_ELM327_PROTOCOL_SAE_J1850_VPW LINK_ELM327_PROTOCOL_SAE_J1850_VPW
+#define JAGLINK_ELM327_PROTOCOL_ISO_9141_2 LINK_ELM327_PROTOCOL_ISO_9141_2
+#define JAGLINK_ELM327_PROTOCOL_ISO_14230_4_SLOW LINK_ELM327_PROTOCOL_ISO_14230_4_SLOW
+#define JAGLINK_ELM327_PROTOCOL_ISO_14230_4_FAST LINK_ELM327_PROTOCOL_ISO_14230_4_FAST
+#define JAGLINK_ELM327_PROTOCOL_ISO_15765_4_11_500 LINK_ELM327_PROTOCOL_ISO_15765_4_11_500
+#define JAGLINK_ELM327_PROTOCOL_ISO_15765_4_29_500 LINK_ELM327_PROTOCOL_ISO_15765_4_29_500
+#define JAGLINK_ELM327_PROTOCOL_ISO_15765_4_11_250 LINK_ELM327_PROTOCOL_ISO_15765_4_11_250
+#define JAGLINK_ELM327_PROTOCOL_ISO_15765_4_29_250 LINK_ELM327_PROTOCOL_ISO_15765_4_29_250
+#define JAGLINK_ELM327_PROTOCOL_SAE_J1939 LINK_ELM327_PROTOCOL_SAE_J1939
 
 typedef LinkElm327Result JaglinkElm327Result;
+typedef LinkElm327ProtocolNumber JaglinkElm327ProtocolNumber;
+typedef LinkElm327ProtocolFamily JaglinkElm327ProtocolFamily;
+typedef LinkElm327ProtocolInit JaglinkElm327ProtocolInit;
+typedef LinkElm327ProtocolDefinition JaglinkElm327ProtocolDefinition;
 typedef LinkElm327Response JaglinkElm327Response;
 typedef LinkElm327Parser JaglinkElm327Parser;
 
@@ -65,6 +80,11 @@ void jaglink_elm327_init_begin(JaglinkElm327InitState *state);
 const char *jaglink_elm327_init_command(const JaglinkElm327InitState *state);
 JaglinkElm327Result jaglink_elm327_init_accept(JaglinkElm327InitState *state,
                                                const JaglinkElm327Response *response);
+#define jaglink_elm327_protocol_definition_count link_elm327_protocol_definition_count
+#define jaglink_elm327_protocol_definition_at link_elm327_protocol_definition_at
+#define jaglink_elm327_protocol_definition link_elm327_protocol_definition
+#define jaglink_elm327_protocol_family_name link_elm327_protocol_family_name
+#define jaglink_elm327_build_set_protocol_command link_elm327_build_set_protocol_command
 
 #ifdef __cplusplus
 }

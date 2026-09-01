@@ -27,29 +27,96 @@ int main(void)
         jaglink_parameter_obd2_definition(0x10U);
     const JaglinkParameterDefinition *rail =
         jaglink_parameter_obd2_definition(0x23U);
-    const JaglinkParameterDefinition *dpf_pressure =
-        jaglink_parameter_obd2_definition(0x7aU);
+    const JaglinkParameterDefinition *throttle_valve =
+        jaglink_parameter_obd2_definition(0x11U);
+    const JaglinkParameterDefinition *pedal_d =
+        jaglink_parameter_obd2_definition(0x49U);
+    const JaglinkParameterDefinition *pedal_e =
+        jaglink_parameter_obd2_definition(0x4aU);
+    const JaglinkParameterDefinition *fuel_level =
+        jaglink_parameter_obd2_definition(0x2fU);
+    const JaglinkParameterDefinition *engine_runtime =
+        jaglink_parameter_obd2_definition(0x1fU);
+    const JaglinkParameterDefinition *distance_since_clear =
+        jaglink_parameter_obd2_definition(0x31U);
+    const JaglinkParameterDefinition *mil_runtime =
+        jaglink_parameter_obd2_definition(0x4dU);
+    const JaglinkParameterDefinition *throttle_g =
+        jaglink_parameter_obd2_definition(0x8dU);
+    const JaglinkParameterDefinition *reflash_distance =
+        jaglink_parameter_obd2_definition(0xc7U);
+    const JaglinkParameterDefinition *max_speed_limit =
+        jaglink_parameter_obd2_definition(0xaaU);
+    const JaglinkParameterDefinition *traction_battery_soh =
+        jaglink_parameter_obd2_definition(0xb2U);
+    const JaglinkParameterDefinition *engine_odometer =
+        jaglink_parameter_obd2_definition(0xd3U);
 
-    const size_t descriptor_count = jaglink_parameter_obd2_definition_count();
-    passed &= check(descriptor_count == 28U,
-                    "standard descriptor count mismatch");
+    passed &= check(jaglink_parameter_obd2_definition_count() == 62U,
+                    "expanded standard scalar descriptor count mismatch");
     passed &= check(rpm != NULL && maf != NULL && rail != NULL &&
-                    dpf_pressure != NULL,
+                    throttle_valve != NULL && pedal_d != NULL &&
+                    pedal_e != NULL && fuel_level != NULL &&
+                    engine_runtime != NULL && distance_since_clear != NULL &&
+                    mil_runtime != NULL && throttle_g != NULL &&
+                    reflash_distance != NULL && max_speed_limit != NULL &&
+                    traction_battery_soh != NULL && engine_odometer != NULL,
                     "expected OBD descriptors missing");
     passed &= check(jaglink_parameter_obd2_definition(0xffU) == NULL,
                     "unknown PID unexpectedly has a descriptor");
-    passed &= check(jaglink_parameter_obd2_definition_at(descriptor_count) == NULL,
+    passed &= check(jaglink_parameter_obd2_definition_at(62U) == NULL,
                     "out-of-range descriptor index should fail");
     passed &= check(
         jaglink_parameter_obd2_definition_for_stable_key("obd2.engine.rpm") == rpm,
         "stable-key lookup mismatch");
     passed &= check(
+        throttle_valve != NULL &&
+        strcmp(throttle_valve->name, "Absolute throttle valve position") == 0,
+        "PID 0x11 must be labelled as throttle valve, not accelerator pedal");
+    passed &= check(
         jaglink_parameter_obd2_definition_for_stable_key(
-            "obd2.dpf.bank1_delta_pressure") == dpf_pressure,
-        "DPF stable-key lookup mismatch");
+            "obd2.driver.accelerator_pedal_d") == pedal_d,
+        "accelerator-pedal D stable-key lookup mismatch");
+    passed &= check(
+        jaglink_parameter_obd2_definition_for_stable_key(
+            "obd2.driver.accelerator_pedal_e") == pedal_e,
+        "accelerator-pedal E stable-key lookup mismatch");
+    passed &= check(
+        jaglink_parameter_obd2_definition_for_stable_key(
+            "obd2.fuel.tank_level") == fuel_level,
+        "fuel-level stable-key lookup mismatch");
+    passed &= check(
+        jaglink_parameter_obd2_definition_for_stable_key(
+            "obd2.engine.runtime") == engine_runtime,
+        "engine-runtime stable-key lookup mismatch");
+    passed &= check(
+        jaglink_parameter_obd2_definition_for_stable_key(
+            "obd2.maintenance.distance_since_clear") == distance_since_clear,
+        "distance-since-clear stable-key lookup mismatch");
+    passed &= check(
+        jaglink_parameter_obd2_definition_for_stable_key(
+            "obd2.emissions.mil_runtime") == mil_runtime,
+        "MIL-runtime stable-key lookup mismatch");
     passed &= check(
         jaglink_parameter_obd2_definition_for_stable_key("obd2.missing") == NULL,
         "unknown stable key unexpectedly resolved");
+
+    passed &= check(jaglink_parameter_obd2_definition(0x06U) != NULL &&
+                    jaglink_parameter_obd2_definition(0xa6U) != NULL,
+                    "expanded shared scalar catalogue is not visible through JAGLINK");
+    passed &= check(throttle_g != NULL && reflash_distance != NULL &&
+                    max_speed_limit != NULL &&
+                    traction_battery_soh != NULL &&
+                    engine_odometer != NULL,
+                    "LINK 0.14.58 scalar definitions are missing");
+    passed &= check(jaglink_parameter_obd2_definition(0x7aU) == NULL &&
+                    jaglink_parameter_obd2_definition(0x7cU) == NULL,
+                    "structured DPF PIDs must not be flattened into fake scalars");
+    passed &= check(jaglink_obd2_mode01_identifier_count() == 256U &&
+                    jaglink_obd2_mode01_assigned_count() == 220U,
+                    "complete SAE Mode 01 namespace is not visible through JAGLINK");
+    passed &= check(jaglink_obd2_pid_definition(0x01U, 0x7aU) != NULL,
+                    "structured SAE PID 0x7A is missing from shared catalogue");
 
     if (rpm != NULL) {
         JaglinkParameterKey same = rpm->key;
@@ -96,18 +163,7 @@ int main(void)
                     jaglink_parameter_format_sample(
                         &parameter, buffer, sizeof(buffer)) &&
                     strcmp(buffer, "123.4 MPa") == 0,
-                    "rail-pressure formatting mismatch");
-
-    obd.pid = 0x7aU;
-    obd.value = 2.34;
-    obd.unit = JAGLINK_OBD2_UNIT_KPA;
-    passed &= check(jaglink_parameter_from_obd2(&obd, 120U, &parameter),
-                    "DPF pressure conversion failed");
-    passed &= check(parameter.definition == dpf_pressure &&
-                    jaglink_parameter_format_sample(
-                        &parameter, buffer, sizeof(buffer)) &&
-                    strcmp(buffer, "2.34 kPa") == 0,
-                    "DPF pressure formatting mismatch");
+                    "rail-pressure display auto-scaling mismatch");
 
     if (rpm != NULL) {
         JaglinkParameterSample unavailable = { rpm, 0U, false, NAN };

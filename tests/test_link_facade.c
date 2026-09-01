@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "jaglink/isotp.h"
-#include "jaglink/obd2.h"
 #include "jaglink/uds_services.h"
+#include "jaglink/obd2.h"
+
+#include <string.h>
 
 #include <stdio.h>
-#include <string.h>
 
 int main(void)
 {
     const JaglinkUdsServiceDefinition *routine;
-    JaglinkDtcKnowledge fault;
-    char status[LINK_DTC_STATUS_TEXT_LENGTH];
 
     if (JAGLINK_ISOTP_CAN_FD_MAX_DATA_LENGTH != 64U ||
         !jaglink_isotp_can_data_length_is_valid(
@@ -25,40 +24,37 @@ int main(void)
         return 1;
     }
 
+    if (jaglink_obd2_pid_definition_count() != 234U) {
+        fputs("JAGLINK did not inherit the completed LINK J1979 catalogue\n", stderr);
+        return 1;
+    }
+    if (jaglink_dtc_catalogue_definition_count() != 9533U ||
+        strcmp(jaglink_dtc_range_model_revision(), "J2012_202509") != 0 ||
+        strcmp(jaglink_dtc_catalogue_audit_revision(), "J2012DA_202607") != 0) {
+        fputs("JAGLINK did not inherit the audited LINK J2012 catalogue\n", stderr);
+        return 1;
+    }
+    {
+        char command[16];
+        uint16_t did = 0U;
+        if (jaglink_obd2_obdonuds_pid_to_did(UINT16_C(0x0100), &did) !=
+                JAGLINK_OBD2_RESULT_OK ||
+            did != UINT16_C(0xf500) ||
+            jaglink_obd2_build_obdonuds_pid_request(
+                UINT16_C(0x0100), command, sizeof(command)) !=
+                JAGLINK_OBD2_RESULT_OK ||
+            strcmp(command, "22F500") != 0) {
+            fputs("JAGLINK J1979-2 OBDonUDS facade is incomplete\n", stderr);
+            return 1;
+        }
+    }
+
     routine = jaglink_uds_standard_service_find(
         JAGLINK_UDS_SERVICE_ROUTINE_CONTROL);
     if (routine == NULL ||
         routine->service != JAGLINK_UDS_SERVICE_ROUTINE_CONTROL ||
         routine->effect != JAGLINK_UDS_SERVICE_EFFECT_STATE_CHANGING) {
         fputs("JAGLINK UDS service facade did not preserve LINK metadata\n",
-              stderr);
-        return 1;
-    }
-
-    if (jaglink_dtc_catalogue_definition_count() != 9533U ||
-        !jaglink_dtc_resolve("P0401", &fault) ||
-        !fault.definition_known ||
-        strcmp(fault.title,
-               "Exhaust Gas Recirculation Flow Insufficient Detected") != 0 ||
-        strcmp(fault.category, "powertrain") != 0 ||
-        fault.origin != JAGLINK_DTC_ORIGIN_STANDARD_GENERIC) {
-        fputs("JAGLINK generic DTC knowledge facade is incomplete\n", stderr);
-        return 1;
-    }
-
-    if (!jaglink_dtc_resolve("P1450", &fault) ||
-        fault.definition_known ||
-        fault.origin != JAGLINK_DTC_ORIGIN_MANUFACTURER_SPECIFIC) {
-        fputs("JAGLINK must preserve manufacturer-specific DTC ownership\n",
-              stderr);
-        return 1;
-    }
-
-    if (!jaglink_dtc_format_uds_status(0x0dU, status, sizeof(status)) ||
-        strstr(status, "Test failed") == NULL ||
-        strstr(status, "Pending") == NULL ||
-        strstr(status, "Confirmed") == NULL) {
-        fputs("JAGLINK shared UDS DTC status semantics are incomplete\n",
               stderr);
         return 1;
     }

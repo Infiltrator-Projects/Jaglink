@@ -195,9 +195,7 @@ static void test_live_pid_decoding(void)
         {0x46U, "0146", "414650\r>", 40.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS},
         {0x5cU, "015C", "415C50\r>", 40.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS},
         {0x5eU, "015E", "415E03E8\r>", 50.0, 0.001, JAGLINK_OBD2_UNIT_LITRES_PER_HOUR},
-        {0x78U, "0178", "4178010FA00000000000\r>", 360.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS},
-        {0x7aU, "017A", "417A0103E800000000\r>", 10.0, 0.001, JAGLINK_OBD2_UNIT_KPA},
-        {0x7cU, "017C", "417C010FA0000000000000\r>", 360.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS}
+        {0x78U, "0178", "4178010FA0000000000000\r>", 360.0, 0.001, JAGLINK_OBD2_UNIT_CELSIUS}
     };
     size_t index;
 
@@ -214,6 +212,48 @@ static void test_live_pid_decoding(void)
         check(near_value(sample.value, cases[index].expected,
                          cases[index].tolerance),
               "sample formula matches");
+    }
+
+    {
+        static const uint8_t dpf_pressure_payload[] = {
+            UINT8_C(0x07), UINT8_C(0xff), UINT8_C(0x9c),
+            UINT8_C(0x00), UINT8_C(0x64), UINT8_C(0x00), UINT8_C(0xc8)
+        };
+        static const uint8_t dpf_temperature_payload[] = {
+            UINT8_C(0x0f), UINT8_C(0x03), UINT8_C(0x20),
+            UINT8_C(0x04), UINT8_C(0xb0), UINT8_C(0x06),
+            UINT8_C(0x40), UINT8_C(0x07), UINT8_C(0xd0)
+        };
+        LinkObd2DecodedPid decoded;
+        const LinkObd2PidDefinition *dpf_pressure =
+            link_obd2_pid_definition(UINT8_C(0x01), UINT8_C(0x7a));
+        const LinkObd2PidDefinition *dpf_temperature =
+            link_obd2_pid_definition(UINT8_C(0x01), UINT8_C(0x7c));
+
+        check(dpf_pressure != NULL &&
+                  dpf_pressure->bytes == 7U &&
+                  dpf_pressure->value_kind == LINK_OBD2_VALUE_MULTI_SCALAR,
+              "DPF pressure is decoded as structured standard data");
+        check(dpf_temperature != NULL &&
+                  dpf_temperature->bytes == 9U &&
+                  dpf_temperature->value_kind == LINK_OBD2_VALUE_MULTI_SCALAR,
+              "DPF temperature is decoded as structured standard data");
+        check(link_obd2_decode_pid_payload(
+                  UINT8_C(0x01), UINT8_C(0x7a),
+                  dpf_pressure_payload, sizeof(dpf_pressure_payload), &decoded) ==
+                  LINK_OBD2_RESULT_OK &&
+                  decoded.signal_count == 3U &&
+                  near_value(decoded.signals[0].value, -1.0, 0.001) &&
+                  near_value(decoded.signals[2].value, 2.0, 0.001),
+              "DPF pressure structured formula matches LINK");
+        check(link_obd2_decode_pid_payload(
+                  UINT8_C(0x01), UINT8_C(0x7c),
+                  dpf_temperature_payload, sizeof(dpf_temperature_payload),
+                  &decoded) == LINK_OBD2_RESULT_OK &&
+                  decoded.signal_count == 4U &&
+                  near_value(decoded.signals[0].value, 40.0, 0.001) &&
+                  near_value(decoded.signals[3].value, 160.0, 0.001),
+              "DPF temperature structured formula matches LINK");
     }
 
     {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /**
  * @file obd2.h
- * @brief JAGLINK compatibility aliases for LINK's shared SAE OBD-II and generic DTC knowledge engines.
+ * @brief JAGLINK compatibility aliases for LINK's shared SAE OBD-II engine.
  */
 #ifndef JAGLINK_OBD2_H
 #define JAGLINK_OBD2_H
@@ -17,6 +17,12 @@ extern "C" {
 typedef LinkObd2Result JaglinkObd2Result;
 typedef LinkObd2Unit JaglinkObd2Unit;
 typedef LinkObd2Sample JaglinkObd2Sample;
+typedef LinkObd2PidDefinition JaglinkObd2PidDefinition;
+typedef LinkObd2DecodedSignal JaglinkObd2DecodedSignal;
+typedef LinkObd2DecodedPid JaglinkObd2DecodedPid;
+typedef LinkObd2IdentifierStatus JaglinkObd2IdentifierStatus;
+typedef LinkObd2ResponderDecodedPid JaglinkObd2ResponderDecodedPid;
+typedef LinkObd2ResponderDecodedPidList JaglinkObd2ResponderDecodedPidList;
 typedef LinkObd2PidSet JaglinkObd2PidSet;
 typedef LinkObd2DtcKind JaglinkObd2DtcKind;
 typedef LinkObd2Dtc JaglinkObd2Dtc;
@@ -50,6 +56,12 @@ typedef LinkDtcKnowledge JaglinkDtcKnowledge;
 #define JAGLINK_OBD2_UNIT_GRAMS_PER_SECOND LINK_OBD2_UNIT_GRAMS_PER_SECOND
 #define JAGLINK_OBD2_UNIT_VOLTS LINK_OBD2_UNIT_VOLTS
 #define JAGLINK_OBD2_UNIT_LITRES_PER_HOUR LINK_OBD2_UNIT_LITRES_PER_HOUR
+#define JAGLINK_OBD2_UNIT_SECONDS LINK_OBD2_UNIT_SECONDS
+#define JAGLINK_OBD2_UNIT_MINUTES LINK_OBD2_UNIT_MINUTES
+#define JAGLINK_OBD2_UNIT_KILOMETRES LINK_OBD2_UNIT_KILOMETRES
+#define JAGLINK_OBD2_UNIT_COUNT LINK_OBD2_UNIT_COUNT
+#define JAGLINK_OBD2_UNIT_RATIO LINK_OBD2_UNIT_RATIO
+#define JAGLINK_OBD2_UNIT_KILOGRAMS_PER_HOUR LINK_OBD2_UNIT_KILOGRAMS_PER_HOUR
 #define JAGLINK_OBD2_DTC_STORED LINK_OBD2_DTC_STORED
 #define JAGLINK_OBD2_DTC_PENDING LINK_OBD2_DTC_PENDING
 #define JAGLINK_OBD2_DTC_PERMANENT LINK_OBD2_DTC_PERMANENT
@@ -63,12 +75,32 @@ typedef LinkDtcKnowledge JaglinkDtcKnowledge;
 #define JAGLINK_DTC_ORIGIN_UNKNOWN LINK_DTC_ORIGIN_UNKNOWN
 #define JAGLINK_DTC_ORIGIN_STANDARD_GENERIC LINK_DTC_ORIGIN_STANDARD_GENERIC
 #define JAGLINK_DTC_ORIGIN_MANUFACTURER_SPECIFIC LINK_DTC_ORIGIN_MANUFACTURER_SPECIFIC
+#define JAGLINK_DTC_ORIGIN_STANDARD_CONTROLLED LINK_DTC_ORIGIN_STANDARD_CONTROLLED
+#define JAGLINK_DTC_ORIGIN_DOCUMENT_RESERVED LINK_DTC_ORIGIN_DOCUMENT_RESERVED
 #define JAGLINK_DTC_SOURCE_UNKNOWN LINK_DTC_SOURCE_UNKNOWN
 #define JAGLINK_DTC_SOURCE_STANDARD_GENERIC LINK_DTC_SOURCE_STANDARD_GENERIC
 
 #define jaglink_obd2_result_name link_obd2_result_name
 #define jaglink_obd2_unit_name link_obd2_unit_name
 #define jaglink_obd2_pid_name link_obd2_pid_name
+/*
+ * Real facade symbols are required here rather than preprocessor aliases:
+ * Clang exposes these declarations to Swift through JAGLINK's bridging header,
+ * while the implementation still delegates to LINK's single shared catalogue.
+ */
+size_t jaglink_obd2_pid_definition_count(void);
+const JaglinkObd2PidDefinition *jaglink_obd2_pid_definition_at(size_t index);
+const JaglinkObd2PidDefinition *jaglink_obd2_pid_definition(uint8_t mode,
+                                                         uint8_t pid);
+#define jaglink_obd2_pid_catalogue_snapshot link_obd2_pid_catalogue_snapshot
+#define jaglink_obd2_mode01_identifier_count link_obd2_mode01_identifier_count
+#define jaglink_obd2_mode01_assigned_count link_obd2_mode01_assigned_count
+#define jaglink_obd2_mode01_identifier_status link_obd2_mode01_identifier_status
+#define jaglink_obd2_j1979_audit_revision link_obd2_j1979_audit_revision
+#define jaglink_obd2_decode_pid_payload link_obd2_decode_pid_payload
+#define jaglink_obd2_obdonuds_pid_to_did link_obd2_obdonuds_pid_to_did
+#define jaglink_obd2_obdonuds_did_to_pid link_obd2_obdonuds_did_to_pid
+#define jaglink_obd2_build_obdonuds_pid_request link_obd2_build_obdonuds_pid_request
 #define jaglink_obd2_build_live_pid_request link_obd2_build_live_pid_request
 #define jaglink_obd2_build_freeze_pid_request link_obd2_build_freeze_pid_request
 #define jaglink_obd2_build_supported_pid_request link_obd2_build_supported_pid_request
@@ -79,14 +111,21 @@ typedef LinkDtcKnowledge JaglinkDtcKnowledge;
 #define jaglink_obd2_pid_set_contains link_obd2_pid_set_contains
 #define jaglink_obd2_accept_supported_pids link_obd2_accept_supported_pids
 #define jaglink_obd2_decode_live_pid link_obd2_decode_live_pid
+#define jaglink_obd2_decode_live_pid_payload link_obd2_decode_live_pid_payload
+#define jaglink_obd2_decode_live_pid_payload_responders link_obd2_decode_live_pid_payload_responders
 #define jaglink_obd2_decode_freeze_pid link_obd2_decode_freeze_pid
 #define jaglink_obd2_decode_readiness link_obd2_decode_readiness
 #define jaglink_obd2_decode_vin link_obd2_decode_vin
 #define jaglink_obd2_decode_dtcs link_obd2_decode_dtcs
 #define jaglink_obd2_decode_dtc_pair link_obd2_decode_dtc_pair
 #define jaglink_dtc_resolve link_dtc_resolve
+#define jaglink_dtc_namespace_count link_dtc_namespace_count
+#define jaglink_dtc_namespace_at link_dtc_namespace_at
 #define jaglink_dtc_catalogue_definition_count link_dtc_catalogue_definition_count
 #define jaglink_dtc_catalogue_snapshot link_dtc_catalogue_snapshot
+#define jaglink_dtc_catalogue_definition_at link_dtc_catalogue_definition_at
+#define jaglink_dtc_range_model_revision link_dtc_range_model_revision
+#define jaglink_dtc_catalogue_audit_revision link_dtc_catalogue_audit_revision
 #define jaglink_dtc_system_name link_dtc_system_name
 #define jaglink_dtc_origin_name link_dtc_origin_name
 #define jaglink_dtc_source_name link_dtc_source_name

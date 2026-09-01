@@ -16,10 +16,35 @@ private enum JagPalette {
     static let amber = Color(red: 0.790, green: 0.525, blue: 0.165)
 }
 
-private let jagDashboardColumns = [
-    GridItem(.flexible(), spacing: 14),
-    GridItem(.flexible(), spacing: 14)
-]
+private let jagLinkTheme = LinkDiagnosticTheme(
+    backgroundTop: JagPalette.cockpit,
+    backgroundMiddle: JagPalette.deepGreen,
+    backgroundBottom: JagPalette.deepGreen,
+    panel: JagPalette.panel,
+    panelRaised: JagPalette.panelRaised,
+    primaryText: JagPalette.ivory,
+    secondaryText: JagPalette.chrome,
+    mutedText: JagPalette.mutedIvory,
+    border: JagPalette.warmMetal.opacity(0.30),
+    accent: JagPalette.warmMetal,
+    success: JagPalette.racingGreen,
+    warning: JagPalette.amber,
+    fault: JagPalette.jaguarRed,
+    typography: LinkDiagnosticTypography(
+        display: .system(size: 29, weight: .semibold, design: .serif),
+        body: .body,
+        bodyBold: .body.bold(),
+        subheadline: .subheadline,
+        subheadlineBold: .subheadline.bold(),
+        headline: .headline,
+        caption: .caption,
+        captionBold: .caption.bold(),
+        caption2: .caption2,
+        caption2Bold: .caption2.bold(),
+        title3: .title3,
+        title2: .title2.bold()))
+
+private let jagDashboardColumns = LinkDiagnosticLayout.dashboardColumns
 
 private struct JaguarBadge: View {
     var size: CGFloat = 52
@@ -39,20 +64,7 @@ private struct JagStatusPill: View {
     let active: Bool
 
     var body: some View {
-        HStack(spacing: 7) {
-            Circle()
-                .fill(active ? JagPalette.racingGreen : JagPalette.chrome.opacity(0.72))
-                .frame(width: 7, height: 7)
-            Text(LocalizedStringKey(text)).textCase(.uppercase)
-                .font(.caption2.weight(.bold))
-                .tracking(0.8)
-                .lineLimit(1)
-        }
-        .foregroundStyle(JagPalette.ivory)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(Capsule().fill(JagPalette.panel))
-        .overlay(Capsule().stroke(JagPalette.warmMetal.opacity(0.34), lineWidth: 1))
+        LinkStatusPill(text: text, active: active)
     }
 }
 
@@ -68,22 +80,9 @@ private struct JagPanel<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Label(LocalizedStringKey(title), systemImage: systemImage)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(JagPalette.ivory)
+        LinkLabeledPanel(title: title, systemImage: systemImage) {
             content
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(JagPalette.panel)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(JagPalette.warmMetal.opacity(0.30), lineWidth: 1)
-        )
     }
 }
 
@@ -106,12 +105,7 @@ private struct JagHomeTile<Destination: View>: View {
     }
 
     var body: some View {
-        NavigationLink {
-            destination()
-        } label: {
-            JagTileFace(title: title, subtitle: subtitle, symbol: symbol)
-        }
-        .buttonStyle(.plain)
+        LinkHomeTile(title, subtitle, symbol, destination: destination)
     }
 }
 
@@ -122,10 +116,7 @@ private struct JagActionTile: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            JagTileFace(title: title, subtitle: subtitle, symbol: symbol)
-        }
-        .buttonStyle(.plain)
+        LinkActionTile(title: title, subtitle: subtitle, symbol: symbol, action: action)
     }
 }
 
@@ -135,48 +126,7 @@ private struct JagTileFace: View {
     let symbol: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Image(systemName: symbol)
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(JagPalette.warmMetal)
-                .frame(width: 30, height: 30, alignment: .leading)
-
-            Text(LocalizedStringKey(title))
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(JagPalette.ivory)
-                .lineLimit(1)
-
-            Text(LocalizedStringKey(subtitle))
-                .font(.caption)
-                .foregroundStyle(JagPalette.mutedIvory)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Spacer(minLength: 0)
-
-            HStack {
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(JagPalette.chrome.opacity(0.76))
-            }
-        }
-        .frame(maxWidth: .infinity, minHeight: 118, alignment: .leading)
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 19, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [JagPalette.panelRaised.opacity(0.72), JagPalette.panel],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 19, style: .continuous)
-                .stroke(JagPalette.warmMetal.opacity(0.30), lineWidth: 1)
-        )
+        LinkTileFace(title: title, subtitle: subtitle, symbol: symbol)
     }
 }
 
@@ -228,13 +178,7 @@ private struct JagMetricTile: View {
 
 private extension View {
     func jagDiagnosticScreen(_ title: String) -> some View {
-        self
-            .background(JagPalette.cockpit.ignoresSafeArea())
-            .navigationTitle(LocalizedStringKey(title))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(JagPalette.cockpit, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+        linkDiagnosticScreen(title)
     }
 }
 
@@ -242,42 +186,21 @@ struct ContentView: View {
     @StateObject private var model = ConnectionViewModel()
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                LinearGradient(
-                    colors: [JagPalette.cockpit, JagPalette.deepGreen],
-                    startPoint: .top,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        header
-                        tileGrid
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 18)
-                    .padding(.bottom, 30)
-                }
-            }
-            .toolbar(.hidden, for: .navigationBar)
-            .tint(JagPalette.warmMetal)
-        }
+        LinkCommandCentreShell(
+            showProgress: model.isActive && !model.isReady,
+            header: { header },
+            progress: { connectionProgress },
+            connection: { connectionCard },
+            primary: { primaryGrid },
+            tools: { supportingTools })
+            .linkDiagnosticTheme(jagLinkTheme)
     }
 
     private var header: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 14) {
-                brandIdentity
-                Spacer(minLength: 8)
-                JagStatusPill(text: model.statusText, active: model.isActive)
-            }
-
-            VStack(alignment: .leading, spacing: 11) {
-                brandIdentity
-                JagStatusPill(text: model.statusText, active: model.isActive)
-            }
+        LinkBrandHeader {
+            brandIdentity
+        } status: {
+            JagStatusPill(text: model.statusText, active: model.isReady)
         }
     }
 
@@ -301,42 +224,115 @@ struct ContentView: View {
         }
     }
 
-    private var tileGrid: some View {
-        LazyVGrid(columns: jagDashboardColumns, spacing: 14) {
-            JagActionTile(
-                title: "Connect",
-                subtitle: model.isActive ? "Disconnect vehicle link" : "Adapter and vehicle link",
-                symbol: model.isActive ? "cable.connector.slash" : "cable.connector"
-            ) {
-                model.isActive ? model.disconnect() : model.connect()
-            }
+    private var connectionCard: some View {
+        LinkPanel {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(model.isActive ? "Diagnostic session" : "Vehicle connection")
+                            .font(.headline)
+                            .foregroundStyle(JagPalette.ivory)
+                        Text(model.statusText)
+                            .font(.caption)
+                            .foregroundStyle(JagPalette.mutedIvory)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 12)
+                    Image(systemName: model.isReady
+                          ? "checkmark.circle.fill"
+                          : model.isActive ? "dot.radiowaves.left.and.right" : "cable.connector")
+                        .foregroundStyle(model.isReady ? JagPalette.racingGreen : JagPalette.warmMetal)
+                }
 
-            JagHomeTile("Live Data", "Sensors and values", "waveform.path.ecg") {
-                JagLiveDataView(model: model)
-            }
+                Button {
+                    model.isActive ? model.disconnect() : model.connect()
+                } label: {
+                    Label(model.isActive ? "Disconnect" : "Connect to vehicle",
+                          systemImage: model.isActive ? "cable.connector.slash" : "cable.connector")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(JagPalette.deepGreen)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(JagPalette.warmMetal))
+                }
+                .buttonStyle(.plain)
 
-            JagHomeTile("Faults", "Stored, pending, permanent", "exclamationmark.triangle.fill") {
+                if model.isReady {
+                    HStack(spacing: 9) {
+                        Image(systemName: "car.side.fill")
+                            .foregroundStyle(JagPalette.warmMetal)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(model.profileDisplayName)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(JagPalette.ivory)
+                            Text(model.vehicleVINText)
+                                .font(.caption2)
+                                .foregroundStyle(JagPalette.mutedIvory)
+                                .lineLimit(1)
+                        }
+                    }
+                } else if !model.isActive {
+                    Text("Connect once to identify the vehicle, faults, modules and supported live data.")
+                        .font(.caption)
+                        .foregroundStyle(JagPalette.mutedIvory)
+                }
+            }
+        }
+    }
+
+    private var connectionProgress: some View {
+        LinkPanel {
+            VStack(alignment: .leading, spacing: 7) {
+                Label("Connecting to vehicle", systemImage: "dot.radiowaves.left.and.right")
+                    .font(.headline)
+                    .foregroundStyle(JagPalette.ivory)
+                Text(model.statusText)
+                    .font(.subheadline)
+                    .foregroundStyle(JagPalette.chrome)
+                    .fixedSize(horizontal: false, vertical: true)
+                if model.peripheralName != "No adapter" {
+                    Text(model.peripheralName)
+                        .font(.caption)
+                        .foregroundStyle(JagPalette.mutedIvory)
+                }
+            }
+        }
+    }
+
+    private var primaryGrid: some View {
+        LinkDiagnosticGrid {
+            JagHomeTile("Faults", "Stored, pending and permanent faults", "exclamationmark.triangle.fill") {
                 JagFaultsView(model: model)
             }
-
-            JagHomeTile("Vehicle", "Identity and profile", "car.side.fill") {
+            JagHomeTile("Live Data", "Sensors and measurements", "waveform.path.ecg") {
+                JagLiveDataView(model: model)
+            }
+            JagHomeTile("Vehicle", "VIN and decoded identity", "car.side.fill") {
                 JagVehicleView(model: model)
             }
-
             JagHomeTile("Modules", "Networks and capabilities", "square.stack.3d.up.fill") {
                 JagModulesView(model: model)
             }
+        }
+    }
 
-            JagHomeTile("Dashboard", "At-a-glance measurements", "gauge.with.dots.needle.67percent") {
-                JagDashboardView(model: model)
-            }
-
-            JagHomeTile("Evidence", "Session log and CSV", "doc.text.magnifyingglass") {
-                JagEvidenceView(model: model)
-            }
-
-            JagHomeTile("Settings", "Adapter and app details", "gearshape.fill") {
-                JagSettingsView(model: model)
+    private var supportingTools: some View {
+        LinkPanel {
+            VStack(alignment: .leading, spacing: 7) {
+                LinkSectionHeader(title: "Tools", kicker: "Secondary")
+                LinkCompactLink("Dashboard", "At-a-glance live measurements", "gauge.with.dots.needle.67percent") {
+                    JagDashboardView(model: model)
+                }
+                Divider().overlay(JagPalette.warmMetal.opacity(0.30))
+                LinkCompactLink("Evidence", "Session log and CSV export", "doc.text.magnifyingglass") {
+                    JagEvidenceView(model: model)
+                }
+                Divider().overlay(JagPalette.warmMetal.opacity(0.30))
+                LinkCompactLink("Settings", "Adapter and app preferences", "gearshape.fill") {
+                    JagSettingsView(model: model)
+                }
             }
         }
     }

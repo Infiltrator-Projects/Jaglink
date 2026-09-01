@@ -13,6 +13,7 @@
 		A00000000000000000000004 /* ../../platform/apple/JagLinkBLETransport.m in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000007 /* ../../platform/apple/JagLinkBLETransport.m */; };
 		A00000000000000000000005 /* ../../platform/apple/JagLinkDiagnosticsController.m in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000009 /* ../../platform/apple/JagLinkDiagnosticsController.m */; };
 		A00000000000000000000024 /* ../../src/link/platform/apple/LinkDiagnosticsController.m in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000024 /* ../../src/link/platform/apple/LinkDiagnosticsController.m */; };
+		A00000000000000000000025 /* ../../src/link/platform/apple/LinkDiagnosticUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000025 /* ../../src/link/platform/apple/LinkDiagnosticUI.swift */; };
 		A00000000000000000000010 /* ../../src/core/jaglink.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000010 /* ../../src/core/jaglink.c */; };
 		A00000000000000000000011 /* ../../src/jaguar/jaguar.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000011 /* ../../src/jaguar/jaguar.c */; };
 		A00000000000000000000023 /* ../../src/jaguar/vin.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000023 /* ../../src/jaguar/vin.c */; };
@@ -64,6 +65,7 @@
 		B00000000000000000000008 /* ../../platform/apple/JagLinkDiagnosticsController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ../../platform/apple/JagLinkDiagnosticsController.h; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000009 /* ../../platform/apple/JagLinkDiagnosticsController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ../../platform/apple/JagLinkDiagnosticsController.m; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000024 /* ../../src/link/platform/apple/LinkDiagnosticsController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ../../src/link/platform/apple/LinkDiagnosticsController.m; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000025 /* ../../src/link/platform/apple/LinkDiagnosticUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../src/link/platform/apple/LinkDiagnosticUI.swift; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000010 /* ../../src/core/jaglink.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/jaglink.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000011 /* ../../src/jaguar/jaguar.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/jaguar/jaguar.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000023 /* ../../src/jaguar/vin.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/jaguar/vin.c; sourceTree = SOURCE_ROOT; };
@@ -149,6 +151,7 @@
 				B00000000000000000000008 /* ../../platform/apple/JagLinkDiagnosticsController.h */,
 				B00000000000000000000009 /* ../../platform/apple/JagLinkDiagnosticsController.m */,
 				B00000000000000000000024 /* ../../src/link/platform/apple/LinkDiagnosticsController.m */,
+				B00000000000000000000025 /* ../../src/link/platform/apple/LinkDiagnosticUI.swift */,
 			);
 			name = "Apple Platform";
 			sourceTree = "<group>";
@@ -338,6 +341,7 @@
 				A00000000000000000000004 /* ../../platform/apple/JagLinkBLETransport.m in Sources */,
 				A00000000000000000000005 /* ../../platform/apple/JagLinkDiagnosticsController.m in Sources */,
 				A00000000000000000000024 /* ../../src/link/platform/apple/LinkDiagnosticsController.m in Sources */,
+				A00000000000000000000025 /* ../../src/link/platform/apple/LinkDiagnosticUI.swift in Sources */,
 				A00000000000000000000010 /* ../../src/core/jaglink.c in Sources */,
 				A00000000000000000000011 /* ../../src/jaguar/jaguar.c in Sources */,
 				A00000000000000000000023 /* ../../src/jaguar/vin.c in Sources */,

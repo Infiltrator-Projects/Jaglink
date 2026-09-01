@@ -40,6 +40,7 @@ jobs:
           grep -q 'src/uds/uds_services.c' src/link/CMakeLists.txt
           grep -q 'link_uds_standard_service_count' src/link/src/uds/uds_services.c
           grep -Fq '#include "../link/src/uds/uds_services.c"' src/uds/uds.c
+          grep -Fq '#include "../link/src/uds/uds_server.c"' src/uds/uds.c
           grep -q 'link_elm327_parser_feed' src/link/src/elm327/elm327.c
           grep -q 'link_obd2_decode_live_pid' src/link/src/obd2/obd2.c
           grep -q 'link_uds_decode_response' src/link/src/uds/uds.c

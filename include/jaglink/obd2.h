@@ -7,6 +7,7 @@
 #define JAGLINK_OBD2_H
 
 #include "jaglink/elm327.h"
+#include "jaglink/j1979da.h"
 #include "link/obd2.h"
 #include "link/dtc_knowledge.h"
 

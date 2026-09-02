@@ -179,7 +179,7 @@ private struct JAGLINKAboutView: View {
                                 .font(.system(size: 34, weight: .black, design: .rounded))
                                 .tracking(2.0)
                                 .foregroundStyle(JAGLINKAboutStyle.ivory)
-                            Text("X400 · JAGUAR DIAGNOSTICS")
+                            Text("JAGUAR · LINK DIAGNOSTICS")
                                 .font(.caption2.weight(.bold))
                                 .tracking(1.7)
                                 .foregroundStyle(JAGLINKAboutStyle.warmMetal)
@@ -189,7 +189,7 @@ private struct JAGLINKAboutView: View {
                             .font(.subheadline.monospaced())
                             .foregroundStyle(JAGLINKAboutStyle.chrome)
 
-                        Text("A C-first, open-source Jaguar X-Type X400 diagnostics platform authored by Xavier Wheaton and Shannon Smith.")
+                        Text("A C-first, open-source Jaguar diagnostics platform authored by Xavier Wheaton and Shannon Smith.")
                             .font(.body)
                             .multilineTextAlignment(.center)
                             .foregroundStyle(JAGLINKAboutStyle.ivory)

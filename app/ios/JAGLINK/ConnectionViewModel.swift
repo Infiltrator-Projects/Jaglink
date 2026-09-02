@@ -44,7 +44,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var peripheralName = "No adapter"
     @Published private(set) var adapterIdentifier = "Unknown"
     @Published private(set) var vehicleVINText = "Waiting for VIN"
-    @Published private(set) var vehiclePlatformText = "Jaguar X400 identity pending"
+    @Published private(set) var vehiclePlatformText = "Jaguar vehicle identity pending"
     @Published private(set) var vehicleConfigurationText = "Waiting for standard VIN"
     @Published private(set) var vehiclePowertrainText = "Waiting for standard VIN"
     @Published private(set) var vehicleBuildText = "Waiting for standard VIN"
@@ -66,7 +66,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var isSimulationActive = false
     @Published private(set) var diagnosticParameters = [DiagnosticParameter]()
     @Published private(set) var jaguarNetworks = [JaguarNetworkInfo]()
-    @Published private(set) var profileDisplayName = "Jaguar X-Type (X400)"
+    @Published private(set) var profileDisplayName = "Jaguar vehicle"
     @Published private(set) var recordedSampleCount = 0
     @Published private(set) var versionText = "Unknown"
     @Published private(set) var csvExportURL: URL?

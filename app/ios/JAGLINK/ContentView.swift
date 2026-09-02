@@ -303,6 +303,9 @@ struct ContentView: View {
 
     private var primaryGrid: some View {
         LinkDiagnosticGrid {
+            JagHomeTile("OBD", "Common legacy, transitional and standard diagnostics", "cpu") {
+                LinkStandardObdView(snapshot: obdSnapshot)
+            }
             JagHomeTile("Faults", "Stored, pending and permanent faults", "exclamationmark.triangle.fill") {
                 JagFaultsView(model: model)
             }
@@ -316,6 +319,22 @@ struct ContentView: View {
                 JagModulesView(model: model)
             }
         }
+    }
+
+    private var obdSnapshot: LinkStandardObdSnapshot {
+        LinkStandardObdSnapshot(
+            capability: model.diagnosticCapabilityText,
+            capabilityDetail: model.diagnosticCapabilityDetailText,
+            vin: model.standardVINText,
+            responderSummary: model.standardResponderSummary,
+            pidSummary: model.supportedPIDSummary,
+            readiness: model.readinessStatusText,
+            readinessMonitors: model.readinessMonitorStatus,
+            freezeFrame: model.freezeFrameContext,
+            storedDTCs: model.storedDTCs,
+            pendingDTCs: model.pendingDTCs,
+            permanentDTCs: model.permanentDTCs,
+            liveRows: model.standardLiveValueRows)
     }
 
     private var supportingTools: some View {

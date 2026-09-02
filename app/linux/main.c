@@ -637,9 +637,9 @@ int main(int argc, char **argv)
     link_fuel_economy_init(&context.fuel_economy);
     jaglink_linux_resources_register_resource();
     descriptor.app_id = "com.github.The-First-Infiltrator.Jaglink";
-    descriptor.window_title = "JAGLINK · Jaguar X400 Diagnostics";
+    descriptor.window_title = "JAGLINK · Jaguar Diagnostics";
     descriptor.brand_name = "JAGLINK";
-    descriptor.brand_subtitle = "JAGUAR X-TYPE · X400";
+    descriptor.brand_subtitle = "JAGUAR · LINK DIAGNOSTICS";
     descriptor.version = jaglink_version();
     descriptor.emblem_resource = "/com/github/Infiltrator-Projects/Jaglink/jaglink-emblem.png";
     descriptor.css = jaglink_css;

@@ -33,19 +33,19 @@ typedef struct JaglinkLinuxContext {
 
 static const char jaglink_css[] =
     "window { background: #061a13; color: #eee8da; }"
-    ".link-connection-bar { background: #0b2d21; border: 1px solid rgba(183,154,98,0.52); }"
-    ".link-link-button { background: #b79a62; color: #071b14; border-radius: 10px; }"
+    ".link-connection-bar { background: #0b2d21; border-color: rgba(183,154,98,0.52); }"
+    ".link-link-button { background: #b79a62; color: #071b14; }"
     ".link-brand { color: #eee8da; font-family: serif; }"
     ".link-brand-subtitle { color: #b79a62; }"
     ".link-section-title { color: #eee8da; }"
     ".link-section-summary { color: #9fa9a2; }"
-    ".link-card { background: linear-gradient(135deg,#0d3829,#09291f); border: 1px solid rgba(183,154,98,0.42); border-radius: 18px; padding: 20px; }"
-    ".link-card-kicker { color: #b79a62; font-size: 10px; font-weight: 800; letter-spacing: 2px; }"
-    ".link-card-title { color: #eee8da; font-family: serif; font-size: 20px; font-weight: 800; }"
+    ".link-card { background: linear-gradient(135deg,#0d3829,#09291f); border-color: rgba(183,154,98,0.42); }"
+    ".link-card-kicker { color: #b79a62; font-weight: 800; }"
+    ".link-card-title { color: #eee8da; font-family: serif; font-weight: 800; }"
     ".link-detail-label { color: #9fa9a2; }"
     ".link-detail-value { color: #eee8da; font-weight: 700; }"
     ".link-card-note { color: #c8c2b3; }"
-    ".link-status-chip { padding: 7px 11px; border-radius: 999px; border: 1px solid rgba(183,154,98,0.5); font-weight: 700; }"
+    ".link-status-chip { border-color: rgba(183,154,98,0.5); font-weight: 700; }"
     ".state-warning { color: #d9bc7b; border-color: #8c7141; }"
     ".state-success { color: #87c99f; border-color: #48775a; }";
 

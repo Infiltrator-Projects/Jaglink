@@ -117,6 +117,15 @@ jobs:
           grep -q 'link_diagnostic_flow_start' src/link/platform/linux/link-gtk-shell.c
           grep -q 'link_elm327_session_begin' src/link/platform/linux/link-gtk-shell.c
           grep -q 'diagnostic_changed' app/linux/main.c
+          if grep -Eq '\.link-(connection-bar|device-row|adapter-combo|toolbar-button|link-button|save-session-button|card|status-chip)[^{]*\{[^}]*((min|max)-(width|height)|padding|border-radius)' app/linux/main.c; then
+            echo 'Shared Linux shell geometry must come from LINK, not JAGLINK CSS.' >&2
+            exit 1
+          fi
+          if grep -Fq 'adapter_combo_width' app/linux/main.c src/link/platform/linux/link-gtk-shell.h; then
+            echo 'Adapter-selector width must be LINK-owned.' >&2
+            exit 1
+          fi
+          grep -Fq 'gtk_widget_set_hexpand(shell->device_combo, TRUE);' src/link/platform/linux/link-gtk-shell.c
           grep -Fq 'Xavier Wheaton' app/linux/about-dialog.c
           grep -Fq 'Shannon Smith' app/linux/about-dialog.c
           grep -Fq 'Generic / APT package' app/linux/about-dialog.c

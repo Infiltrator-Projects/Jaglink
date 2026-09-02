@@ -212,7 +212,7 @@ struct ContentView: View {
                     .font(.system(size: 29, weight: .semibold, design: .serif))
                     .tracking(3.8)
                     .foregroundStyle(JagPalette.ivory)
-                Text("X400 · JAGUAR DIAGNOSTICS")
+                Text("JAGUAR · LINK DIAGNOSTICS")
                     .font(.caption2.weight(.bold))
                     .tracking(1.4)
                     .foregroundStyle(JagPalette.warmMetal)

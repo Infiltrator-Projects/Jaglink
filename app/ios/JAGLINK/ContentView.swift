@@ -303,52 +303,21 @@ struct ContentView: View {
 
     private var primaryGrid: some View {
         LinkDiagnosticGrid {
-            JagHomeTile("OBD", "Common legacy, transitional and standard diagnostics", "cpu") {
-                LinkStandardObdView(snapshot: obdSnapshot)
-            }
-            JagHomeTile("Faults", "Stored, pending and permanent faults", "exclamationmark.triangle.fill") {
-                JagFaultsView(model: model)
-            }
-            JagHomeTile("Live Data", "Sensors and measurements", "waveform.path.ecg") {
-                JagLiveDataView(model: model)
-            }
-            JagHomeTile("Vehicle", "VIN and decoded identity", "car.side.fill") {
-                JagVehicleView(model: model)
-            }
-            JagHomeTile("Modules", "Networks and capabilities", "square.stack.3d.up.fill") {
-                JagModulesView(model: model)
-            }
+            LinkTaskTile(.vehicle) { JagVehicleView(model: model) }
+            LinkTaskTile(.log) { JagEvidenceView(model: model) }
+            LinkTaskTile(.errors) { JagFaultsView(model: model) }
+            LinkTaskTile(.dashboard) { JagDashboardView(model: model) }
+            LinkTaskTile(.table) { JagTableView(model: model) }
+            LinkTaskTile(.graph) { JagGraphView(model: model) }
+            LinkTaskTile(.tests) { JagTestsView(model: model) }
+            LinkTaskTile(.services) { JagServicesView(model: model) }
         }
-    }
-
-    private var obdSnapshot: LinkStandardObdSnapshot {
-        LinkStandardObdSnapshot(
-            capability: model.diagnosticCapabilityText,
-            capabilityDetail: model.diagnosticCapabilityDetailText,
-            vin: model.standardVINText,
-            responderSummary: model.standardResponderSummary,
-            pidSummary: model.supportedPIDSummary,
-            readiness: model.readinessStatusText,
-            readinessMonitors: model.readinessMonitorStatus,
-            freezeFrame: model.freezeFrameContext,
-            storedDTCs: model.storedDTCs,
-            pendingDTCs: model.pendingDTCs,
-            permanentDTCs: model.permanentDTCs,
-            liveRows: model.standardLiveValueRows)
     }
 
     private var supportingTools: some View {
         LinkPanel {
             VStack(alignment: .leading, spacing: 7) {
-                LinkSectionHeader(title: "Tools", kicker: "Secondary")
-                LinkCompactLink("Dashboard", "At-a-glance live measurements", "gauge.with.dots.needle.67percent") {
-                    JagDashboardView(model: model)
-                }
-                Divider().overlay(JagPalette.warmMetal.opacity(0.30))
-                LinkCompactLink("Evidence", "Session log and CSV export", "doc.text.magnifyingglass") {
-                    JagEvidenceView(model: model)
-                }
-                Divider().overlay(JagPalette.warmMetal.opacity(0.30))
+                LinkSectionHeader(title: "Settings", kicker: "Application")
                 LinkCompactLink("Settings", "Adapter and app preferences", "gearshape.fill") {
                     JagSettingsView(model: model)
                 }
@@ -382,6 +351,27 @@ private struct JagVehicleView: View {
                     jagDivider
                     jagValueRow("Status", model.statusText, icon: "checkmark.seal")
                 }
+                JagPanel(title: "Control units", systemImage: "square.stack.3d.up.fill") {
+                    NavigationLink {
+                        JagModulesView(model: model)
+                    } label: {
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Networks and module inventory")
+                                    .font(.headline)
+                                    .foregroundStyle(JagPalette.ivory)
+                                Text("Open discovered X400 networks and capability details")
+                                    .font(.caption)
+                                    .foregroundStyle(JagPalette.mutedIvory)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(JagPalette.warmMetal)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+
             }
             .padding(16)
         }
@@ -446,7 +436,7 @@ private struct JagFaultsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
-                JagPanel(title: "Fault Memory", systemImage: "exclamationmark.triangle.fill") {
+                JagPanel(title: "Errors", systemImage: "exclamationmark.triangle.fill") {
                     HStack {
                         Text(LocalizedStringKey(model.faultScanStatusText))
                             .font(.subheadline)
@@ -463,7 +453,7 @@ private struct JagFaultsView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Faults")
+        .jagDiagnosticScreen("Errors")
     }
 }
 
@@ -573,7 +563,154 @@ private struct JagEvidenceView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Evidence")
+        .jagDiagnosticScreen("Log")
+    }
+}
+
+private struct JagTableView: View {
+    @ObservedObject var model: ConnectionViewModel
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 15) {
+                JagPanel(title: "Table", systemImage: "tablecells") {
+                    if model.diagnosticParameters.isEmpty {
+                        Text("Connect to populate supported diagnostic parameters.")
+                            .font(.subheadline)
+                            .foregroundStyle(JagPalette.mutedIvory)
+                    } else {
+                        ForEach(model.diagnosticParameters) { parameter in
+                            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(parameter.title)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(JagPalette.ivory)
+                                    Text("\(parameter.protocolName) · \(parameter.shortName)")
+                                        .font(.caption2)
+                                        .foregroundStyle(JagPalette.mutedIvory)
+                                }
+                                Spacer()
+                                Text(parameter.formattedValue)
+                                    .font(.subheadline.monospacedDigit().weight(.semibold))
+                                    .foregroundStyle(parameter.isAvailable ? JagPalette.warmMetal : JagPalette.mutedIvory)
+                            }
+                            .padding(.vertical, 6)
+                            if parameter.id != model.diagnosticParameters.last?.id { jagDivider }
+                        }
+                    }
+                }
+            }
+            .padding(16)
+        }
+        .jagDiagnosticScreen("Table")
+    }
+}
+
+private struct JagGraphView: View {
+    @ObservedObject var model: ConnectionViewModel
+
+    private var graphed: [DiagnosticParameter] {
+        let values = model.diagnosticParameters.filter { !$0.history.isEmpty }
+        let favourites = values.filter { $0.favourite }
+        return Array((favourites.isEmpty ? values : favourites).prefix(4))
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 15) {
+                if graphed.isEmpty {
+                    JagPanel(title: "Graph", systemImage: "chart.xyaxis.line") {
+                        Text("Collect live samples to populate parameter history.")
+                            .font(.subheadline)
+                            .foregroundStyle(JagPalette.mutedIvory)
+                    }
+                } else {
+                    ForEach(graphed) { parameter in
+                        JagPanel(title: parameter.title, systemImage: "chart.xyaxis.line") {
+                            jagValueRow("Current", parameter.formattedValue, icon: "waveform.path.ecg")
+                            jagDivider
+                            jagValueRow("History", "\(parameter.history.count) samples", icon: "clock.arrow.circlepath")
+                            Text("The shared LINK telemetry history is retained for time-series presentation.")
+                                .font(.caption)
+                                .foregroundStyle(JagPalette.mutedIvory)
+                        }
+                    }
+                }
+            }
+            .padding(16)
+        }
+        .jagDiagnosticScreen("Graph")
+    }
+}
+
+private struct JagTestsView: View {
+    @ObservedObject var model: ConnectionViewModel
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 15) {
+                JagPanel(title: "Readiness", systemImage: "checkmark.square.fill") {
+                    jagValueRow("Status", model.readinessStatusText, icon: "checklist")
+                    if model.readinessMonitorStatus.isEmpty {
+                        Text("No readiness-monitor detail has been returned yet.")
+                            .font(.caption)
+                            .foregroundStyle(JagPalette.mutedIvory)
+                    } else {
+                        ForEach(model.readinessMonitorStatus, id: \.self) { row in
+                            Text(row)
+                                .font(.subheadline)
+                                .foregroundStyle(JagPalette.chrome)
+                        }
+                    }
+                }
+
+                JagPanel(title: "Freeze-frame context", systemImage: "camera.metering.matrix") {
+                    if model.freezeFrameContext.isEmpty {
+                        Text("No standard freeze-frame context captured.")
+                            .font(.subheadline)
+                            .foregroundStyle(JagPalette.mutedIvory)
+                    } else {
+                        ForEach(model.freezeFrameContext, id: \.self) { row in
+                            Text(row)
+                                .font(.subheadline)
+                                .foregroundStyle(JagPalette.chrome)
+                        }
+                    }
+                }
+
+                JagPanel(title: "Additional tests", systemImage: "checkmark.seal") {
+                    Text("Verified standard monitor results and Jaguar self-tests belong here as they are implemented. Unsupported tests are never fabricated.")
+                        .font(.caption)
+                        .foregroundStyle(JagPalette.mutedIvory)
+                }
+            }
+            .padding(16)
+        }
+        .jagDiagnosticScreen("Tests")
+    }
+}
+
+private struct JagServicesView: View {
+    @ObservedObject var model: ConnectionViewModel
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 15) {
+                JagPanel(title: "Services", systemImage: "wrench.and.screwdriver.fill") {
+                    Text(model.isActive
+                         ? "No verified service procedure is enabled for this session."
+                         : "Connect to the vehicle to evaluate supported service procedures.")
+                        .font(.headline)
+                        .foregroundStyle(JagPalette.ivory)
+                    Text("A service action appears only when its target module, prerequisites, request sequence and safety behaviour are explicitly supported. Unknown or destructive operations remain unavailable.")
+                        .font(.caption)
+                        .foregroundStyle(JagPalette.mutedIvory)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(16)
+        }
+        .jagDiagnosticScreen("Services")
     }
 }
 

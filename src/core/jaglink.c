@@ -28,7 +28,7 @@
  * stable and truthful. The product's own revision is injected by the build.
  */
 #define JAGLINK_EMBEDDED_LINK_REVISION \
-    "eb515a0f5b3d807cc94356556063248de6e07729"
+    "f9d3385368b8d65d8bdd8f34c84a4daec0409c48"
 
 /*
  * Normal CMake builds consume shared engines through LINK::Core.  The native
@@ -42,6 +42,7 @@
 #include "../link/src/core/diagnostic_request.c"
 #include "../link/src/core/doip.c"
 #include "../link/src/core/diagnostic_flow.c"
+#include "../link/src/core/diagnostic_capability.c"
 #include "../link/src/core/parameter.c"
 #include "../link/src/core/scheduler.c"
 

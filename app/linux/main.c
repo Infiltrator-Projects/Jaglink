@@ -521,32 +521,59 @@ static void render_section(size_t section, GtkWidget *body, void *opaque)
 {
     JaglinkLinuxContext *context = opaque;
     switch ((LinkWorkspaceSection)section) {
-    case LINK_WORKSPACE_VEHICLE: append_vehicle(body, context); break;
-    case LINK_WORKSPACE_OBD: break; /* LINK renders the common OBD workspace. */
-    case LINK_WORKSPACE_MODULES: append_modules(body); break;
-    case LINK_WORKSPACE_FAULTS: append_faults(body, context); break;
-    case LINK_WORKSPACE_LIVE_DATA: append_parameters(body, false, context); break;
-    case LINK_WORKSPACE_TABLE: append_parameters(body, true, context); break;
-    case LINK_WORKSPACE_DASHBOARD: append_dashboard(body, context); break;
+    case LINK_WORKSPACE_VEHICLE:
+        append_vehicle(body, context);
+        append_modules(body);
+        break;
+    case LINK_WORKSPACE_FAULTS:
+        append_faults(body, context);
+        break;
+    case LINK_WORKSPACE_TABLE:
+        append_parameters(body, true, context);
+        break;
+    case LINK_WORKSPACE_DASHBOARD:
+        append_dashboard(body, context);
+        break;
     case LINK_WORKSPACE_GRAPHS:
-        append_generic_status(body, "INSTRUMENT TRACES", "Signal history",
-                              "Time-series traces receive real LINK telemetry samples from the active Linux diagnostic flow.", context); break;
+        append_generic_status(
+            body, "INSTRUMENT TRACES", "Signal history",
+            "Time-series traces receive real LINK telemetry samples from the active Linux diagnostic flow.",
+            context);
+        break;
+    case LINK_WORKSPACE_TESTS:
+        append_generic_status(
+            body, "TESTS", "Diagnostic checks",
+            "Readiness, monitor results and verified Jaguar self-tests belong in this task.",
+            context);
+        break;
+    case LINK_WORKSPACE_SERVICES:
+        append_generic_status(
+            body, "SERVICES", "Vehicle procedures",
+            "No verified service procedure is currently enabled in this build.",
+            context);
+        break;
     case LINK_WORKSPACE_LOG:
-        append_generic_status(body, "SESSION RECORDER", "Diagnostic evidence",
-                              "Raw requests, responses and telemetry use the shared evidence path; no synthetic vehicle data is displayed.", context); break;
+        append_generic_status(
+            body, "SESSION RECORDER", "Diagnostic log and evidence",
+            "Raw requests, responses, warnings and telemetry use the shared evidence path.",
+            context);
+        break;
     case LINK_WORKSPACE_SETTINGS: {
         GtkWidget *card = link_gtk_card_new("JAGLINK", "System identity");
         link_gtk_card_append_detail(card, "Version", jaglink_version());
         link_gtk_card_append_detail(card, "Product", "Jaguar X-Type X400 diagnostics");
         link_gtk_card_append_detail(card, "Portable core", jaglink_self_check() ? "Validated" : "Invalid metadata");
         link_gtk_card_append_detail(card, "Linux transport", "LINK native ELM/Bluetooth + Tactrix OpenPort 2.0 USB");
-        link_gtk_card_append_detail(card, "Linux live flow", "Automatic SAE PID + DTC + live polling");
         link_gtk_card_append_detail(card, "Jaguar factory layer", "X400 routes + module-specific DTC catalogue");
-        link_gtk_card_append_detail(card, "Fuel economy", "Factory-priority + SAE measured fallback");
         gtk_box_append(GTK_BOX(body), card);
         break;
     }
-    case LINK_WORKSPACE_SECTION_COUNT: break;
+    case LINK_WORKSPACE_SECTION_COUNT:
+        break;
+    case LINK_WORKSPACE_OBD:
+    case LINK_WORKSPACE_MODULES:
+    case LINK_WORKSPACE_LIVE_DATA:
+        break;
     }
 }
 

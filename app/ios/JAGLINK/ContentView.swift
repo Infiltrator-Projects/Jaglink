@@ -360,7 +360,7 @@ private struct JagVehicleView: View {
                                 Text("Networks and module inventory")
                                     .font(.headline)
                                     .foregroundStyle(JagPalette.ivory)
-                                Text("Open discovered X400 networks and capability details")
+                                Text("Open discovered Jaguar networks and capability details")
                                     .font(.caption)
                                     .foregroundStyle(JagPalette.mutedIvory)
                             }

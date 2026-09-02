@@ -77,6 +77,39 @@ static NSString *JagLinkStringFromCString(const char *value)
 - (NSArray<NSString *> *)storedDTCs { return _shared.storedDTCs; }
 - (NSArray<NSString *> *)pendingDTCs { return _shared.pendingDTCs; }
 - (NSArray<NSString *> *)permanentDTCs { return _shared.permanentDTCs; }
+- (NSString *)readinessStatusText { return _shared.readinessStatusText; }
+- (NSArray<NSString *> *)readinessMonitorStatus
+{
+    return _shared.readinessMonitorStatus;
+}
+- (NSArray<NSString *> *)freezeFrameContext
+{
+    return _shared.freezeFrameContext;
+}
+- (NSString *)diagnosticCapabilityText
+{
+    return _shared.diagnosticCapabilityText;
+}
+- (NSString *)diagnosticCapabilityDetailText
+{
+    return _shared.diagnosticCapabilityDetailText;
+}
+- (NSString *)standardResponderSummary
+{
+    return _shared.standardResponderSummary;
+}
+- (NSString *)supportedPIDSummary
+{
+    return _shared.supportedPIDSummary;
+}
+- (NSString *)standardVINText
+{
+    return _shared.standardVINText;
+}
+- (NSArray<NSString *> *)standardLiveValueRows
+{
+    return _shared.standardLiveValueRows;
+}
 - (BOOL)isActive { return _shared.isActive; }
 - (BOOL)isReady { return _shared.isReady; }
 - (NSUInteger)recordedSampleCount { return _shared.recordedSampleCount; }

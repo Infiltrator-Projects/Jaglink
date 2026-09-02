@@ -51,7 +51,13 @@ jobs:
           grep -Fq 'LinkProbeTimeoutSeconds = 5.0' src/link/platform/apple/LinkBLETransport.m
           grep -q 'LinkDiagnosticsController' platform/apple/JagLinkDiagnosticsController.m
           grep -Fq '#include "../link/src/core/diagnostic_capability.c"' src/core/jaglink.c
-          grep -Fq 'LinkStandardObdView(snapshot: obdSnapshot)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.vehicle)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.errors)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.table)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.graph)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.tests)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.services)' app/ios/JAGLINK/ContentView.swift
+          ! grep -Fq 'JagHomeTile("OBD"' app/ios/JAGLINK/ContentView.swift
           grep -Fq 'diagnosticCapabilityText = controller.diagnosticCapabilityText' app/ios/JAGLINK/ConnectionViewModel.swift
           grep -Fq 'return _shared.standardLiveValueRows;' platform/apple/JagLinkDiagnosticsController.m
           grep -q 'src/core/diagnostic_flow.c' src/core/jaglink.c
@@ -264,7 +270,13 @@ jobs:
           grep -Fq '#include "../link/src/uds/uds_services.c"' src/uds/uds.c
           grep -q 'link_diagnostic_flow_accept_response' src/link/platform/apple/LinkDiagnosticsController.m
           grep -q 'LinkDiagnosticsController' platform/apple/JagLinkDiagnosticsController.m
-          grep -Fq 'LinkStandardObdView(snapshot: obdSnapshot)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.vehicle)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.errors)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.table)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.graph)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.tests)' app/ios/JAGLINK/ContentView.swift
+          grep -Fq 'LinkTaskTile(.services)' app/ios/JAGLINK/ContentView.swift
+          ! grep -Fq 'JagHomeTile("OBD"' app/ios/JAGLINK/ContentView.swift
           grep -Fq '#define JAGLINK_WORKSPACE_OBD LINK_WORKSPACE_OBD' include/jaglink/jaglink.h
           grep -q 'didReceiveFlowEvent' platform/apple/JagLinkDiagnosticsController.m
           grep -q 'didReceiveFlowEvent' src/link/platform/apple/LinkDiagnosticsController.m

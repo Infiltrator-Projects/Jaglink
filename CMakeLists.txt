@@ -140,7 +140,7 @@ if(JAGLINK_BUILD_WINDOWS_DISCOVER)
     endif()
     link_add_windows_discover(jaglink-discover PRODUCT_NAME "JAGLINK" PRODUCT_SLUG "jaglink" WINDOW_CLASS "JAGLINKDiscoverWindow"
         PRODUCT_VERSION "${PROJECT_VERSION}" PRODUCT_COPYRIGHT "Copyright (C) 2026 Xavier Wheaton and Shannon Smith"
-        PRODUCT_SUBTITLE "Jaguar X400 Diagnostics" PRODUCT_WEBSITE "https://github.com/Infiltrator-Projects/Jaglink"
+        PRODUCT_SUBTITLE "Jaguar Diagnostics" PRODUCT_WEBSITE "https://github.com/Infiltrator-Projects/Jaglink"
         PRODUCT_ICON_PNG "${CMAKE_CURRENT_SOURCE_DIR}/app/ios/JAGLINK/Assets.xcassets/AppIcon.appiconset/AppIcon-60@3x.png"
         INVENTORY_VIN_FORMATTER_FUNCTION jaglink_jaguar_vin_format_summary)
     target_link_libraries(jaglink-discover PRIVATE jaglink)
@@ -193,7 +193,7 @@ if(BUILD_TESTING)
 endif()
 set(CPACK_PACKAGE_NAME "jaglink")
 set(CPACK_PACKAGE_VENDOR "JAGLINK Project")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Jaguar X-Type X400 diagnostics platform")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Jaguar diagnostics platform using LINK")
 set(CPACK_PACKAGE_VERSION "${JAGLINK_PACKAGE_VERSION}")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)

@@ -522,6 +522,7 @@ static void render_section(size_t section, GtkWidget *body, void *opaque)
     JaglinkLinuxContext *context = opaque;
     switch ((LinkWorkspaceSection)section) {
     case LINK_WORKSPACE_VEHICLE: append_vehicle(body, context); break;
+    case LINK_WORKSPACE_OBD: break; /* LINK renders the common OBD workspace. */
     case LINK_WORKSPACE_MODULES: append_modules(body); break;
     case LINK_WORKSPACE_FAULTS: append_faults(body, context); break;
     case LINK_WORKSPACE_LIVE_DATA: append_parameters(body, false, context); break;

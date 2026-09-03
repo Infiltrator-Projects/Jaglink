@@ -194,6 +194,9 @@ struct ContentView: View {
             primary: { primaryGrid },
             tools: { supportingTools })
             .linkDiagnosticTheme(jagLinkTheme)
+            .linkDiagnosticLocalization { model.localizedText($0) }
+            .environment(\.locale, Locale(identifier: model.interfaceLocaleIdentifier))
+            .environment(\.layoutDirection, model.interfaceLocaleIdentifier.hasPrefix("ar") ? .rightToLeft : .leftToRight)
     }
 
     private var header: some View {
@@ -311,19 +314,11 @@ struct ContentView: View {
             LinkTaskTile(.graph) { JagGraphView(model: model) }
             LinkTaskTile(.tests) { JagTestsView(model: model) }
             LinkTaskTile(.services) { JagServicesView(model: model) }
+            LinkTaskTile(.settings) { JagSettingsView(model: model) }
         }
     }
 
-    private var supportingTools: some View {
-        LinkPanel {
-            VStack(alignment: .leading, spacing: 7) {
-                LinkSectionHeader(title: "Settings", kicker: "Application")
-                LinkCompactLink("Settings", "Adapter and app preferences", "gearshape.fill") {
-                    JagSettingsView(model: model)
-                }
-            }
-        }
-    }
+    private var supportingTools: some View { EmptyView() }
 }
 
 private struct JagVehicleView: View {
@@ -716,57 +711,25 @@ private struct JagServicesView: View {
 
 private struct JagSettingsView: View {
     @ObservedObject var model: ConnectionViewModel
-    @AppStorage("jaglink.language") private var language = "en-AU"
-
     private var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 15) {
-                JagPanel(title: "Adapter", systemImage: "cable.connector") {
-                    jagValueRow("Name", model.peripheralName, icon: "antenna.radiowaves.left.and.right")
-                    jagDivider
-                    jagValueRow("Identity", model.adapterIdentifier, icon: "cpu")
-                    jagDivider
-                    jagValueRow("Status", model.statusText, icon: "checkmark.seal")
-                }
-
-                JagPanel(title: "Language", systemImage: "globe") {
-                    NavigationLink {
-                        JagLanguageSelectionView(selection: $language)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "globe")
-                                .foregroundStyle(JagPalette.warmMetal)
-                            Text("Language")
-                                .font(.headline)
-                                .foregroundStyle(JagPalette.ivory)
-                            Spacer()
-                            Text(JagInterfaceLanguage.displayName(for: language))
-                                .font(.subheadline)
-                                .foregroundStyle(JagPalette.mutedIvory)
-                            Image(systemName: "chevron.right")
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(JagPalette.chrome)
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                JagPanel(title: "Application", systemImage: "gearshape.fill") {
-                    jagValueRow("Version", version, icon: "number")
-                    jagDivider
-                    jagValueRow("Profile", model.profileDisplayName, icon: "car.side.fill")
-                    jagDivider
-                    jagValueRow("Bundle", Bundle.main.bundleIdentifier ?? "Unknown", icon: "app.badge")
-                }
-            }
-            .padding(16)
-        }
-        .jagDiagnosticScreen("Settings")
+        LinkDiagnosticSettingsView(
+            languageOptions: model.languageOptions,
+            selectedLanguageID: Binding(get: { model.selectedLanguageID }, set: { model.selectLanguage($0) }),
+            measurementOptions: model.measurementOptions,
+            selectedMeasurementID: Binding(get: { model.selectedMeasurementID }, set: { model.selectMeasurementSystem($0) }),
+            preferFavouriteSignals: Binding(get: { model.preferFavouriteSignals }, set: { model.setPreferFavouriteSignals($0) }),
+            showUnavailableParameters: Binding(get: { model.showUnavailableParameters }, set: { model.setShowUnavailableParameters($0) }),
+            productName: "JAGLINK",
+            productVersion: version,
+            adapterName: model.peripheralName,
+            adapterIdentity: model.adapterIdentifier,
+            connectionStatus: model.statusText,
+            bundleIdentifier: Bundle.main.bundleIdentifier ?? "Unknown",
+            coreSummary: "LINK 0.14.86 · Jaguar profile: \(model.profileDisplayName)")
     }
 }
 

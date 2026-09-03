@@ -29,8 +29,11 @@ struct JaguarNetworkInfo: Identifiable {
 }
 
 private func jaglinkLocalized(_ key: String) -> String {
-    let stored = UserDefaults.standard.string(forKey: "jaglink.language") ?? "en-AU"
-    let language = JagInterfaceLanguage.canonical(stored)
+    let selected = UserDefaults.standard.string(forKey: "link.displayLanguage") ?? "system"
+    let requested = selected == "system"
+        ? (Locale.preferredLanguages.first ?? "en-AU")
+        : selected
+    let language = JagInterfaceLanguage.canonical(requested)
     guard let path = Bundle.main.path(forResource: language, ofType: "lproj"),
           let bundle = Bundle(path: path) else {
         return key
@@ -71,11 +74,18 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var versionText = "Unknown"
     @Published private(set) var csvExportURL: URL?
     @Published private(set) var isPreparingCSV = false
+    @Published private(set) var languageOptions = [LinkSettingOption]()
+    @Published private(set) var selectedLanguageID = "system"
+    @Published private(set) var measurementOptions = [LinkSettingOption]()
+    @Published private(set) var selectedMeasurementID = "system"
+    @Published private(set) var preferFavouriteSignals = true
+    @Published private(set) var showUnavailableParameters = true
 
     private let controller = JagLinkDiagnosticsController()
 
     override init() {
         super.init()
+        migrateLegacySharedSettings()
         controller.delegate = self
         loadJaguarProfile()
         if let value = jaglink_version() { versionText = String(cString: value) }
@@ -119,6 +129,19 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         controller.disconnect()
         isSimulationActive = false
     }
+
+    var interfaceLocaleIdentifier: String {
+        let requested = selectedLanguageID == "system"
+            ? (Locale.preferredLanguages.first ?? "en-AU")
+            : selectedLanguageID
+        return JagInterfaceLanguage.canonical(requested)
+    }
+
+    func localizedText(_ key: String) -> String { controller.localizedText(forKey: key) }
+    func selectLanguage(_ id: String) { controller.setSelectedLanguageTag(id); refresh() }
+    func selectMeasurementSystem(_ id: String) { controller.setSelectedMeasurementSystemKey(id); refresh() }
+    func setPreferFavouriteSignals(_ enabled: Bool) { controller.setPreferFavouriteSignals(enabled); refresh() }
+    func setShowUnavailableParameters(_ enabled: Bool) { controller.setShowUnavailableParameters(enabled); refresh() }
 
     func toggleFavourite(stableKey: String) {
         let pid: UInt8? = stableKey.withCString { key in
@@ -190,6 +213,14 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     private func clearPreparedExport() {
         if let url = csvExportURL { try? FileManager.default.removeItem(at: url) }
         csvExportURL = nil
+    }
+
+    private func migrateLegacySharedSettings() {
+        let defaults = UserDefaults.standard
+        if defaults.object(forKey: "link.displayLanguage") == nil,
+           let legacy = defaults.string(forKey: "jaglink.language") {
+            controller.setSelectedLanguageTag(JagInterfaceLanguage.canonical(legacy))
+        }
     }
 
     private func string(from cString: UnsafePointer<CChar>?) -> String {
@@ -281,6 +312,14 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         supportedPIDSummary = controller.supportedPIDSummary
         standardVINText = controller.standardVINText
         standardLiveValueRows = controller.standardLiveValueRows
+        languageOptions = zip(controller.availableLanguageTags, controller.availableLanguageNames)
+            .map { LinkSettingOption(id: $0.0, title: $0.1) }
+        selectedLanguageID = controller.selectedLanguageTag
+        measurementOptions = zip(controller.availableMeasurementSystemKeys, controller.availableMeasurementSystemNames)
+            .map { LinkSettingOption(id: $0.0, title: $0.1) }
+        selectedMeasurementID = controller.selectedMeasurementSystemKey
+        preferFavouriteSignals = controller.preferFavouriteSignals
+        showUnavailableParameters = controller.showUnavailableParameters
         isActive = controller.isActive
         isReady = controller.isReady
         diagnosticParameters = loadDiagnosticParameters()

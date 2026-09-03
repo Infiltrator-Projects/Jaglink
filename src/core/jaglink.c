@@ -28,7 +28,7 @@
  * stable and truthful. The product's own revision is injected by the build.
  */
 #define JAGLINK_EMBEDDED_LINK_REVISION \
-    "4e50d442edecda99403a2e50019f0e59a70beb26"
+    "5ba715a8286758ea0e66743c7d692d820b157bd4"
 
 /*
  * Normal CMake builds consume shared engines through LINK::Core.  The native
@@ -38,6 +38,7 @@
  */
 #if defined(__APPLE__) && TARGET_OS_IOS
 #include "../link/src/core/workspace.c"
+#include "../link/src/core/units.c"
 #include "../link/src/core/fuel_economy.c"
 #include "../link/src/core/diagnostic_request.c"
 #include "../link/src/core/doip.c"

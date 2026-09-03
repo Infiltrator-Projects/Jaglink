@@ -16,7 +16,7 @@ private enum JagPalette {
     static let amber = Color(red: 0.790, green: 0.525, blue: 0.165)
 }
 
-private let jagLinkTheme = LinkDiagnosticTheme(
+let jagLinkTheme = LinkDiagnosticTheme(
     backgroundTop: JagPalette.cockpit,
     backgroundMiddle: JagPalette.deepGreen,
     backgroundBottom: JagPalette.deepGreen,

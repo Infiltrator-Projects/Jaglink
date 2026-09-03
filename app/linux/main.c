@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include "about-dialog.h"
 #include "jaglink/jaglink.h"
+#include "jaglink/project_info.h"
 #include "jaglink/jaguar.h"
 #include "jaglink/parameter.h"
 #include "link-gtk-shell.h"
@@ -577,10 +577,13 @@ static void render_section(size_t section, GtkWidget *body, void *opaque)
     }
 }
 
-static void show_about(GtkWindow *window, void *context)
+static const char *jaglink_linux_build_label(const char *profile)
 {
-    (void)context;
-    jaglink_linux_show_about(window);
+    if (g_strcmp0(profile, "native") == 0)
+        return "Native / local machine compile";
+    if (g_strcmp0(profile, "generic") == 0)
+        return "Generic / APT package";
+    return "Source / development build";
 }
 
 static void connection_changed(LinkTransport *transport,
@@ -632,10 +635,40 @@ int main(int argc, char **argv)
 {
     JaglinkLinuxContext context = {0};
     LinkGtkShellDescriptor descriptor = {0};
+    LinkAboutInfo about_info = {0};
+    const InfiltratrProjectInfo *project_info;
+    char *about_description;
     int status;
 
     link_fuel_economy_init(&context.fuel_economy);
     jaglink_linux_resources_register_resource();
+
+    project_info = jaglink_project_info();
+    about_description = g_strdup_printf(
+        "%s\n\nBuild: %s",
+        project_info->comments,
+        jaglink_linux_build_label(project_info->build_profile));
+    if (about_description == NULL) {
+        jaglink_linux_resources_unregister_resource();
+        return 6;
+    }
+    about_info.product_name = project_info->program_name;
+    about_info.subtitle = "JAGUAR · LINK DIAGNOSTICS";
+    about_info.version = project_info->version;
+    about_info.description = about_description;
+    about_info.authors = "Xavier Wheaton\nShannon Smith";
+    about_info.copyright = project_info->copyright_text;
+    about_info.website = project_info->website;
+    about_info.license_name = project_info->license_id;
+    about_info.license_text =
+        "JAGLINK is free software licensed under the GNU General Public "
+        "License version 3 or, at your option, any later version "
+        "(GPL-3.0-or-later).\n\n"
+        "See LICENSE in the source package for the complete licence text.";
+    about_info.credits =
+        "Xavier Wheaton — Author and project contributor\n"
+        "Shannon Smith — Author and project maintainer";
+
     descriptor.app_id = "com.github.The-First-Infiltrator.Jaglink";
     descriptor.window_title = "JAGLINK · Jaguar Diagnostics";
     descriptor.brand_name = "JAGLINK";
@@ -644,11 +677,12 @@ int main(int argc, char **argv)
     descriptor.emblem_resource = "/com/github/Infiltrator-Projects/Jaglink/jaglink-emblem.png";
     descriptor.css = jaglink_css;
     descriptor.render_section = render_section;
-    descriptor.show_about = show_about;
+    descriptor.about = &about_info;
     descriptor.connection_changed = connection_changed;
     descriptor.diagnostic_changed = diagnostic_changed;
     descriptor.context = &context;
     status = link_gtk_shell_run(argc, argv, &descriptor);
+    g_free(about_description);
     jaglink_linux_resources_unregister_resource();
     return status;
 }

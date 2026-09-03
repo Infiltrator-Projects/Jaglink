@@ -118,8 +118,8 @@ if(JAGLINK_BUILD_LINUX_APP)
         COMMAND "${GLIB_COMPILE_RESOURCES_EXECUTABLE}" --generate-source --manual-register --c-name=jaglink_linux_resources "--target=${JAGLINK_LINUX_RESOURCE_SOURCE}" jaglink.gresource.xml
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/app/linux"
         DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/app/linux/jaglink.gresource.xml" "${CMAKE_CURRENT_SOURCE_DIR}/app/linux/assets/jaglink-emblem.png" VERBATIM)
-    add_executable(jaglink-linux app/linux/main.c app/linux/about-dialog.c "${JAGLINK_LINUX_RESOURCE_SOURCE}")
-    set_source_files_properties(app/linux/main.c app/linux/about-dialog.c PROPERTIES
+    add_executable(jaglink-linux app/linux/main.c "${JAGLINK_LINUX_RESOURCE_SOURCE}")
+    set_source_files_properties(app/linux/main.c PROPERTIES
         COMPILE_OPTIONS "-include;${JAGLINK_LINK_DIR}/platform/linux/link-gtk-i18n.h")
     set_source_files_properties("${JAGLINK_LINUX_RESOURCE_SOURCE}" PROPERTIES COMPILE_OPTIONS "-w")
     set_target_properties(jaglink-linux PROPERTIES OUTPUT_NAME jaglink)
@@ -140,7 +140,11 @@ if(JAGLINK_BUILD_WINDOWS_DISCOVER)
     endif()
     link_add_windows_discover(jaglink-discover PRODUCT_NAME "JAGLINK" PRODUCT_SLUG "jaglink" WINDOW_CLASS "JAGLINKDiscoverWindow"
         PRODUCT_VERSION "${PROJECT_VERSION}" PRODUCT_COPYRIGHT "Copyright (C) 2026 Xavier Wheaton and Shannon Smith"
-        PRODUCT_SUBTITLE "Jaguar Diagnostics" PRODUCT_WEBSITE "https://github.com/Infiltrator-Projects/Jaglink"
+        PRODUCT_SUBTITLE "Jaguar Diagnostics"
+        PRODUCT_DESCRIPTION "A C-first, open-source Jaguar diagnostics platform."
+        PRODUCT_AUTHORS "Xavier Wheaton and Shannon Smith"
+        PRODUCT_LICENSE_NAME "GPL-3.0-or-later"
+        PRODUCT_WEBSITE "https://github.com/Infiltrator-Projects/Jaglink"
         PRODUCT_ICON_PNG "${CMAKE_CURRENT_SOURCE_DIR}/app/ios/JAGLINK/Assets.xcassets/AppIcon.appiconset/AppIcon-60@3x.png"
         INVENTORY_VIN_FORMATTER_FUNCTION jaglink_jaguar_vin_format_summary)
     target_link_libraries(jaglink-discover PRIVATE jaglink)

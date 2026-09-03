@@ -103,17 +103,10 @@ struct JagInterfaceLanguage: Identifiable, Hashable {
 @main
 struct JAGLINKApp: App {
     @State private var showingAbout = false
-    @AppStorage("jaglink.language") private var language = "en-AU"
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(\.locale, Locale(identifier: JagInterfaceLanguage.canonical(language)))
-                .environment(\.layoutDirection, JagInterfaceLanguage.canonical(language).hasPrefix("ar") ? .rightToLeft : .leftToRight)
-                .onAppear {
-                    let canonical = JagInterfaceLanguage.canonical(language)
-                    if language != canonical { language = canonical }
-                }
                 .preferredColorScheme(.dark)
                 .tint(JAGLINKAboutStyle.warmMetal)
                 .safeAreaInset(edge: .bottom, spacing: 0) {

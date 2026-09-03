@@ -28,7 +28,7 @@
  * stable and truthful. The product's own revision is injected by the build.
  */
 #define JAGLINK_EMBEDDED_LINK_REVISION \
-    "5ba715a8286758ea0e66743c7d692d820b157bd4"
+    "27ce1d25110dc29b23a689c786e1ac2a27d62267"
 
 /*
  * Normal CMake builds consume shared engines through LINK::Core.  The native

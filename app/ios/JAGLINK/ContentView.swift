@@ -711,43 +711,110 @@ private struct JagServicesView: View {
 
 private struct JagSettingsView: View {
     @ObservedObject var model: ConnectionViewModel
+
     private var version: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
+        Bundle.main.object(
+            forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
     }
 
     var body: some View {
-        LinkDiagnosticSettingsView(
-            languageOptions: model.languageOptions,
-            selectedLanguageID: Binding(get: { model.selectedLanguageID }, set: { model.selectLanguage($0) }),
-            measurementOptions: model.measurementOptions,
-            selectedMeasurementID: Binding(get: { model.selectedMeasurementID }, set: { model.selectMeasurementSystem($0) }),
-            preferFavouriteSignals: Binding(get: { model.preferFavouriteSignals }, set: { model.setPreferFavouriteSignals($0) }),
-            showUnavailableParameters: Binding(get: { model.showUnavailableParameters }, set: { model.setShowUnavailableParameters($0) }),
-            productName: "JAGLINK",
-            productVersion: version,
-            adapterName: model.peripheralName,
-            adapterIdentity: model.adapterIdentifier,
-            connectionStatus: model.statusText,
-            bundleIdentifier: Bundle.main.bundleIdentifier ?? "Unknown",
-            coreSummary: "LINK 0.14.86 · Jaguar profile: \(model.profileDisplayName)")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 15) {
+                JagPanel(title: "Adapter", systemImage: "cable.connector") {
+                    jagValueRow("Name", model.peripheralName, icon: "antenna.radiowaves.left.and.right")
+                    jagDivider
+                    jagValueRow("Identity", model.adapterIdentifier, icon: "cpu")
+                    jagDivider
+                    jagValueRow("Status", model.statusText, icon: "checkmark.seal")
+                }
+
+                JagPanel(title: "Language", systemImage: "globe") {
+                    NavigationLink {
+                        JagLanguageSelectionView(
+                            tags: model.languageTags,
+                            names: model.languageNames,
+                            selection: Binding(
+                                get: { model.selectedLanguageID },
+                                set: { model.selectLanguage($0) }))
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "globe")
+                                .foregroundStyle(JagPalette.warmMetal)
+                            Text("Language")
+                                .font(.headline)
+                                .foregroundStyle(JagPalette.ivory)
+                            Spacer()
+                            Text(languageName)
+                                .font(.subheadline)
+                                .foregroundStyle(JagPalette.mutedIvory)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(JagPalette.chrome)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                JagPanel(title: "Unit system", systemImage: "ruler") {
+                    Picker(
+                        "Unit system",
+                        selection: Binding(
+                            get: { model.selectedMeasurementID },
+                            set: { model.selectMeasurementSystem($0) })
+                    ) {
+                        ForEach(Array(model.measurementKeys.indices), id: \.self) { index in
+                            let title = index < model.measurementNames.count
+                                ? model.measurementNames[index]
+                                : model.measurementKeys[index]
+                            Text(title).tag(model.measurementKeys[index])
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+
+                JagPanel(title: "Application", systemImage: "gearshape.fill") {
+                    jagValueRow("Version", version, icon: "number")
+                    jagDivider
+                    jagValueRow("Profile", model.profileDisplayName, icon: "car.side.fill")
+                    jagDivider
+                    jagValueRow("Bundle", Bundle.main.bundleIdentifier ?? "Unknown", icon: "app.badge")
+                }
+            }
+            .padding(16)
+        }
+        .jagDiagnosticScreen("Settings")
+    }
+
+    private var languageName: String {
+        guard let index = model.languageTags.firstIndex(
+            of: model.selectedLanguageID),
+              index < model.languageNames.count else {
+            return JagInterfaceLanguage.displayName(for: model.selectedLanguageID)
+        }
+        return model.languageNames[index]
     }
 }
 
 private struct JagLanguageSelectionView: View {
+    let tags: [String]
+    let names: [String]
     @Binding var selection: String
 
     var body: some View {
         List {
-            ForEach(JagInterfaceLanguage.all) { item in
+            ForEach(Array(tags.indices), id: \.self) { index in
+                let tag = tags[index]
+                let title = index < names.count ? names[index] : tag
                 Button {
-                    selection = item.id
+                    selection = tag
                 } label: {
                     HStack(spacing: 12) {
-                        Text(item.nativeName)
+                        Text(title)
                             .font(.body.weight(.medium))
                             .foregroundStyle(JagPalette.ivory)
                         Spacer()
-                        if JagInterfaceLanguage.canonical(selection) == item.id {
+                        if selection == tag {
                             Image(systemName: "checkmark")
                                 .font(.body.weight(.bold))
                                 .foregroundStyle(JagPalette.warmMetal)

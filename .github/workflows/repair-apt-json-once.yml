@@ -24,21 +24,25 @@ jobs:
           from pathlib import Path
 
           path = Path('.github/workflows/ci.yml')
-          text = path.read_text(encoding='utf-8')
+          lines = path.read_text(encoding='utf-8').splitlines(keepends=True)
 
-          old_payload = '''          payload="$(jq -nc --arg repository "$GITHUB_REPOSITORY" --arg sha "$RELEASE_SHA" \\
-            '{event_type:"application-release",client_payload:{repository:$repository,sha:$sha}}')"'''
-          new_payload = '''          payload="$(python3 -c 'import json, os; print(json.dumps({"event_type":"application-release","client_payload":{"repository":os.environ["GITHUB_REPOSITORY"],"sha":os.environ["RELEASE_SHA"]}}, separators=(",", ":")))')"'''
+          payload_hits = [i for i, line in enumerate(lines) if 'payload="$(jq -nc --arg repository' in line]
+          assert len(payload_hits) == 1, f'unexpected jq payload line count: {len(payload_hits)}'
+          i = payload_hits[0]
+          assert i + 1 < len(lines) and 'event_type:"application-release"' in lines[i + 1]
+          indent = lines[i][:-len(lines[i].lstrip())]
+          new_payload = """payload="$(python3 -c 'import json, os; print(json.dumps({"event_type":"application-release","client_payload":{"repository":os.environ["GITHUB_REPOSITORY"],"sha":os.environ["RELEASE_SHA"]}}, separators=(",", ":")))')"\n"""
+          lines[i:i + 2] = [indent + new_payload]
 
-          old_check = '''            if curl -fsS --retry 2 --retry-delay 1 "$catalogue?release=$RELEASE_SHA&attempt=$attempt" \\
-              | jq -e --arg id "$APP_ID" --arg version "$VERSION" \\
-                '.[] | select(.id == $id and .version == $version)' >/dev/null; then'''
-          new_check = '''            if curl -fsS --retry 2 --retry-delay 1 "$catalogue?release=$RELEASE_SHA&attempt=$attempt" \\
-              | python3 -c 'import json, os, sys; apps=json.load(sys.stdin); raise SystemExit(0 if any(str(app.get("id", "")) == os.environ["APP_ID"] and str(app.get("version", "")) == os.environ["VERSION"] for app in apps) else 1)'; then'''
+          check_hits = [i for i, line in enumerate(lines) if '| jq -e --arg id "$APP_ID"' in line]
+          assert len(check_hits) == 1, f'unexpected jq catalogue line count: {len(check_hits)}'
+          i = check_hits[0]
+          assert i + 1 < len(lines) and '.[] | select(.id == $id and .version == $version)' in lines[i + 1]
+          indent = lines[i][:-len(lines[i].lstrip())]
+          new_check = """| python3 -c 'import json, os, sys; apps=json.load(sys.stdin); raise SystemExit(0 if any(str(app.get("id", "")) == os.environ["APP_ID"] and str(app.get("version", "")) == os.environ["VERSION"] for app in apps) else 1)'; then\n"""
+          lines[i:i + 2] = [indent + new_check]
 
-          assert text.count(old_payload) == 1, 'unexpected jq payload block count'
-          assert text.count(old_check) == 1, 'unexpected jq catalogue block count'
-          text = text.replace(old_payload, new_payload).replace(old_check, new_check)
+          text = ''.join(lines)
           assert 'payload="$(jq -nc' not in text
           assert '| jq -e --arg id "$APP_ID"' not in text
           path.write_text(text, encoding='utf-8')

@@ -33,6 +33,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy, readonly) NSString *supportedPIDSummary;
 @property(nonatomic, copy, readonly) NSString *standardVINText;
 @property(nonatomic, copy, readonly) NSArray<NSString *> *standardLiveValueRows;
+/** Generic standard OBD-II responder capability snapshots for vehicle profiles. */
+@property(nonatomic, copy, readonly) NSArray<NSDictionary *> *standardResponderProfiles;
 @property(nonatomic, readonly, getter=isActive) BOOL active;
 @property(nonatomic, readonly, getter=isReady) BOOL ready;
 @property(nonatomic, readonly) NSUInteger recordedSampleCount;

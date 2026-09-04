@@ -110,6 +110,36 @@ static NSString *JagLinkStringFromCString(const char *value)
 {
     return _shared.standardLiveValueRows;
 }
+
+- (NSArray<NSDictionary *> *)standardResponderProfiles
+{
+    const LinkDiagnosticFlow *flow = _shared.diagnosticFlow;
+    if (flow == NULL || flow->supported_pid_responders.count == 0) {
+        return @[];
+    }
+
+    NSMutableArray<NSDictionary *> *profiles = [NSMutableArray arrayWithCapacity:
+        flow->supported_pid_responders.count];
+    for (size_t index = 0;
+         index < flow->supported_pid_responders.count;
+         ++index) {
+        const LinkObd2ResponderPidSet *entry =
+            &flow->supported_pid_responders.entries[index];
+        NSMutableArray<NSNumber *> *supportedPIDs = [NSMutableArray array];
+        for (NSUInteger pid = 0; pid < 256; ++pid) {
+            if (link_obd2_pid_set_contains(
+                    &entry->supported_pids, (uint8_t)pid)) {
+                [supportedPIDs addObject:@(pid)];
+            }
+        }
+        [profiles addObject:@{
+            @"responderID": @(entry->responder_id),
+            @"extendedID": @(entry->extended_id),
+            @"supportedPIDs": supportedPIDs.copy
+        }];
+    }
+    return profiles;
+}
 - (BOOL)isActive { return _shared.isActive; }
 - (BOOL)isReady { return _shared.isReady; }
 - (NSUInteger)recordedSampleCount { return _shared.recordedSampleCount; }

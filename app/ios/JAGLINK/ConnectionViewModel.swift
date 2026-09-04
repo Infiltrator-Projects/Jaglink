@@ -96,6 +96,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         legacySelectedVINKey: nil,
         legacyAdapterMappingKey: nil)
     private var lastPersistedLiveVIN: String?
+    private var lastPersistedReadyVIN: String?
 
     var selectedVehicleDisplayName: String {
         guard let selectedVehicleVIN else { return "No vehicle loaded" }
@@ -146,6 +147,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     private func beginConnection(_ source: LinkConnectionSource) {
         guard !isActive else { return }
         lastPersistedLiveVIN = nil
+        lastPersistedReadyVIN = nil
         switch source {
         case .automatic:
             isSimulationActive = false
@@ -252,7 +254,11 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         }
     }
 
-    private func saveVehicleProfile(vin: String, displayName: String) {
+    private func saveVehicleProfile(
+        vin: String,
+        displayName: String,
+        includeDiagnosticSnapshot: Bool = false
+    ) {
         var profile = vehicleProfileStore.profile(forVIN: vin) ?? [:]
         profile["displayName"] = displayName
         profile["manufacturer"] = "Jaguar"
@@ -260,7 +266,79 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         profile["configuration"] = vehicleConfigurationText
         profile["powertrain"] = vehiclePowertrainText
         profile["build"] = vehicleBuildText
+
+        if includeDiagnosticSnapshot {
+            /*
+             * Read the shared controller directly. refresh() is called from
+             * the LINK delegate before the Swift mirror is updated, so using
+             * the published properties here would persist the previous event.
+             */
+            profile["standardResponderSummary"] = controller.standardResponderSummary
+            profile["supportedPIDSummary"] = controller.supportedPIDSummary
+            profile["standardVINText"] = controller.standardVINText
+            profile["standardLiveValueRows"] = controller.standardLiveValueRows
+            profile["diagnosticCapabilityText"] = controller.diagnosticCapabilityText
+            profile["diagnosticCapabilityDetailText"] = controller.diagnosticCapabilityDetailText
+            profile["faultScanStatusText"] = controller.faultScanStatusText
+            profile["storedDTCs"] = controller.storedDTCs
+            profile["pendingDTCs"] = controller.pendingDTCs
+            profile["permanentDTCs"] = controller.permanentDTCs
+            profile["readinessStatusText"] = controller.readinessStatusText
+            profile["readinessMonitorStatus"] = controller.readinessMonitorStatus
+            profile["freezeFrameContext"] = controller.freezeFrameContext
+
+            let responderProfiles = controller.standardResponderProfiles
+            if !responderProfiles.isEmpty {
+                profile["standardResponderProfiles"] = responderProfiles
+            }
+        }
+
         vehicleProfileStore.saveProfile(profile, forVIN: vin)
+    }
+
+    private func restoreSavedDiagnosticSnapshot(_ profile: [String: Any]) {
+        standardResponderSummary =
+            (profile["standardResponderSummary"] as? String)
+            ?? "Saved standard responder information"
+        supportedPIDSummary =
+            (profile["supportedPIDSummary"] as? String)
+            ?? "Saved standard PID information"
+        standardVINText =
+            (profile["standardVINText"] as? String)
+            ?? "Saved standard VIN information"
+        standardLiveValueRows =
+            (profile["standardLiveValueRows"] as? [String]) ?? []
+        diagnosticCapabilityText =
+            (profile["diagnosticCapabilityText"] as? String)
+            ?? "Saved diagnostic capability"
+        diagnosticCapabilityDetailText =
+            (profile["diagnosticCapabilityDetailText"] as? String) ?? ""
+        faultScanStatusText =
+            (profile["faultScanStatusText"] as? String) ?? "Saved diagnostic state"
+        storedDTCs = (profile["storedDTCs"] as? [String]) ?? []
+        pendingDTCs = (profile["pendingDTCs"] as? [String]) ?? []
+        permanentDTCs = (profile["permanentDTCs"] as? [String]) ?? []
+        readinessStatusText =
+            (profile["readinessStatusText"] as? String) ?? "Saved readiness state"
+        readinessMonitorStatus =
+            (profile["readinessMonitorStatus"] as? [String]) ?? []
+        freezeFrameContext = (profile["freezeFrameContext"] as? [String]) ?? []
+    }
+
+    private func resetOfflineDiagnosticSnapshot() {
+        faultScanStatusText = "Not scanned"
+        storedDTCs = []
+        pendingDTCs = []
+        permanentDTCs = []
+        readinessStatusText = "Not collected"
+        readinessMonitorStatus = []
+        freezeFrameContext = []
+        diagnosticCapabilityText = "Unknown / probing"
+        diagnosticCapabilityDetailText = ""
+        standardResponderSummary = "0 physical responders"
+        supportedPIDSummary = "0 advertised PIDs"
+        standardVINText = "Unavailable / not yet read"
+        standardLiveValueRows = []
     }
 
     private func presentingViewController() -> UIViewController? {
@@ -385,32 +463,53 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
            let liveVIN = controller.vehicleVINText,
            liveVIN.count == 17,
            lastPersistedLiveVIN != liveVIN {
+            let previousSelectedVIN = selectedVehicleVIN
             vehicleProfileStore.recordLiveVIN(liveVIN)
             selectedVehicleVIN = liveVIN
             let existingName =
                 (vehicleProfileStore.profile(forVIN: liveVIN)?["displayName"] as? String)
             let name = existingName ??
-                (liveVIN == selectedVehicleVIN
+                (liveVIN == previousSelectedVIN
                     ? profileDisplayName
                     : "Jaguar vehicle · \(liveVIN)")
             profileDisplayName = name
             saveVehicleProfile(vin: liveVIN, displayName: name)
             lastPersistedLiveVIN = liveVIN
+            lastPersistedReadyVIN = nil
             refreshSavedVehicleProfiles()
         }
-        faultScanStatusText = controller.faultScanStatusText
-        storedDTCs = controller.storedDTCs
-        pendingDTCs = controller.pendingDTCs
-        permanentDTCs = controller.permanentDTCs
-        readinessStatusText = controller.readinessStatusText
-        readinessMonitorStatus = controller.readinessMonitorStatus
-        freezeFrameContext = controller.freezeFrameContext
-        diagnosticCapabilityText = controller.diagnosticCapabilityText
-        diagnosticCapabilityDetailText = controller.diagnosticCapabilityDetailText
-        standardResponderSummary = controller.standardResponderSummary
-        supportedPIDSummary = controller.supportedPIDSummary
-        standardVINText = controller.standardVINText
-        standardLiveValueRows = controller.standardLiveValueRows
+
+        if controller.isActive,
+           let liveVIN = controller.vehicleVINText,
+           liveVIN.count == 17,
+           controller.isReady,
+           lastPersistedReadyVIN != liveVIN {
+            saveVehicleProfile(
+                vin: liveVIN,
+                displayName: profileDisplayName,
+                includeDiagnosticSnapshot: true)
+            lastPersistedReadyVIN = liveVIN
+            refreshSavedVehicleProfiles()
+        }
+        if controller.isActive {
+            faultScanStatusText = controller.faultScanStatusText
+            storedDTCs = controller.storedDTCs
+            pendingDTCs = controller.pendingDTCs
+            permanentDTCs = controller.permanentDTCs
+            readinessStatusText = controller.readinessStatusText
+            readinessMonitorStatus = controller.readinessMonitorStatus
+            freezeFrameContext = controller.freezeFrameContext
+            diagnosticCapabilityText = controller.diagnosticCapabilityText
+            diagnosticCapabilityDetailText = controller.diagnosticCapabilityDetailText
+            standardResponderSummary = controller.standardResponderSummary
+            supportedPIDSummary = controller.supportedPIDSummary
+            standardVINText = controller.standardVINText
+            standardLiveValueRows = controller.standardLiveValueRows
+        } else if let profile = vehicleProfileStore.profile(forVIN: selectedVehicleVIN ?? "") {
+            restoreSavedDiagnosticSnapshot(profile)
+        } else {
+            resetOfflineDiagnosticSnapshot()
+        }
         languageTags = controller.availableLanguageTags
         languageNames = controller.availableLanguageNames
         selectedLanguageID = controller.selectedLanguageTag

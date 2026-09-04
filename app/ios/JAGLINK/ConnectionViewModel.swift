@@ -268,19 +268,24 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         profile["build"] = vehicleBuildText
 
         if includeDiagnosticSnapshot {
-            profile["standardResponderSummary"] = standardResponderSummary
-            profile["supportedPIDSummary"] = supportedPIDSummary
-            profile["standardVINText"] = standardVINText
-            profile["standardLiveValueRows"] = standardLiveValueRows
-            profile["diagnosticCapabilityText"] = diagnosticCapabilityText
-            profile["diagnosticCapabilityDetailText"] = diagnosticCapabilityDetailText
-            profile["faultScanStatusText"] = faultScanStatusText
-            profile["storedDTCs"] = storedDTCs
-            profile["pendingDTCs"] = pendingDTCs
-            profile["permanentDTCs"] = permanentDTCs
-            profile["readinessStatusText"] = readinessStatusText
-            profile["readinessMonitorStatus"] = readinessMonitorStatus
-            profile["freezeFrameContext"] = freezeFrameContext
+            /*
+             * Read the shared controller directly. refresh() is called from
+             * the LINK delegate before the Swift mirror is updated, so using
+             * the published properties here would persist the previous event.
+             */
+            profile["standardResponderSummary"] = controller.standardResponderSummary
+            profile["supportedPIDSummary"] = controller.supportedPIDSummary
+            profile["standardVINText"] = controller.standardVINText
+            profile["standardLiveValueRows"] = controller.standardLiveValueRows
+            profile["diagnosticCapabilityText"] = controller.diagnosticCapabilityText
+            profile["diagnosticCapabilityDetailText"] = controller.diagnosticCapabilityDetailText
+            profile["faultScanStatusText"] = controller.faultScanStatusText
+            profile["storedDTCs"] = controller.storedDTCs
+            profile["pendingDTCs"] = controller.pendingDTCs
+            profile["permanentDTCs"] = controller.permanentDTCs
+            profile["readinessStatusText"] = controller.readinessStatusText
+            profile["readinessMonitorStatus"] = controller.readinessMonitorStatus
+            profile["freezeFrameContext"] = controller.freezeFrameContext
 
             let responderProfiles = controller.standardResponderProfiles
             if !responderProfiles.isEmpty {

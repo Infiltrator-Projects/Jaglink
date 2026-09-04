@@ -14,7 +14,6 @@
 
 @implementation JagLinkDiagnosticsController {
     LinkDiagnosticsController *_shared;
-    LinkVehicleProfileStore *_vehicleProfileStore;
 }
 
 static NSString *JagLinkStringFromCString(const char *value)
@@ -32,12 +31,6 @@ static NSString *JagLinkStringFromCString(const char *value)
     LinkDiagnosticFlowConfig flowConfig = LINK_DIAGNOSTIC_FLOW_CONFIG_INIT;
     /* Keep live CAN responder IDs (for example 7E8/7E9) in evidence. */
     flowConfig.preserve_live_response_headers = true;
-    _vehicleProfileStore = [[LinkVehicleProfileStore alloc]
-        initWithProductNamespace:@"jaglink"
-        legacyProfileKey:nil
-        legacySelectedVINKey:nil
-        legacyAdapterMappingKey:nil];
-
     _shared = [[LinkDiagnosticsController alloc]
         initWithProductSlug:@"jaglink"
         flowConfig:flowConfig

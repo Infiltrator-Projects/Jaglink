@@ -296,7 +296,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         vehicleProfileStore.saveProfile(profile, forVIN: vin)
     }
 
-    private func restoreSavedDiagnosticSnapshot(_ profile: [String: Any]) {
+    private func restoreSavedDiagnosticSnapshot(_ profile: [AnyHashable: Any]) {
         standardResponderSummary =
             (profile["standardResponderSummary"] as? String)
             ?? "Saved standard responder information"

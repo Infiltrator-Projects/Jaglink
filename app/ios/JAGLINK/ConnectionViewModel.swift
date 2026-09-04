@@ -387,7 +387,13 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
            lastPersistedLiveVIN != liveVIN {
             vehicleProfileStore.recordLiveVIN(liveVIN)
             selectedVehicleVIN = liveVIN
-            let name = profileDisplayName.isEmpty ? "Jaguar vehicle · \(liveVIN)" : profileDisplayName
+            let existingName =
+                (vehicleProfileStore.profile(forVIN: liveVIN)?["displayName"] as? String)
+            let name = existingName ??
+                (liveVIN == selectedVehicleVIN
+                    ? profileDisplayName
+                    : "Jaguar vehicle · \(liveVIN)")
+            profileDisplayName = name
             saveVehicleProfile(vin: liveVIN, displayName: name)
             lastPersistedLiveVIN = liveVIN
             refreshSavedVehicleProfiles()

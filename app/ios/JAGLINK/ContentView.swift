@@ -277,9 +277,27 @@ struct ContentView: View {
                         }
                     }
                 } else if !model.isActive {
-                    Text("Connect once to identify the vehicle, faults, modules and supported live data.")
-                        .font(.caption)
-                        .foregroundStyle(JagPalette.mutedIvory)
+                    if model.selectedVehicleVIN != nil {
+                        HStack(spacing: 9) {
+                            Image(systemName: "car.side.fill")
+                                .foregroundStyle(JagPalette.warmMetal)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(model.selectedVehicleDisplayName)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(JagPalette.ivory)
+                                Text("\(model.vehicleVINText) · saved offline")
+                                    .font(.caption2)
+                                    .foregroundStyle(JagPalette.mutedIvory)
+                            }
+                        }
+                        Text("Connect to verify the live VIN and use the associated adapter.")
+                            .font(.caption)
+                            .foregroundStyle(JagPalette.mutedIvory)
+                    } else {
+                        Text("Choose a saved vehicle or scan a nearby adapter to identify this vehicle.")
+                            .font(.caption)
+                            .foregroundStyle(JagPalette.mutedIvory)
+                    }
                 }
             }
         }
@@ -318,7 +336,65 @@ struct ContentView: View {
         }
     }
 
-    private var supportingTools: some View { EmptyView() }
+    private var supportingTools: some View {
+        LinkPanel {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Label("Garage", systemImage: "car.2.fill")
+                        .font(.headline)
+                        .foregroundStyle(JagPalette.ivory)
+                    Spacer()
+                    Button("Add / Scan New Vehicle") {
+                        model.connect()
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(JagPalette.warmMetal)
+                }
+
+                Text("Select a saved vehicle offline, or scan a new adapter. The live VIN decides which profile is used after connection.")
+                    .font(.caption)
+                    .foregroundStyle(JagPalette.mutedIvory)
+
+                if model.savedVehicleProfiles.isEmpty {
+                    Text("No saved vehicles yet.")
+                        .font(.subheadline)
+                        .foregroundStyle(JagPalette.chrome)
+                } else {
+                    ForEach(model.savedVehicleProfiles) { profile in
+                        Button {
+                            model.selectSavedVehicle(vin: profile.vin)
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: profile.vin == model.selectedVehicleVIN
+                                      ? "checkmark.circle.fill" : "car.side")
+                                    .foregroundStyle(profile.vin == model.selectedVehicleVIN
+                                                     ? JagPalette.racingGreen : JagPalette.warmMetal)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(profile.displayName)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(JagPalette.ivory)
+                                    Text(profile.vin)
+                                        .font(.caption2.monospaced())
+                                        .foregroundStyle(JagPalette.mutedIvory)
+                                }
+                                Spacer()
+                                if profile.adapterIdentifier != nil {
+                                    Image(systemName: "memorychip")
+                                        .foregroundStyle(JagPalette.chrome)
+                                        .accessibilityLabel("Known adapter")
+                                }
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        if profile.id != model.savedVehicleProfiles.last?.id {
+                            jagDivider
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 private struct JagVehicleView: View {

@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Repair JAGLINK Xcode version once
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Apply exact version repair and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          project='app/ios/JAGLINK.xcodeproj/project.pbxproj'
+          test "$(grep -Fc 'MARKETING_VERSION = 0.2.67;' "$project")" -eq 2
+          test "$(grep -Fc 'MARKETING_VERSION = 0.2.68;' "$project")" -eq 0
+          sed -i 's/MARKETING_VERSION = 0\.2\.67;/MARKETING_VERSION = 0.2.68;/g' "$project"
+          test "$(grep -Fc 'MARKETING_VERSION = 0.2.68;' "$project")" -eq 2
+          git rm .github/workflows/repair-xcode-version-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$project"
+          git diff --cached --check
+          git commit -m 'Align JAGLINK Xcode project with VERSION 0.2.68'
+          git push origin HEAD:main

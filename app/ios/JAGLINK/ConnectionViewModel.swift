@@ -28,6 +28,14 @@ struct JaguarNetworkInfo: Identifiable {
     let provenance: String
 }
 
+struct JagSavedVehicleProfileSummary: Identifiable {
+    let id: String
+    let vin: String
+    let displayName: String
+    let updatedAt: Date?
+    let adapterIdentifier: String?
+}
+
 private func jaglinkLocalized(_ key: String) -> String {
     let selected = UserDefaults.standard.string(
         forKey: "link.displayLanguage") ?? "en-AU"
@@ -68,6 +76,8 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var diagnosticParameters = [DiagnosticParameter]()
     @Published private(set) var jaguarNetworks = [JaguarNetworkInfo]()
     @Published private(set) var profileDisplayName = "Jaguar vehicle"
+    @Published private(set) var savedVehicleProfiles = [JagSavedVehicleProfileSummary]()
+    @Published private(set) var selectedVehicleVIN: String?
     @Published private(set) var recordedSampleCount = 0
     @Published private(set) var versionText = "Unknown"
     @Published private(set) var csvExportURL: URL?
@@ -80,12 +90,25 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var selectedMeasurementID = "metric"
 
     private let controller = JagLinkDiagnosticsController()
+    private let vehicleProfileStore = LinkVehicleProfileStore(
+        productNamespace: "jaglink",
+        legacyProfileKey: nil,
+        legacySelectedVINKey: nil,
+        legacyAdapterMappingKey: nil)
+    private var lastPersistedLiveVIN: String?
+
+    var selectedVehicleDisplayName: String {
+        guard let selectedVehicleVIN else { return "No vehicle loaded" }
+        return savedVehicleProfiles.first(where: { $0.vin == selectedVehicleVIN })?.displayName
+            ?? "Jaguar vehicle"
+    }
 
     override init() {
         super.init()
         migrateLegacySharedSettings()
         controller.delegate = self
         loadJaguarProfile()
+        selectedVehicleVIN = vehicleProfileStore.selectedVehicleVIN
         if let value = jaglink_version() { versionText = String(cString: value) }
         refresh()
     }
@@ -94,38 +117,58 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         clearPreparedExport()
         if isActive { return }
 
-        let alert = UIAlertController(
-            title: jaglinkLocalized("Connection Test"),
-            message: jaglinkLocalized("Real Adapter uses Bluetooth. Simulated ELM327 runs the same diagnostic stack against an in-process ELM327 byte-stream emulator."),
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: jaglinkLocalized("Real Adapter"), style: .default) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.isSimulationActive = false
-                self.controller.start()
-            }
-        })
-        alert.addAction(UIAlertAction(title: jaglinkLocalized("Simulated ELM327"), style: .default) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.isSimulationActive = true
-                self.controller.startSimulated()
-            }
-        })
-        alert.addAction(UIAlertAction(title: jaglinkLocalized("Cancel"), style: .cancel))
-
         guard let presenter = presentingViewController() else {
-            isSimulationActive = false
-            controller.start()
+            beginConnection(.automatic)
             return
         }
-        presenter.present(alert, animated: true)
+
+        let currentVehicleText: String
+        if let selectedVehicleVIN {
+            currentVehicleText = "\(selectedVehicleDisplayName) · \(selectedVehicleVIN)"
+        } else {
+            currentVehicleText = "No saved vehicle loaded"
+        }
+
+        let picker = LinkConnectionPickerViewController(
+            vehicleText: currentVehicleText,
+            knownAdapterIdentifier: associatedAdapterIdentifier(
+                for: selectedVehicleVIN)
+        ) { [weak self] source in
+            Task { @MainActor [weak self] in
+                self?.beginConnection(source)
+            }
+        }
+        let navigation = UINavigationController(rootViewController: picker)
+        navigation.modalPresentationStyle = .pageSheet
+        presenter.present(navigation, animated: true)
+    }
+
+    private func beginConnection(_ source: LinkConnectionSource) {
+        guard !isActive else { return }
+        lastPersistedLiveVIN = nil
+        switch source {
+        case .automatic:
+            isSimulationActive = false
+            controller.start()
+        case .simulated:
+            isSimulationActive = true
+            controller.startSimulated()
+        case .peripheral(let identifier):
+            isSimulationActive = false
+            controller.start(withPeripheralIdentifier: identifier)
+        }
     }
 
     func disconnect() {
         controller.disconnect()
         isSimulationActive = false
+    }
+
+    func selectSavedVehicle(vin: String) {
+        guard !isActive else { return }
+        guard vehicleProfileStore.selectOfflineVehicle(withVIN: vin) else { return }
+        selectedVehicleVIN = vin
+        refresh()
     }
 
     var interfaceLocaleIdentifier: String {
@@ -182,6 +225,42 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
 
     func diagnosticsControllerDidUpdate(_ controller: JagLinkDiagnosticsController) {
         refresh()
+    }
+
+    private func associatedAdapterIdentifier(for vin: String?) -> String? {
+        guard let vin else { return nil }
+        return vehicleProfileStore.associatedAdapterIdentifier(forVIN: vin)
+    }
+
+    private func refreshSavedVehicleProfiles() {
+        savedVehicleProfiles = vehicleProfileStore.savedProfiles.compactMap { profile in
+            guard let vin = profile["vin"] as? String, vin.count == 17 else { return nil }
+            let displayName = (profile["displayName"] as? String) ?? "Jaguar vehicle"
+            let timestamp = (profile["updatedAt"] as? NSNumber)?.doubleValue
+            let adapter = vehicleProfileStore.associatedAdapterIdentifier(forVIN: vin)
+            return JagSavedVehicleProfileSummary(
+                id: vin,
+                vin: vin,
+                displayName: displayName,
+                updatedAt: timestamp.map { Date(timeIntervalSince1970: $0) },
+                adapterIdentifier: adapter)
+        }
+        selectedVehicleVIN = vehicleProfileStore.selectedVehicleVIN
+        if let selectedVehicleVIN,
+           let selected = savedVehicleProfiles.first(where: { $0.vin == selectedVehicleVIN }) {
+            profileDisplayName = selected.displayName
+        }
+    }
+
+    private func saveVehicleProfile(vin: String, displayName: String) {
+        var profile = vehicleProfileStore.profile(forVIN: vin) ?? [:]
+        profile["displayName"] = displayName
+        profile["manufacturer"] = "Jaguar"
+        profile["platform"] = vehiclePlatformText
+        profile["configuration"] = vehicleConfigurationText
+        profile["powertrain"] = vehiclePowertrainText
+        profile["build"] = vehicleBuildText
+        vehicleProfileStore.saveProfile(profile, forVIN: vin)
     }
 
     private func presentingViewController() -> UIViewController? {
@@ -284,14 +363,35 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     }
 
     private func refresh() {
+        refreshSavedVehicleProfiles()
         statusText = controller.statusText
         peripheralName = controller.peripheralName ?? "No adapter"
         adapterIdentifier = controller.adapterIdentifier ?? "Unknown"
-        vehicleVINText = controller.vehicleVINText ?? "Not returned by SAE Mode 09"
-        vehiclePlatformText = controller.vehiclePlatformText
-        vehicleConfigurationText = controller.vehicleConfigurationText
-        vehiclePowertrainText = controller.vehiclePowertrainText
-        vehicleBuildText = controller.vehicleBuildText
+        vehicleVINText = controller.isActive
+            ? (controller.vehicleVINText ?? "Not returned by SAE Mode 09")
+            : (selectedVehicleVIN ?? "No vehicle loaded")
+        if controller.isActive {
+            vehiclePlatformText = controller.vehiclePlatformText
+            vehicleConfigurationText = controller.vehicleConfigurationText
+            vehiclePowertrainText = controller.vehiclePowertrainText
+            vehicleBuildText = controller.vehicleBuildText
+        } else if let profile = vehicleProfileStore.profile(forVIN: selectedVehicleVIN ?? "") {
+            vehiclePlatformText = (profile["platform"] as? String) ?? "Saved Jaguar profile"
+            vehicleConfigurationText = (profile["configuration"] as? String) ?? "Saved vehicle configuration"
+            vehiclePowertrainText = (profile["powertrain"] as? String) ?? "Saved powertrain information"
+            vehicleBuildText = (profile["build"] as? String) ?? "Saved build information"
+        }
+        if controller.isActive,
+           let liveVIN = controller.vehicleVINText,
+           liveVIN.count == 17,
+           lastPersistedLiveVIN != liveVIN {
+            vehicleProfileStore.recordLiveVIN(liveVIN)
+            selectedVehicleVIN = liveVIN
+            let name = profileDisplayName.isEmpty ? "Jaguar vehicle · \(liveVIN)" : profileDisplayName
+            saveVehicleProfile(vin: liveVIN, displayName: name)
+            lastPersistedLiveVIN = liveVIN
+            refreshSavedVehicleProfiles()
+        }
         faultScanStatusText = controller.faultScanStatusText
         storedDTCs = controller.storedDTCs
         pendingDTCs = controller.pendingDTCs

@@ -15,6 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy, readonly) NSString *statusText;
 @property(nonatomic, copy, readonly, nullable) NSString *peripheralName;
 @property(nonatomic, copy, readonly, nullable) NSString *adapterIdentifier;
+/** Active OBD transport identified by LINK (protocol, speed/init and auto-selection). */
+@property(nonatomic, copy, readonly) NSString *obdProtocolText;
 @property(nonatomic, copy, readonly, nullable) NSString *vehicleVINText;
 @property(nonatomic, copy, readonly) NSString *vehiclePlatformText;
 @property(nonatomic, copy, readonly) NSString *vehicleConfigurationText;
@@ -68,7 +70,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)localizedTextForKey:(NSString *)key;
 - (void)setSelectedLanguageTag:(NSString *)tag;
 - (void)setSelectedMeasurementSystemKey:(NSString *)key;
+/** Canonical history retained for evidence/backwards compatibility. */
 - (NSArray<NSNumber *> *)recentValuesForPID:(uint8_t)pid limit:(NSUInteger)limit;
+/** LINK-owned presentation conversion for the selected unit system. */
+- (NSArray<NSNumber *> *)displayRecentValuesForPID:(uint8_t)pid limit:(NSUInteger)limit;
+- (NSString *)displayUnitForPID:(uint8_t)pid;
+- (NSArray<NSNumber *> *)displayRangeForPID:(uint8_t)pid;
 - (BOOL)favouriteForPID:(uint8_t)pid;
 - (void)setFavourite:(BOOL)favourite forPID:(uint8_t)pid;
 - (nullable NSData *)csvDataSnapshot;

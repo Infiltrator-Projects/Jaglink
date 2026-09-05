@@ -1,0 +1,198 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: JAGLINK 0.2.70 GitHub-hosted release
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/release-0.2.70-github-hosted.yml]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  portable:
+    name: Ubuntu / C11
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+      - name: Verify exact dependencies and release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(tr -d '[:space:]' < VERSION)" = "0.2.70"
+          test "$(tr -d '[:space:]' < src/link/VERSION)" = "0.15.0"
+          test "$(git ls-tree HEAD src/link | awk '{print $3}')" = "f56984deba554cde3b0c207319cb3c983996e42e"
+          test "$(git -C src/link rev-parse HEAD)" = "f56984deba554cde3b0c207319cb3c983996e42e"
+          grep -Fq '"f56984deba554cde3b0c207319cb3c983996e42e"' src/core/jaglink.c
+          project_versions="$(grep -E '^[[:space:]]*MARKETING_VERSION = ' app/ios/JAGLINK.xcodeproj/project.pbxproj | sed -E 's/.*= ([^;]+);/\1/' | sort -u)"
+          test "$project_versions" = "0.2.70"
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build --config Release --parallel
+      - run: ctest --test-dir build --build-config Release --output-on-failure
+
+  sanitizers:
+    name: Ubuntu / ASan + UBSan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+      - run: cmake -S . -B build-sanitized -DCMAKE_BUILD_TYPE=Debug -DJAGLINK_ENABLE_SANITIZERS=ON
+      - run: cmake --build build-sanitized --parallel
+      - run: ctest --test-dir build-sanitized --output-on-failure
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+
+  linux-packages:
+    name: Ubuntu / GTK4 + DEB + RUN
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential cmake dpkg-dev libgtk-4-dev libbluetooth-dev libusb-1.0-0-dev pkg-config xvfb
+      - id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(tr -d '[:space:]' < VERSION)"
+          test "$version" = "0.2.70"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Configure and build Linux app
+        run: cmake -S . -B build-linux -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DJAGLINK_BUILD_LINUX_APP=ON -DJAGLINK_BUILD_PROFILE=generic -DBUILD_TESTING=OFF
+      - run: cmake --build build-linux --parallel
+      - name: Verify native provider and disconnected navigation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ldd ./build-linux/jaglink | grep -F 'libusb-1.0.so' >/dev/null
+          grep -aF 'OP2:Tactrix OpenPort 2.0' ./build-linux/jaglink >/dev/null
+          log="$RUNNER_TEMP/navigation-stress.log"
+          GTK_A11Y=none G_DEBUG=fatal-warnings timeout 40s xvfb-run -a ./build-linux/jaglink --ui-navigation-stress | tee "$log"
+          grep -Fq 'LINK GTK timed navigation stress verified:' "$log"
+          grep -Fq 'sidebar selections while disconnected with main-loop interleaving' "$log"
+      - name: Package DEB and native RUN
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release" "$RUNNER_TEMP/cpack"
+          cpack --config build-linux/CPackConfig.cmake -G DEB -B "$RUNNER_TEMP/cpack"
+          deb_src="$(find "$RUNNER_TEMP/cpack" -maxdepth 1 -type f -name '*.deb' -print -quit)"
+          test -n "$deb_src"
+          dpkg-deb -c "$deb_src" | grep -F './usr/lib/udev/rules.d/60-jaglink-openport2.rules' >/dev/null
+          dpkg-deb -c "$deb_src" | grep -F './usr/share/doc/jaglink/copyright' >/dev/null
+          dpkg-deb -f "$deb_src" Depends | grep -E '(^|, )libusb-1\.0-0([ (]|,|$)' >/dev/null
+          install -m 0644 "$deb_src" "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-amd64.deb"
+          bash scripts/build-linux-run.sh "$RUNNER_TEMP/release"
+          "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-native.run" --help >/dev/null
+          native_deb="$RUNNER_TEMP/jaglink_${VERSION}+native1_amd64.deb"
+          "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-native.run" --build-only --output "$native_deb"
+          test "$(dpkg-deb -f "$native_deb" Package)" = jaglink
+          test "$(dpkg-deb -f "$native_deb" Version)" = "${VERSION}+native1"
+          dpkg-deb -c "$native_deb" | grep -F './usr/lib/udev/rules.d/60-jaglink-openport2.rules' >/dev/null
+          dpkg-deb -f "$native_deb" Depends | grep -E '(^|, )libusb-1\.0-0([ (]|,|$)' >/dev/null
+          dpkg --compare-versions "${VERSION}+native1" gt "${VERSION}"
+          test -s "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-amd64.deb"
+          test -s "$RUNNER_TEMP/release/JAGLINK-${VERSION}-linux-native.run"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: JAGLINK-0.2.70-linux-packages-hosted
+          path: ${{ runner.temp }}/release/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+  publish:
+    name: Publish JAGLINK 0.2.70
+    needs: [portable, sanitizers, linux-packages]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Verify exact release target
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --tags
+          test "$GITHUB_SHA" = "$(git rev-parse origin/main)"
+          test "$(tr -d '[:space:]' < VERSION)" = "0.2.70"
+          test "$(tr -d '[:space:]' < src/link/VERSION)" = "0.15.0"
+          test "$(git ls-tree HEAD src/link | awk '{print $3}')" = "f56984deba554cde3b0c207319cb3c983996e42e"
+          if git rev-parse -q --verify refs/tags/v0.2.70 >/dev/null; then
+            echo 'v0.2.70 already exists; releases are immutable.' >&2
+            exit 1
+          fi
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: JAGLINK-0.2.70-linux-packages-hosted
+          path: release-assets
+      - name: Download verified IPA from JAGLINK CI run 33941093609
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: JAGLINK-0.2.70-unsigned-iphone-ipa
+          path: release-assets
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 33941093609
+      - name: Download verified Windows artifact from JAGLINK CI run 33941093609
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: JAGLINK-0.2.70-windows-discover
+          path: release-assets
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: 33941093609
+      - name: Verify release payload and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in \
+            JAGLINK-0.2.70-unsigned.ipa \
+            JAGLINK-0.2.70-linux-amd64.deb \
+            JAGLINK-0.2.70-linux-native.run \
+            JAGLINK-0.2.70-windows-discover.exe; do
+            test -s "release-assets/$file"
+          done
+          unzip -tq release-assets/JAGLINK-0.2.70-unsigned.ipa
+          (cd release-assets && sha256sum JAGLINK-* > SHA256SUMS.txt)
+          test -s release-assets/SHA256SUMS.txt
+      - name: Publish complete atomic GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create v0.2.70 --target "$GITHUB_SHA" --draft \
+            --title 'JAGLINK 0.2.70' \
+            --notes 'JAGLINK 0.2.70: Jaguar ISO-9141 ATH1 live-diagnostics parsing fixed through LINK 0.15.0, with validated transport framing, preserved ECU source identity, unified live scheduling, and launch-verified Apple, Windows and Linux release artifacts on Infiltratr Common 1.15.7.'
+          gh release upload v0.2.70 release-assets/* --clobber
+          assets="$(gh release view v0.2.70 --json assets --jq '.assets[].name')"
+          for expected in \
+            JAGLINK-0.2.70-unsigned.ipa \
+            JAGLINK-0.2.70-linux-amd64.deb \
+            JAGLINK-0.2.70-linux-native.run \
+            JAGLINK-0.2.70-windows-discover.exe \
+            SHA256SUMS.txt; do
+            grep -Fxq "$expected" <<<"$assets"
+          done
+          gh release edit v0.2.70 --draft=false
+          git fetch origin refs/tags/v0.2.70:refs/tags/v0.2.70
+          test "$(git rev-parse 'refs/tags/v0.2.70^{commit}')" = "$GITHUB_SHA"

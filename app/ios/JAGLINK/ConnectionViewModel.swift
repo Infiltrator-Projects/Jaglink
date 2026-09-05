@@ -52,6 +52,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var statusText = "Idle"
     @Published private(set) var peripheralName = "No adapter"
     @Published private(set) var adapterIdentifier = "Unknown"
+    @Published private(set) var obdProtocolText = "OBD-II protocol not identified"
     @Published private(set) var vehicleVINText = "Waiting for VIN"
     @Published private(set) var vehiclePlatformText = "Jaguar vehicle identity pending"
     @Published private(set) var vehicleConfigurationText = "Waiting for standard VIN"
@@ -91,6 +92,12 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var measurementKeys = [String]()
     @Published private(set) var measurementNames = [String]()
     @Published private(set) var selectedMeasurementID = "metric"
+    @Published private(set) var instantaneousFuelEconomyText = "Unavailable"
+    @Published private(set) var averageFuelEconomyText = "Unavailable"
+    @Published private(set) var fuelRateText = "Unavailable"
+    @Published private(set) var fuelTripText = "0.00 L over 0.0 km"
+    @Published private(set) var fuelEconomySourceText = "Unavailable"
+    @Published private(set) var factoryFuelSignalStatusText = "Jaguar factory fuel signal not yet enabled"
 
     private let controller = JagLinkDiagnosticsController()
     private let vehicleProfileStore = LinkVehicleProfileStore(
@@ -273,9 +280,10 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         if includeDiagnosticSnapshot {
             /*
              * Read the shared controller directly. refresh() is called from
-             * the LINK delegate before the Swift mirror is updated, so using
-             * the published properties here would persist the previous event.
+             * the LINK delegate after the flow event is applied, so the shared
+             * controller is the authoritative generic diagnostic snapshot.
              */
+            profile["obdProtocolText"] = controller.obdProtocolText
             profile["standardResponderSummary"] = controller.standardResponderSummary
             profile["supportedPIDSummary"] = controller.supportedPIDSummary
             profile["standardVINText"] = controller.standardVINText
@@ -303,6 +311,9 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     }
 
     private func restoreSavedDiagnosticSnapshot(_ profile: [AnyHashable: Any]) {
+        obdProtocolText =
+            (profile["obdProtocolText"] as? String)
+            ?? "Saved OBD-II protocol unavailable"
         standardResponderSummary =
             (profile["standardResponderSummary"] as? String)
             ?? "Saved standard responder information"
@@ -338,6 +349,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     }
 
     private func resetOfflineDiagnosticSnapshot() {
+        obdProtocolText = "OBD-II protocol not identified"
         faultScanStatusText = "Not scanned"
         storedDTCs = []
         pendingDTCs = []
@@ -414,16 +426,15 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         jaguarNetworks = result
     }
 
-    private func formattedValue(definition: UnsafePointer<JaglinkParameterDefinition>, value: Double?) -> String {
-        var buffer = [CChar](repeating: 0, count: 96)
-        let success = buffer.withUnsafeMutableBufferPointer { storage in
-            jaglink_parameter_format_value(definition, value != nil, value ?? 0.0, storage.baseAddress, storage.count)
-        }
-        guard success else { return "N/A" }
-        return buffer.withUnsafeBufferPointer { storage in
-            guard let base = storage.baseAddress else { return "N/A" }
-            return String(cString: base)
-        }
+    private func formattedDisplayValue(
+        definition: UnsafePointer<JaglinkParameterDefinition>,
+        value: Double?,
+        displayUnit: String
+    ) -> String {
+        guard let value else { return "N/A" }
+        let decimalPlaces = Int(definition.pointee.decimal_places)
+        let suffix = displayUnit.isEmpty ? "" : " \(displayUnit)"
+        return String(format: "%.*f%@", decimalPlaces, value, suffix)
     }
 
     private func loadDiagnosticParameters() -> [DiagnosticParameter] {
@@ -435,8 +446,9 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
             guard let definition = jaglink_parameter_obd2_definition_at(index) else { continue }
             let metadata = definition.pointee
             guard let pid = UInt8(exactly: metadata.key.identifier) else { continue }
-            let history = controller.recentValues(forPID: pid, limit: 60).map(\.doubleValue)
+            let history = controller.displayRecentValues(forPID: pid, limit: 60).map(\.doubleValue)
             let value = history.last
+            let displayUnit = controller.displayUnit(forPID: pid)
             let stableKey = string(from: metadata.stable_key)
             guard !stableKey.isEmpty else { continue }
             result.append(DiagnosticParameter(
@@ -446,13 +458,34 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
                 parameterIdentifier: metadata.key.identifier,
                 shortName: string(from: metadata.short_name),
                 title: string(from: metadata.name),
-                suffix: string(from: metadata.suffix),
-                formattedValue: formattedValue(definition: definition, value: value),
+                suffix: displayUnit,
+                formattedValue: formattedDisplayValue(
+                    definition: definition,
+                    value: value,
+                    displayUnit: displayUnit),
                 value: value,
                 favourite: controller.favourite(forPID: pid),
                 history: history))
         }
         return result
+    }
+
+    private func refreshFuelEconomy() {
+        instantaneousFuelEconomyText = controller.instantaneousFuelEconomyAvailable
+            ? String(format: "%.1f L/100 km", controller.instantaneousFuelEconomyLPer100km)
+            : "Unavailable"
+        averageFuelEconomyText = controller.averageFuelEconomyAvailable
+            ? String(format: "%.1f L/100 km", controller.averageFuelEconomyLPer100km)
+            : "Unavailable"
+        fuelRateText = controller.fuelRateAvailable
+            ? String(format: "%.2f L/h", controller.fuelRateLitresPerHour)
+            : "Unavailable"
+        fuelTripText = String(
+            format: "%.2f L over %.1f km",
+            controller.tripFuelLitres,
+            controller.tripDistanceKilometres)
+        fuelEconomySourceText = controller.fuelEconomySourceText
+        factoryFuelSignalStatusText = controller.factoryFuelSignalStatusText
     }
 
     private func refresh() {
@@ -507,6 +540,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
             refreshSavedVehicleProfiles()
         }
         if controller.isActive {
+            obdProtocolText = controller.obdProtocolText
             faultScanStatusText = controller.faultScanStatusText
             storedDTCs = controller.storedDTCs
             pendingDTCs = controller.pendingDTCs
@@ -538,5 +572,6 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         isReady = controller.isReady
         diagnosticParameters = loadDiagnosticParameters()
         recordedSampleCount = Int(clamping: controller.recordedSampleCount)
+        refreshFuelEconomy()
     }
 }

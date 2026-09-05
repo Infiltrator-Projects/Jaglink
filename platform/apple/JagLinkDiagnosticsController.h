@@ -24,6 +24,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy, readonly) NSArray<NSString *> *storedDTCs;
 @property(nonatomic, copy, readonly) NSArray<NSString *> *pendingDTCs;
 @property(nonatomic, copy, readonly) NSArray<NSString *> *permanentDTCs;
+/** Presentation rows; raw DTC arrays above remain unchanged for evidence/profile data. */
+@property(nonatomic, copy, readonly) NSArray<NSString *> *storedDTCDisplayRows;
+@property(nonatomic, copy, readonly) NSArray<NSString *> *pendingDTCDisplayRows;
+@property(nonatomic, copy, readonly) NSArray<NSString *> *permanentDTCDisplayRows;
 @property(nonatomic, copy, readonly) NSString *readinessStatusText;
 @property(nonatomic, copy, readonly) NSArray<NSString *> *readinessMonitorStatus;
 @property(nonatomic, copy, readonly) NSArray<NSString *> *freezeFrameContext;

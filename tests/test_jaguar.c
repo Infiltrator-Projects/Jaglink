@@ -76,6 +76,18 @@ int main(void)
     passed &= check(factory_dtc != NULL && !factory_dtc->generic_obd2_accessible,
                     "factory trip-computer DTC missing or misclassified");
     factory_dtc = jaglink_jaguar_profile_find_factory_dtc(
+        profile, JAGLINK_JAGUAR_MODULE_ECM, "P1647");
+    passed &= check(factory_dtc != NULL && factory_dtc->generic_obd2_accessible &&
+                    strcmp(factory_dtc->category, "oxygen-sensor") == 0,
+                    "Jaguar EOBD P1647 definition missing or misclassified");
+    passed &= check(strcmp(jaglink_jaguar_x400_obd_dtc_title("P1647"),
+                           "ECM HO2 sensor control malfunction — bank 2 upstream (2/1)") == 0,
+                    "Jaguar P1647 display title mismatch");
+    passed &= check(jaglink_jaguar_x400_obd_dtc_title("P0116") == NULL &&
+                    jaglink_jaguar_x400_obd_dtc_title("P0332") == NULL,
+                    "generic SAE DTCs must remain LINK-owned");
+
+    factory_dtc = jaglink_jaguar_profile_find_factory_dtc(
         profile, JAGLINK_JAGUAR_MODULE_GECM, "U1041");
     passed &= check(factory_dtc != NULL && strcmp(factory_dtc->category, "network") == 0,
                     "factory GECM network DTC missing");

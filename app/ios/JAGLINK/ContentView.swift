@@ -517,9 +517,9 @@ private struct JagFaultsView: View {
                             .font(.title2.monospacedDigit().weight(.bold))
                             .foregroundStyle(total == 0 ? JagPalette.racingGreen : JagPalette.jaguarRed)
                     }
-                    faultRows(title: "Stored", codes: model.storedDTCs)
-                    faultRows(title: "Pending", codes: model.pendingDTCs)
-                    faultRows(title: "Permanent", codes: model.permanentDTCs)
+                    faultRows(title: "Stored", codes: model.storedDTCDisplayRows)
+                    faultRows(title: "Pending", codes: model.pendingDTCDisplayRows)
+                    faultRows(title: "Permanent", codes: model.permanentDTCDisplayRows)
                 }
             }
             .padding(16)

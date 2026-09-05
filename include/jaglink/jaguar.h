@@ -150,6 +150,13 @@ const JaglinkJaguarFactoryDtcDefinition *jaglink_jaguar_profile_find_factory_dtc
     const char *code);
 const JaglinkJaguarVehicleProfile *jaglink_jaguar_x400_profile(void);
 
+/**
+ * Resolve a short title for a source-corroborated Jaguar-specific DTC that is
+ * legitimately exposed through generic OBD-II. Generic SAE definitions stay
+ * LINK-owned and therefore return NULL here.
+ */
+const char *jaglink_jaguar_x400_obd_dtc_title(const char *code);
+
 /** Number of documented X400 manufacturer fuel/trip signals. */
 size_t jaglink_jaguar_x400_fuel_signal_count(void);
 

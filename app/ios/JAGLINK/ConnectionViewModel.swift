@@ -61,6 +61,9 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var storedDTCs = [String]()
     @Published private(set) var pendingDTCs = [String]()
     @Published private(set) var permanentDTCs = [String]()
+    @Published private(set) var storedDTCDisplayRows = [String]()
+    @Published private(set) var pendingDTCDisplayRows = [String]()
+    @Published private(set) var permanentDTCDisplayRows = [String]()
     @Published private(set) var readinessStatusText = "Not collected"
     @Published private(set) var readinessMonitorStatus = [String]()
     @Published private(set) var freezeFrameContext = [String]()
@@ -283,6 +286,9 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
             profile["storedDTCs"] = controller.storedDTCs
             profile["pendingDTCs"] = controller.pendingDTCs
             profile["permanentDTCs"] = controller.permanentDTCs
+            profile["storedDTCDisplayRows"] = controller.storedDTCDisplayRows
+            profile["pendingDTCDisplayRows"] = controller.pendingDTCDisplayRows
+            profile["permanentDTCDisplayRows"] = controller.permanentDTCDisplayRows
             profile["readinessStatusText"] = controller.readinessStatusText
             profile["readinessMonitorStatus"] = controller.readinessMonitorStatus
             profile["freezeFrameContext"] = controller.freezeFrameContext
@@ -318,6 +324,12 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         storedDTCs = (profile["storedDTCs"] as? [String]) ?? []
         pendingDTCs = (profile["pendingDTCs"] as? [String]) ?? []
         permanentDTCs = (profile["permanentDTCs"] as? [String]) ?? []
+        storedDTCDisplayRows =
+            (profile["storedDTCDisplayRows"] as? [String]) ?? storedDTCs
+        pendingDTCDisplayRows =
+            (profile["pendingDTCDisplayRows"] as? [String]) ?? pendingDTCs
+        permanentDTCDisplayRows =
+            (profile["permanentDTCDisplayRows"] as? [String]) ?? permanentDTCs
         readinessStatusText =
             (profile["readinessStatusText"] as? String) ?? "Saved readiness state"
         readinessMonitorStatus =
@@ -330,6 +342,9 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         storedDTCs = []
         pendingDTCs = []
         permanentDTCs = []
+        storedDTCDisplayRows = []
+        pendingDTCDisplayRows = []
+        permanentDTCDisplayRows = []
         readinessStatusText = "Not collected"
         readinessMonitorStatus = []
         freezeFrameContext = []
@@ -496,6 +511,9 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
             storedDTCs = controller.storedDTCs
             pendingDTCs = controller.pendingDTCs
             permanentDTCs = controller.permanentDTCs
+            storedDTCDisplayRows = controller.storedDTCDisplayRows
+            pendingDTCDisplayRows = controller.pendingDTCDisplayRows
+            permanentDTCDisplayRows = controller.permanentDTCDisplayRows
             readinessStatusText = controller.readinessStatusText
             readinessMonitorStatus = controller.readinessMonitorStatus
             freezeFrameContext = controller.freezeFrameContext

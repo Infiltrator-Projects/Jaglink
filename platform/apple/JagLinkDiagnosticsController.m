@@ -2,6 +2,7 @@
 #import "JagLinkDiagnosticsController.h"
 
 #import "../../src/link/platform/apple/LinkDiagnosticsController.h"
+#import "jaglink/jaguar.h"
 #import "jaglink/jaguar_vin.h"
 
 @interface JagLinkDiagnosticsController () <LinkDiagnosticsControllerDelegate>
@@ -21,6 +22,33 @@ static NSString *JagLinkStringFromCString(const char *value)
     if (value == NULL) return @"unknown";
     NSString *string = [NSString stringWithUTF8String:value];
     return string != nil ? string : @"unknown";
+}
+
+static NSString *JagLinkDTCDisplayText(
+    LinkDiagnosticsController *shared, NSString *code)
+{
+    if (code.length == 0U) return @"";
+    NSString *normalized = code.uppercaseString;
+    const char *jaguar_title =
+        jaglink_jaguar_x400_obd_dtc_title(normalized.UTF8String);
+    if (jaguar_title != NULL) {
+        return [NSString stringWithFormat:@"%@ — %@", normalized,
+            JagLinkStringFromCString(jaguar_title)];
+    }
+    return [shared dtcDisplayTextForCode:normalized];
+}
+
+static NSArray<NSString *> *JagLinkDTCDisplayRows(
+    LinkDiagnosticsController *shared, NSArray<NSString *> *codes)
+{
+    if (codes.count == 0U) return @[];
+    NSMutableArray<NSString *> *rows =
+        [[NSMutableArray alloc] initWithCapacity:codes.count];
+    for (NSString *code in codes) {
+        NSString *row = JagLinkDTCDisplayText(shared, code);
+        if (row.length != 0U) [rows addObject:row];
+    }
+    return [rows copy];
 }
 
 - (instancetype)init
@@ -77,6 +105,18 @@ static NSString *JagLinkStringFromCString(const char *value)
 - (NSArray<NSString *> *)storedDTCs { return _shared.storedDTCs; }
 - (NSArray<NSString *> *)pendingDTCs { return _shared.pendingDTCs; }
 - (NSArray<NSString *> *)permanentDTCs { return _shared.permanentDTCs; }
+- (NSArray<NSString *> *)storedDTCDisplayRows
+{
+    return JagLinkDTCDisplayRows(_shared, _shared.storedDTCs);
+}
+- (NSArray<NSString *> *)pendingDTCDisplayRows
+{
+    return JagLinkDTCDisplayRows(_shared, _shared.pendingDTCs);
+}
+- (NSArray<NSString *> *)permanentDTCDisplayRows
+{
+    return JagLinkDTCDisplayRows(_shared, _shared.permanentDTCs);
+}
 - (NSString *)readinessStatusText { return _shared.readinessStatusText; }
 - (NSArray<NSString *> *)readinessMonitorStatus
 {

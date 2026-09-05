@@ -10,6 +10,8 @@ static const char x400_diagnostic_provenance[] =
     "Jaguar X-TYPE 2002 Electrical Guide CAN message matrix, factory diagnostic data identifiers";
 static const char x400_dtc_provenance[] =
     "Jaguar X-TYPE 2002 Model Year DTC Summaries: factory module B/C/U diagnostic catalogue";
+static const char x400_eobd_dtc_provenance[] =
+    "Jaguar X-TYPE P DTC OBD II 2002 Model Year, Powertrain DTC Summaries";
 static const char x400_fuel_used_provenance[] =
     "Jaguar X-TYPE Electrical Guide CAN message matrix: ID 0x44D, CAN FUEL USED, ECM to instrument cluster, data for trip computer calculations. Numerical byte layout/scaling is not yet vehicle-verified.";
 
@@ -50,6 +52,9 @@ static const JaglinkJaguarDiagnosticEndpointDefinition x400_diagnostic_endpoints
 };
 
 static const JaglinkJaguarFactoryDtcDefinition x400_factory_dtcs[] = {
+    { "P1647", "x400.ecm.ho2-bank2-upstream", JAGLINK_JAGUAR_MODULE_ECM,
+      "oxygen-sensor", true, JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED,
+      x400_eobd_dtc_provenance },
     { "B1202", "x400.ic.fuel-level-sensor-1", JAGLINK_JAGUAR_MODULE_INSTRUMENT_CLUSTER,
       "fuel-level", false, JAGLINK_JAGUAR_DEFINITION_SOURCE_CORROBORATED, x400_dtc_provenance },
     { "B1204", "x400.ic.fuel-level-sensor-1-short", JAGLINK_JAGUAR_MODULE_INSTRUMENT_CLUSTER,
@@ -289,6 +294,14 @@ const JaglinkJaguarFactoryDtcDefinition *jaglink_jaguar_profile_find_factory_dtc
 const JaglinkJaguarVehicleProfile *jaglink_jaguar_x400_profile(void)
 {
     return &x400_profile;
+}
+
+const char *jaglink_jaguar_x400_obd_dtc_title(const char *code)
+{
+    if (!valid_dtc_code(code)) return NULL;
+    if (strcmp(code, "P1647") == 0)
+        return "ECM HO2 sensor control malfunction — bank 2 upstream (2/1)";
+    return NULL;
 }
 
 size_t jaglink_jaguar_x400_fuel_signal_count(void)

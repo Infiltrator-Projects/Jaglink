@@ -140,7 +140,11 @@ static int test_scheduler_fairness(void)
               &scheduler, &supported, 0U) == JAGLINK_SCHEDULER_RESULT_OK);
     CHECK(scheduler.count == sizeof(expected));
 
-    for (size_t dispatch_count = 0U; dispatch_count < 16U; ++dispatch_count) {
+    /* LINK 0.15.1+ prioritises overdue urgent work while aging slower jobs
+     * upward until they run. Simulate long enough to prove that preference
+     * does not become starvation; the two 3-second LOW jobs arrive near
+     * dispatches 30-31 under this deliberately overloaded 300 ms loop. */
+    for (size_t dispatch_count = 0U; dispatch_count < 40U; ++dispatch_count) {
         CHECK(jaglink_scheduler_next(&scheduler, now_ms, &dispatch) ==
               JAGLINK_SCHEDULER_NEXT_READY);
         seen[dispatch.pid] = true;

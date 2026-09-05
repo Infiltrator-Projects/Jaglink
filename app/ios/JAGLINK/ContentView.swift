@@ -420,6 +420,8 @@ private struct JagVehicleView: View {
                     jagDivider
                     jagValueRow("ELM identity", model.adapterIdentifier, icon: "cpu")
                     jagDivider
+                    jagValueRow("OBD transport", model.obdProtocolText, icon: "network")
+                    jagDivider
                     jagValueRow("Status", model.statusText, icon: "checkmark.seal")
                 }
                 JagPanel(title: "Control units", systemImage: "square.stack.3d.up.fill") {
@@ -580,6 +582,22 @@ private struct JagDashboardView: View {
                     jagValueRow("Recorded samples", "\(model.recordedSampleCount)", icon: "waveform.path.ecg")
                 }
 
+                JagPanel(title: "Fuel Economy", systemImage: "fuelpump.fill") {
+                    jagValueRow("Instantaneous", model.instantaneousFuelEconomyText, icon: "gauge.with.dots.needle.50percent")
+                    jagDivider
+                    jagValueRow("Trip average", model.averageFuelEconomyText, icon: "chart.line.uptrend.xyaxis")
+                    jagDivider
+                    jagValueRow("Fuel rate", model.fuelRateText, icon: "drop.fill")
+                    jagDivider
+                    jagValueRow("Trip", model.fuelTripText, icon: "road.lanes")
+                    jagDivider
+                    jagValueRow("Source", model.fuelEconomySourceText, icon: "checkmark.seal")
+                    Text(model.factoryFuelSignalStatusText)
+                        .font(.caption)
+                        .foregroundStyle(JagPalette.mutedIvory)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
                 if displayed.isEmpty {
                     JagPanel(title: "Measurements", systemImage: "waveform.path.ecg") {
                         Text("Connect to the vehicle to populate dashboard measurements.")
@@ -610,6 +628,8 @@ private struct JagEvidenceView: View {
             VStack(alignment: .leading, spacing: 15) {
                 JagPanel(title: "Diagnostic Evidence", systemImage: "doc.text.magnifyingglass") {
                     jagValueRow("Fault scan", model.faultScanStatusText, icon: "exclamationmark.triangle")
+                    jagDivider
+                    jagValueRow("OBD transport", model.obdProtocolText, icon: "network")
                     jagDivider
                     jagValueRow("Recorded samples", "\(model.recordedSampleCount)", icon: "waveform.path.ecg")
                     jagDivider
@@ -800,6 +820,8 @@ private struct JagSettingsView: View {
                     jagValueRow("Name", model.peripheralName, icon: "antenna.radiowaves.left.and.right")
                     jagDivider
                     jagValueRow("Identity", model.adapterIdentifier, icon: "cpu")
+                    jagDivider
+                    jagValueRow("OBD transport", model.obdProtocolText, icon: "network")
                     jagDivider
                     jagValueRow("Status", model.statusText, icon: "checkmark.seal")
                 }

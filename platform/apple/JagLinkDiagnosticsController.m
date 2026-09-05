@@ -4,6 +4,7 @@
 #import "../../src/link/platform/apple/LinkDiagnosticsController.h"
 #import "jaglink/jaguar.h"
 #import "jaglink/jaguar_vin.h"
+#import "link/fuel_economy.h"
 
 @interface JagLinkDiagnosticsController () <LinkDiagnosticsControllerDelegate>
 @property(nonatomic, copy, readwrite, nullable) NSString *vehicleVINText;
@@ -11,10 +12,13 @@
 @property(nonatomic, copy, readwrite) NSString *vehicleConfigurationText;
 @property(nonatomic, copy, readwrite) NSString *vehiclePowertrainText;
 @property(nonatomic, copy, readwrite) NSString *vehicleBuildText;
+- (void)resetFuelEconomy;
+- (LinkFuelEconomySnapshot)fuelEconomySnapshot;
 @end
 
 @implementation JagLinkDiagnosticsController {
     LinkDiagnosticsController *_shared;
+    LinkFuelEconomy _fuelEconomy;
 }
 
 static NSString *JagLinkStringFromCString(const char *value)
@@ -22,6 +26,25 @@ static NSString *JagLinkStringFromCString(const char *value)
     if (value == NULL) return @"unknown";
     NSString *string = [NSString stringWithUTF8String:value];
     return string != nil ? string : @"unknown";
+}
+
+static uint64_t JagLinkMonotonicMilliseconds(void)
+{
+    NSTimeInterval uptime = NSProcessInfo.processInfo.systemUptime;
+    if (uptime <= 0.0) return 0U;
+    const double milliseconds = uptime * 1000.0;
+    return milliseconds >= (double)UINT64_MAX
+        ? UINT64_MAX : (uint64_t)milliseconds;
+}
+
+static NSString *JagLinkFuelEconomySourceText(LinkFuelEconomySource source)
+{
+    const char *name = link_fuel_economy_source_name(source);
+    if (name == NULL || name[0] == '\0' ||
+        source == LINK_FUEL_ECONOMY_SOURCE_NONE) {
+        return @"Unavailable";
+    }
+    return JagLinkStringFromCString(name);
 }
 
 static NSString *JagLinkDTCDisplayText(
@@ -69,6 +92,7 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
         standardVINStatusText:
             @"Reading standard VIN for Jaguar X400 identification"];
     _shared.delegate = self;
+    link_fuel_economy_init(&_fuelEconomy);
 
     _vehiclePlatformText = @"Jaguar X400 identity pending";
     _vehicleConfigurationText = @"Waiting for standard VIN";
@@ -91,6 +115,20 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
     self.vehicleBuildText = @"Waiting for standard VIN";
 }
 
+- (void)resetFuelEconomy
+{
+    const uint64_t now_ms = JagLinkMonotonicMilliseconds();
+    link_fuel_economy_init(&_fuelEconomy);
+    link_fuel_economy_reset_trip(&_fuelEconomy, now_ms);
+}
+
+- (LinkFuelEconomySnapshot)fuelEconomySnapshot
+{
+    const uint64_t now_ms = JagLinkMonotonicMilliseconds();
+    link_fuel_economy_tick(&_fuelEconomy, now_ms);
+    return link_fuel_economy_snapshot(&_fuelEconomy, now_ms);
+}
+
 - (void)notifyDelegate
 {
     id<JagLinkDiagnosticsControllerDelegate> delegate = self.delegate;
@@ -101,6 +139,7 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
 - (NSString *)statusText { return _shared.statusText; }
 - (nullable NSString *)peripheralName { return _shared.peripheralName; }
 - (nullable NSString *)adapterIdentifier { return _shared.adapterIdentifier; }
+- (NSString *)obdProtocolText { return _shared.obdProtocolText; }
 - (NSString *)faultScanStatusText { return _shared.faultScanStatusText; }
 - (NSArray<NSString *> *)storedDTCs { return _shared.storedDTCs; }
 - (NSArray<NSString *> *)pendingDTCs { return _shared.pendingDTCs; }
@@ -196,18 +235,21 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
 - (void)start
 {
     [self resetVehicleIdentity];
+    [self resetFuelEconomy];
     [_shared start];
 }
 
 - (void)startWithPeripheralIdentifier:(NSString *)peripheralIdentifier
 {
     [self resetVehicleIdentity];
+    [self resetFuelEconomy];
     [_shared startWithPeripheralIdentifier:peripheralIdentifier];
 }
 
 - (void)startSimulated
 {
     [self resetVehicleIdentity];
+    [self resetFuelEconomy];
     [_shared startSimulatedWithAdapterIdentifier:"ELM327 v2.3 JAGLINK SIM"
                                              vin:"SAJAC51M31XC12345"
                                  customResponder:NULL
@@ -217,12 +259,29 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
 - (void)disconnect
 {
     [_shared disconnect];
+    link_fuel_economy_init(&_fuelEconomy);
 }
 
 - (NSArray<NSNumber *> *)recentValuesForPID:(uint8_t)pid
                                       limit:(NSUInteger)limit
 {
     return [_shared recentValuesForPID:pid limit:limit];
+}
+
+- (NSArray<NSNumber *> *)displayRecentValuesForPID:(uint8_t)pid
+                                             limit:(NSUInteger)limit
+{
+    return [_shared displayRecentValuesForPID:pid limit:limit];
+}
+
+- (NSString *)displayUnitForPID:(uint8_t)pid
+{
+    return [_shared displayUnitForPID:pid];
+}
+
+- (NSArray<NSNumber *> *)displayRangeForPID:(uint8_t)pid
+{
+    return [_shared displayRangeForPID:pid];
 }
 
 - (BOOL)favouriteForPID:(uint8_t)pid
@@ -256,8 +315,16 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
               didReceiveFlowEvent:(const LinkDiagnosticFlowEvent *)event
 {
     (void)controller;
-    if (event == NULL ||
-        event->kind != LINK_DIAGNOSTIC_FLOW_EVENT_STANDARD_VIN) {
+    if (event == NULL) return;
+
+    if (event->kind == LINK_DIAGNOSTIC_FLOW_EVENT_LIVE_SAMPLE) {
+        const uint64_t now_ms = JagLinkMonotonicMilliseconds();
+        (void)link_fuel_economy_observe_obd2(
+            &_fuelEconomy, &event->sample, now_ms);
+        link_fuel_economy_tick(&_fuelEconomy, now_ms);
+    }
+
+    if (event->kind != LINK_DIAGNOSTIC_FLOW_EVENT_STANDARD_VIN) {
         return;
     }
 
@@ -348,16 +415,60 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
         @"Unexpected manufacturer extension request in JAGLINK standard flow"];
 }
 
-- (BOOL)instantaneousFuelEconomyAvailable { return NO; }
-- (double)instantaneousFuelEconomyLPer100km { return 0.0; }
-- (BOOL)averageFuelEconomyAvailable { return NO; }
-- (double)averageFuelEconomyLPer100km { return 0.0; }
-- (BOOL)fuelRateAvailable { return NO; }
-- (double)fuelRateLitresPerHour { return 0.0; }
-- (double)tripFuelLitres { return 0.0; }
-- (double)tripDistanceKilometres { return 0.0; }
-- (NSString *)fuelEconomySourceText { return @"Unavailable"; }
-- (NSString *)factoryFuelSignalStatusText {
+- (BOOL)instantaneousFuelEconomyAvailable
+{
+    return [self fuelEconomySnapshot].instantaneous_available;
+}
+
+- (double)instantaneousFuelEconomyLPer100km
+{
+    return [self fuelEconomySnapshot].instantaneous_l_per_100km;
+}
+
+- (BOOL)averageFuelEconomyAvailable
+{
+    return [self fuelEconomySnapshot].average_available;
+}
+
+- (double)averageFuelEconomyLPer100km
+{
+    return [self fuelEconomySnapshot].average_l_per_100km;
+}
+
+- (BOOL)fuelRateAvailable
+{
+    return [self fuelEconomySnapshot].fuel_rate_available;
+}
+
+- (double)fuelRateLitresPerHour
+{
+    return [self fuelEconomySnapshot].fuel_rate_l_per_hour;
+}
+
+- (double)tripFuelLitres
+{
+    return [self fuelEconomySnapshot].trip_fuel_litres;
+}
+
+- (double)tripDistanceKilometres
+{
+    return [self fuelEconomySnapshot].trip_distance_km;
+}
+
+- (NSString *)fuelEconomySourceText
+{
+    LinkFuelEconomySnapshot snapshot = [self fuelEconomySnapshot];
+    if (snapshot.instantaneous_available)
+        return JagLinkFuelEconomySourceText(snapshot.instantaneous_source);
+    if (snapshot.fuel_rate_available)
+        return JagLinkFuelEconomySourceText(snapshot.fuel_rate_source);
+    if (snapshot.average_available)
+        return JagLinkFuelEconomySourceText(snapshot.average_source);
+    return @"Unavailable";
+}
+
+- (NSString *)factoryFuelSignalStatusText
+{
     return @"Jaguar factory fuel signal not yet enabled";
 }
 

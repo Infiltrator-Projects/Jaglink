@@ -23,18 +23,16 @@
 #define JAGLINK_BUILD_PROFILE "source"
 #endif
 
-/*
- * This dependency SHA is external to the JAGLINK commit, so embedding it is
- * stable and truthful. The product's own revision is injected by the build.
- */
+/* Exact LINK revision consumed by the native Apple amalgamation. */
 #define JAGLINK_EMBEDDED_LINK_REVISION \
-    "37a1289b50539705454fd2a4b8e7a6ee80ecd116"
+    "bc5ebe79c972b632e26292f888d02cae3440a13f"
 
 /*
- * Normal CMake builds consume shared engines through LINK::Core.  The native
- * iPhone target compiles portable C sources directly, so include the exact
- * sources from the pinned LINK checkout rather than maintaining product-owned
- * copies of workspace, runtime, transport or diagnostic state machines.
+ * Normal CMake builds consume shared engines through LINK::Core. The current
+ * JAGLINK iPhone target predates LINK's single portable-core TU and already
+ * compiles ISO-TP and localisation as separate Xcode sources. Keep that proven
+ * topology to avoid duplicate symbols, while compiling every remaining generic
+ * implementation from the pinned LINK checkout rather than product copies.
  */
 #if defined(__APPLE__) && TARGET_OS_IOS
 #include "../link/src/core/workspace.c"

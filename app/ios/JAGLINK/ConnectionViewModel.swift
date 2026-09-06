@@ -3,20 +3,7 @@ import Combine
 import Foundation
 import UIKit
 
-struct DiagnosticParameter: Identifiable {
-    let id: String
-    let protocolName: String
-    let moduleIdentifier: UInt32
-    let parameterIdentifier: UInt32
-    let shortName: String
-    let title: String
-    let suffix: String
-    let formattedValue: String
-    let value: Double?
-    let favourite: Bool
-    let history: [Double]
-    var isAvailable: Bool { value != nil }
-}
+typealias DiagnosticParameter = LinkDiagnosticParameter
 
 struct JaguarNetworkInfo: Identifiable {
     let id: String
@@ -34,17 +21,6 @@ struct JagSavedVehicleProfileSummary: Identifiable {
     let displayName: String
     let updatedAt: Date?
     let adapterIdentifier: String?
-}
-
-private func jaglinkLocalized(_ key: String) -> String {
-    let selected = UserDefaults.standard.string(
-        forKey: "link.displayLanguage") ?? "en-AU"
-    let language = JagInterfaceLanguage.canonical(selected)
-    guard let path = Bundle.main.path(forResource: language, ofType: "lproj"),
-          let bundle = Bundle(path: path) else {
-        return key
-    }
-    return bundle.localizedString(forKey: key, value: key, table: nil)
 }
 
 @MainActor
@@ -77,7 +53,8 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var isActive = false
     @Published private(set) var isReady = false
     @Published private(set) var isSimulationActive = false
-    @Published private(set) var diagnosticParameters = [DiagnosticParameter]()
+    @Published private(set) var diagnosticParameters = [LinkDiagnosticParameter]()
+    @Published private(set) var dashboardParameters = [LinkDiagnosticParameter]()
     @Published private(set) var jaguarNetworks = [JaguarNetworkInfo]()
     @Published private(set) var profileDisplayName = "Jaguar vehicle"
     @Published private(set) var savedVehicleProfiles = [JagSavedVehicleProfileSummary]()
@@ -95,7 +72,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var instantaneousFuelEconomyText = "Unavailable"
     @Published private(set) var averageFuelEconomyText = "Unavailable"
     @Published private(set) var fuelRateText = "Unavailable"
-    @Published private(set) var fuelTripText = "0.00 L over 0.0 km"
+    @Published private(set) var fuelTripText = "Unavailable"
     @Published private(set) var fuelEconomySourceText = "Unavailable"
     @Published private(set) var factoryFuelSignalStatusText = "Jaguar factory fuel signal not yet enabled"
 
@@ -105,8 +82,20 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         legacyProfileKey: nil,
         legacySelectedVINKey: nil,
         legacyAdapterMappingKey: nil)
+    private let pidSelectionStore = LinkPIDSelectionStore(
+        productNamespace: "jaglink",
+        legacyGlobalKey: nil,
+        legacyVehicleKey: nil)
+    private let standardControllerIdentifier = "standard-obd2"
     private var lastPersistedLiveVIN: String?
     private var lastPersistedReadyVIN: String?
+    private var lastCapabilityMergeVIN: String?
+
+    private let legacyLanguageAliases = [
+        "en": "en-AU",
+        "de": "de-DE",
+        "pl": "pl-PL"
+    ]
 
     var selectedVehicleDisplayName: String {
         guard let selectedVehicleVIN else { return "No vehicle loaded" }
@@ -126,7 +115,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
 
     func connect() {
         clearPreparedExport()
-        if isActive { return }
+        guard !isActive else { return }
 
         guard let presenter = presentingViewController() else {
             beginConnection(.automatic)
@@ -142,8 +131,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
 
         let picker = LinkConnectionPickerViewController(
             vehicleText: currentVehicleText,
-            knownAdapterIdentifier: associatedAdapterIdentifier(
-                for: selectedVehicleVIN)
+            knownAdapterIdentifier: associatedAdapterIdentifier(for: selectedVehicleVIN)
         ) { [weak self] source in
             Task { @MainActor [weak self] in
                 self?.beginConnection(source)
@@ -158,6 +146,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         guard !isActive else { return }
         lastPersistedLiveVIN = nil
         lastPersistedReadyVIN = nil
+        lastCapabilityMergeVIN = nil
         switch source {
         case .automatic:
             isSimulationActive = false
@@ -184,7 +173,10 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     }
 
     var interfaceLocaleIdentifier: String {
-        JagInterfaceLanguage.canonical(selectedLanguageID)
+        LinkInterfaceLanguage.canonical(
+            selectedLanguageID,
+            aliases: legacyLanguageAliases,
+            fallback: "en-AU")
     }
 
     func localizedText(_ key: String) -> String { controller.localizedText(forKey: key) }
@@ -192,44 +184,34 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     func selectMeasurementSystem(_ id: String) { controller.setSelectedMeasurementSystemKey(id); refresh() }
 
     func toggleFavourite(stableKey: String) {
-        let pid: UInt8? = stableKey.withCString { key in
-            guard let definition = jaglink_parameter_obd2_definition_for_stable_key(key) else { return nil }
-            return UInt8(exactly: definition.pointee.key.identifier)
-        }
-        guard let pid else { return }
+        guard let parameter = diagnosticParameters.first(where: { $0.id == stableKey }),
+              let pid = UInt8(exactly: parameter.parameterIdentifier) else { return }
         controller.setFavourite(!controller.favourite(forPID: pid), forPID: pid)
         refresh()
     }
 
+    func togglePolling(_ parameter: LinkDiagnosticParameter) {
+        guard let pid = UInt8(exactly: parameter.parameterIdentifier) else { return }
+        controller.setPollingEnabled(!controller.pollingEnabled(forPID: pid), forPID: pid)
+        refresh()
+    }
+
     func prepareCSVExport() {
-        guard !isPreparingCSV else { return }
-        /*
-         * Copy the recorder bytes while on the main actor, then perform the
-         * filesystem write away from CoreBluetooth/session scheduling. Evidence
-         * preparation must not pause or disconnect a live diagnostic session.
-         */
-        guard let data = controller.csvDataSnapshot() else {
-            clearPreparedExport()
-            return
-        }
-
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("JAGLINK-diagnostic-evidence-\(UUID().uuidString).csv")
+        guard !isPreparingCSV, let snapshot = controller.csvDataSnapshot() else { return }
+        clearPreparedExport()
         isPreparingCSV = true
-
+        let data = snapshot as Data
         Task { [weak self] in
             do {
-                try await Task.detached(priority: .utility) {
-                    try data.write(to: url, options: .atomic)
-                }.value
+                let url = try await LinkEvidenceExport.prepareTemporaryCSV(
+                    data, productName: "JAGLINK")
                 guard let self else {
-                    try? FileManager.default.removeItem(at: url)
+                    LinkEvidenceExport.removeTemporaryFile(url)
                     return
                 }
-                self.clearPreparedExport()
                 self.csvExportURL = url
             } catch {
-                try? FileManager.default.removeItem(at: url)
+                self?.csvExportURL = nil
             }
             self?.isPreparingCSV = false
         }
@@ -278,11 +260,6 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         profile["build"] = vehicleBuildText
 
         if includeDiagnosticSnapshot {
-            /*
-             * Read the shared controller directly. refresh() is called from
-             * the LINK delegate after the flow event is applied, so the shared
-             * controller is the authoritative generic diagnostic snapshot.
-             */
             profile["obdProtocolText"] = controller.obdProtocolText
             profile["standardResponderSummary"] = controller.standardResponderSummary
             profile["supportedPIDSummary"] = controller.supportedPIDSummary
@@ -300,14 +277,19 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
             profile["readinessStatusText"] = controller.readinessStatusText
             profile["readinessMonitorStatus"] = controller.readinessMonitorStatus
             profile["freezeFrameContext"] = controller.freezeFrameContext
-
-            let responderProfiles = controller.standardResponderProfiles
-            if !responderProfiles.isEmpty {
-                profile["standardResponderProfiles"] = responderProfiles
-            }
         }
 
         vehicleProfileStore.saveProfile(profile, forVIN: vin)
+    }
+
+    private func mergeStandardCapabilitiesIfReady(vin: String) {
+        guard controller.isReady, lastCapabilityMergeVIN != vin else { return }
+        if let flow = controller.diagnosticFlow() {
+            _ = vehicleProfileStore.mergeStandardCapabilities(
+                fromDiagnosticFlow: flow,
+                forVIN: vin)
+            lastCapabilityMergeVIN = vin
+        }
     }
 
     private func restoreSavedDiagnosticSnapshot(_ profile: [AnyHashable: Any]) {
@@ -388,7 +370,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     }
 
     private func clearPreparedExport() {
-        if let url = csvExportURL { try? FileManager.default.removeItem(at: url) }
+        LinkEvidenceExport.removeTemporaryFile(csvExportURL)
         csvExportURL = nil
     }
 
@@ -396,7 +378,11 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         let defaults = UserDefaults.standard
         if defaults.object(forKey: "link.displayLanguage") == nil,
            let legacy = defaults.string(forKey: "jaglink.language") {
-            controller.setSelectedLanguageTag(JagInterfaceLanguage.canonical(legacy))
+            controller.setSelectedLanguageTag(
+                LinkInterfaceLanguage.canonical(
+                    legacy,
+                    aliases: legacyLanguageAliases,
+                    fallback: "en-AU"))
         }
     }
 
@@ -437,10 +423,10 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         return String(format: "%.*f%@", decimalPlaces, value, suffix)
     }
 
-    private func loadDiagnosticParameters() -> [DiagnosticParameter] {
+    private func loadDiagnosticParameters() -> [LinkDiagnosticParameter] {
         let count = jaglink_parameter_obd2_definition_count()
         guard count > 0 else { return [] }
-        var result = [DiagnosticParameter]()
+        var result = [LinkDiagnosticParameter]()
         result.reserveCapacity(count)
         for index in 0..<count {
             guard let definition = jaglink_parameter_obd2_definition_at(index) else { continue }
@@ -449,9 +435,14 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
             let history = controller.displayRecentValues(forPID: pid, limit: 60).map(\.doubleValue)
             let value = history.last
             let displayUnit = controller.displayUnit(forPID: pid)
+            let range = controller.displayRange(forPID: pid)
+            let minimum = range.count >= 2 ? range[0].doubleValue : nil
+            let maximum = range.count >= 2 ? range[1].doubleValue : nil
             let stableKey = string(from: metadata.stable_key)
             guard !stableKey.isEmpty else { continue }
-            result.append(DiagnosticParameter(
+            let supported = controller.supportsPID(pid)
+            let pollingEnabled = controller.pollingEnabled(forPID: pid)
+            result.append(LinkDiagnosticParameter(
                 id: stableKey,
                 protocolName: string(from: jaglink_parameter_protocol_name(metadata.key.protocol)),
                 moduleIdentifier: metadata.key.module,
@@ -464,26 +455,73 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
                     value: value,
                     displayUnit: displayUnit),
                 value: value,
+                structuredValue: nil,
+                rawHex: nil,
+                vehicleSupported: supported,
                 favourite: controller.favourite(forPID: pid),
-                history: history))
+                pollingEnabled: pollingEnabled,
+                history: history,
+                sourceLabel: "SAE OBD-II",
+                qualityNote: supported && !pollingEnabled ? "Polling disabled" : nil,
+                dashboardMinimum: minimum,
+                dashboardMaximum: maximum))
         }
         return result
     }
 
+    private func preferredDashboardKeys(from supported: [LinkDiagnosticParameter]) -> [String] {
+        let preferredPIDs: [UInt32] = [0x0C, 0x0D, 0x05, 0x11, 0x04, 0x0F]
+        let preferred = preferredPIDs.compactMap { pid in
+            supported.first(where: { $0.parameterIdentifier == pid })?.id
+        }
+        return preferred.isEmpty ? Array(supported.prefix(6).map(\.id)) : preferred
+    }
+
+    private func refreshDashboardSelection() {
+        let supported = diagnosticParameters.filter(\.vehicleSupported)
+        let defaults = preferredDashboardKeys(from: supported)
+
+        if !pidSelectionStore.hasGlobalSelection, !defaults.isEmpty {
+            pidSelectionStore.setGlobalStableKeys(defaults)
+        }
+
+        let selectedKeys: [String]
+        if let vin = selectedVehicleVIN, vin.count == 17 {
+            if !pidSelectionStore.hasSelection(
+                forVIN: vin,
+                controllerIdentifier: standardControllerIdentifier),
+               !defaults.isEmpty {
+                let seed = pidSelectionStore.hasGlobalSelection
+                    ? pidSelectionStore.globalStableKeys
+                    : defaults
+                pidSelectionStore.setStableKeys(
+                    seed,
+                    forVIN: vin,
+                    controllerIdentifier: standardControllerIdentifier)
+            }
+            selectedKeys = pidSelectionStore.hasSelection(
+                forVIN: vin,
+                controllerIdentifier: standardControllerIdentifier)
+                ? pidSelectionStore.stableKeys(
+                    forVIN: vin,
+                    controllerIdentifier: standardControllerIdentifier)
+                : pidSelectionStore.globalStableKeys
+        } else {
+            selectedKeys = pidSelectionStore.globalStableKeys
+        }
+
+        let selected = Set(selectedKeys)
+        let chosen = diagnosticParameters.filter {
+            selected.contains($0.id) && $0.vehicleSupported
+        }
+        dashboardParameters = chosen.isEmpty ? Array(supported.prefix(6)) : chosen
+    }
+
     private func refreshFuelEconomy() {
-        instantaneousFuelEconomyText = controller.instantaneousFuelEconomyAvailable
-            ? String(format: "%.1f L/100 km", controller.instantaneousFuelEconomyLPer100km)
-            : "Unavailable"
-        averageFuelEconomyText = controller.averageFuelEconomyAvailable
-            ? String(format: "%.1f L/100 km", controller.averageFuelEconomyLPer100km)
-            : "Unavailable"
-        fuelRateText = controller.fuelRateAvailable
-            ? String(format: "%.2f L/h", controller.fuelRateLitresPerHour)
-            : "Unavailable"
-        fuelTripText = String(
-            format: "%.2f L over %.1f km",
-            controller.tripFuelLitres,
-            controller.tripDistanceKilometres)
+        instantaneousFuelEconomyText = controller.instantaneousFuelEconomyText
+        averageFuelEconomyText = controller.averageFuelEconomyText
+        fuelRateText = controller.fuelRateText
+        fuelTripText = controller.fuelTripText
         fuelEconomySourceText = controller.fuelEconomySourceText
         factoryFuelSignalStatusText = controller.factoryFuelSignalStatusText
     }
@@ -524,20 +562,23 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
             saveVehicleProfile(vin: liveVIN, displayName: name)
             lastPersistedLiveVIN = liveVIN
             lastPersistedReadyVIN = nil
+            lastCapabilityMergeVIN = nil
             refreshSavedVehicleProfiles()
         }
 
         if controller.isActive,
            let liveVIN = controller.vehicleVINText,
            liveVIN.count == 17,
-           controller.isReady,
-           lastPersistedReadyVIN != liveVIN {
-            saveVehicleProfile(
-                vin: liveVIN,
-                displayName: profileDisplayName,
-                includeDiagnosticSnapshot: true)
-            lastPersistedReadyVIN = liveVIN
-            refreshSavedVehicleProfiles()
+           controller.isReady {
+            mergeStandardCapabilitiesIfReady(vin: liveVIN)
+            if lastPersistedReadyVIN != liveVIN {
+                saveVehicleProfile(
+                    vin: liveVIN,
+                    displayName: profileDisplayName,
+                    includeDiagnosticSnapshot: true)
+                lastPersistedReadyVIN = liveVIN
+                refreshSavedVehicleProfiles()
+            }
         }
         if controller.isActive {
             obdProtocolText = controller.obdProtocolText
@@ -571,6 +612,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         isActive = controller.isActive
         isReady = controller.isReady
         diagnosticParameters = loadDiagnosticParameters()
+        refreshDashboardSelection()
         recordedSampleCount = Int(clamping: controller.recordedSampleCount)
         refreshFuelEconomy()
     }

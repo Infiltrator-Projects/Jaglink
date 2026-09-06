@@ -43,6 +43,7 @@
 #include "../link/src/core/diagnostic_flow.c"
 #include "../link/src/core/diagnostic_capability.c"
 #include "../link/src/core/parameter.c"
+#include "../link/src/core/dashboard.c"
 #include "../link/src/core/scheduler.c"
 
 #ifndef LINK_SOURCE_REVISION
@@ -54,6 +55,7 @@
 #undef JAGLINK_DEFINED_LINK_SOURCE_REVISION
 #undef LINK_SOURCE_REVISION
 #endif
+#include "../link/src/core/session_trace.c"
 
 #include "../link/src/core/mercedes_me_adapter.c"
 #define read_u16_be jaglink_mercedes_me_native_read_u16_be

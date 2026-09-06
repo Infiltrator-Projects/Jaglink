@@ -31,7 +31,7 @@ let jagLinkTheme = LinkDiagnosticTheme(
     warning: JagPalette.amber,
     fault: JagPalette.jaguarRed,
     typography: LinkDiagnosticTypography(
-        display: .system(size: 29, weight: .semibold, design: .serif),
+        display: .system(size: 29, weight: .bold),
         body: .body,
         bodyBold: .body.bold(),
         subheadline: .subheadline,
@@ -59,39 +59,6 @@ private struct JaguarBadge: View {
     }
 }
 
-private struct JagStatusPill: View {
-    let text: String
-    let active: Bool
-
-    var body: some View {
-        LinkStatusPill(text: text, active: active)
-    }
-}
-
-private struct JagPanel<Content: View>: View {
-    let title: String
-    let systemImage: String
-    let content: Content
-
-    init(title: String, systemImage: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.systemImage = systemImage
-        self.content = content()
-    }
-
-    var body: some View {
-        LinkLabeledPanel(title: title, systemImage: systemImage) {
-            content
-        }
-    }
-}
-
-private extension View {
-    func jagDiagnosticScreen(_ title: String) -> some View {
-        linkDiagnosticScreen(title)
-    }
-}
-
 struct ContentView: View {
     @StateObject private var model = ConnectionViewModel()
 
@@ -113,7 +80,7 @@ struct ContentView: View {
         LinkBrandHeader {
             brandIdentity
         } status: {
-            JagStatusPill(text: model.statusText, active: model.isReady)
+            LinkStatusPill(text: model.statusText, active: model.isReady)
         }
     }
 
@@ -122,17 +89,13 @@ struct ContentView: View {
             JaguarBadge(size: 54)
             VStack(alignment: .leading, spacing: 3) {
                 Text("JAGLINK")
-                    .font(.system(size: 29, weight: .semibold, design: .serif))
-                    .tracking(3.8)
+                    .font(.system(size: 29, weight: .bold))
+                    .tracking(1.6)
                     .foregroundStyle(JagPalette.ivory)
                 Text("JAGUAR · LINK DIAGNOSTICS")
                     .font(.caption2.weight(.bold))
                     .tracking(1.4)
                     .foregroundStyle(JagPalette.warmMetal)
-                Text(model.profileDisplayName)
-                    .font(.caption)
-                    .foregroundStyle(JagPalette.mutedIvory)
-                    .lineLimit(1)
             }
         }
     }
@@ -235,73 +198,84 @@ struct ContentView: View {
     private var primaryGrid: some View {
         LinkDiagnosticGrid {
             LinkTaskTile(.vehicle) { JagVehicleView(model: model) }
-            LinkTaskTile(.log) { JagEvidenceView(model: model) }
             LinkTaskTile(.errors) { JagFaultsView(model: model) }
             LinkTaskTile(.dashboard) { JagDashboardView(model: model) }
             LinkTaskTile(.table) { JagTableView(model: model) }
             LinkTaskTile(.graph) { JagGraphView(model: model) }
-            LinkTaskTile(.tests) { JagTestsView(model: model) }
-            LinkTaskTile(.services) { JagServicesView(model: model) }
-            LinkTaskTile(.settings) { JagSettingsView(model: model) }
         }
     }
 
     private var supportingTools: some View {
-        LinkPanel {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Label("Garage", systemImage: "car.2.fill")
-                        .font(.headline)
-                        .foregroundStyle(JagPalette.ivory)
-                    Spacer()
-                    Button("Add / Scan New Vehicle") {
-                        model.connect()
+        VStack(alignment: .leading, spacing: 14) {
+            LinkPanel {
+                VStack(alignment: .leading, spacing: 12) {
+                    LinkSectionHeader(
+                        title: "Vehicle setup",
+                        kicker: "Current / saved / new")
+
+                    HStack {
+                        Label("Saved Vehicles & PIDs", systemImage: "list.bullet.rectangle.portrait.fill")
+                            .font(.headline)
+                            .foregroundStyle(JagPalette.ivory)
+                        Spacer()
+                        Button("Add / Scan New Vehicle") { model.connect() }
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(JagPalette.warmMetal)
+                            .disabled(model.isActive)
                     }
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(JagPalette.warmMetal)
-                }
 
-                Text("Select a saved vehicle offline, or scan a new adapter. The live VIN decides which profile is used after connection.")
-                    .font(.caption)
-                    .foregroundStyle(JagPalette.mutedIvory)
+                    Text("Load a saved Jaguar offline or scan an adapter. The live VIN remains authoritative after connection.")
+                        .font(.caption)
+                        .foregroundStyle(JagPalette.mutedIvory)
 
-                if model.savedVehicleProfiles.isEmpty {
-                    Text("No saved vehicles yet.")
-                        .font(.subheadline)
-                        .foregroundStyle(JagPalette.chrome)
-                } else {
-                    ForEach(model.savedVehicleProfiles) { profile in
-                        Button {
-                            model.selectSavedVehicle(vin: profile.vin)
-                        } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: profile.vin == model.selectedVehicleVIN
-                                      ? "checkmark.circle.fill" : "car.side")
-                                    .foregroundStyle(profile.vin == model.selectedVehicleVIN
-                                                     ? JagPalette.racingGreen : JagPalette.warmMetal)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(profile.displayName)
-                                        .font(.subheadline.weight(.semibold))
-                                        .foregroundStyle(JagPalette.ivory)
-                                    Text(profile.vin)
-                                        .font(.caption2.monospaced())
-                                        .foregroundStyle(JagPalette.mutedIvory)
+                    if model.savedVehicleProfiles.isEmpty {
+                        Text("No saved vehicles yet.")
+                            .font(.subheadline)
+                            .foregroundStyle(JagPalette.chrome)
+                    } else {
+                        ForEach(model.savedVehicleProfiles) { profile in
+                            Button {
+                                model.selectSavedVehicle(vin: profile.vin)
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: profile.vin == model.selectedVehicleVIN
+                                          ? "checkmark.circle.fill" : "car.side")
+                                        .foregroundStyle(profile.vin == model.selectedVehicleVIN
+                                                         ? JagPalette.racingGreen : JagPalette.warmMetal)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(profile.displayName)
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(JagPalette.ivory)
+                                        Text(profile.vin)
+                                            .font(.caption2.monospaced())
+                                            .foregroundStyle(JagPalette.mutedIvory)
+                                    }
+                                    Spacer()
+                                    if profile.adapterIdentifier != nil {
+                                        Image(systemName: "memorychip")
+                                            .foregroundStyle(JagPalette.chrome)
+                                            .accessibilityLabel("Known adapter")
+                                    }
                                 }
-                                Spacer()
-                                if profile.adapterIdentifier != nil {
-                                    Image(systemName: "memorychip")
-                                        .foregroundStyle(JagPalette.chrome)
-                                        .accessibilityLabel("Known adapter")
-                                }
+                                .contentShape(Rectangle())
                             }
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        if profile.id != model.savedVehicleProfiles.last?.id {
-                            jagDivider
+                            .buttonStyle(.plain)
+                            if profile.id != model.savedVehicleProfiles.last?.id {
+                                jagDivider
+                            }
                         }
                     }
                 }
+            }
+
+            LinkSectionHeader(
+                title: "More diagnostics",
+                kicker: "Evidence, tests, services and preferences")
+            LinkDiagnosticGrid {
+                LinkTaskTile(.log) { JagEvidenceView(model: model) }
+                LinkTaskTile(.tests) { JagTestsView(model: model) }
+                LinkTaskTile(.services) { JagServicesView(model: model) }
+                LinkTaskTile(.settings) { JagSettingsView(model: model) }
             }
         }
     }
@@ -313,7 +287,7 @@ private struct JagVehicleView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
-                JagPanel(title: "Vehicle", systemImage: "car.side.fill") {
+                LinkLabeledPanel(title: "Vehicle", systemImage: "car.side.fill") {
                     jagValueRow("Profile", model.profileDisplayName, icon: "shield.lefthalf.filled")
                     jagDivider
                     jagValueRow("VIN", model.vehicleVINText, icon: "number")
@@ -334,7 +308,7 @@ private struct JagVehicleView: View {
                     jagDivider
                     jagValueRow("Status", model.statusText, icon: "checkmark.seal")
                 }
-                JagPanel(title: "Control units", systemImage: "square.stack.3d.up.fill") {
+                LinkLabeledPanel(title: "Control units", systemImage: "square.stack.3d.up.fill") {
                     NavigationLink {
                         JagModulesView(model: model)
                     } label: {
@@ -357,7 +331,7 @@ private struct JagVehicleView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Vehicle")
+        .linkDiagnosticScreen("Vehicle")
     }
 }
 
@@ -367,7 +341,7 @@ private struct JagModulesView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
-                JagPanel(title: "X400 Networks", systemImage: "point.3.connected.trianglepath.dotted") {
+                LinkLabeledPanel(title: "X400 Networks", systemImage: "point.3.connected.trianglepath.dotted") {
                     ForEach(model.jaguarNetworks) { network in
                         HStack(alignment: .top, spacing: 12) {
                             Image(systemName: networkIcon(network.kind))
@@ -402,7 +376,7 @@ private struct JagModulesView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Modules")
+        .linkDiagnosticScreen("Modules")
     }
 }
 
@@ -416,7 +390,7 @@ private struct JagFaultsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
-                JagPanel(title: "Errors", systemImage: "exclamationmark.triangle.fill") {
+                LinkLabeledPanel(title: "Errors", systemImage: "exclamationmark.triangle.fill") {
                     HStack {
                         Text(LocalizedStringKey(model.faultScanStatusText))
                             .font(.subheadline)
@@ -433,7 +407,7 @@ private struct JagFaultsView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Errors")
+        .linkDiagnosticScreen("Errors")
     }
 }
 
@@ -454,7 +428,7 @@ private struct JagDashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
-                JagPanel(title: "Vehicle Summary", systemImage: "gauge.with.dots.needle.67percent") {
+                LinkLabeledPanel(title: "Vehicle Summary", systemImage: "gauge.with.dots.needle.67percent") {
                     jagValueRow("Connection", model.statusText, icon: "link")
                     jagDivider
                     jagValueRow("Fault records", "\(totalFaultCount)", icon: "exclamationmark.triangle")
@@ -462,7 +436,7 @@ private struct JagDashboardView: View {
                     jagValueRow("Recorded samples", "\(model.recordedSampleCount)", icon: "waveform.path.ecg")
                 }
 
-                JagPanel(title: "Fuel Economy", systemImage: "fuelpump.fill") {
+                LinkLabeledPanel(title: "Fuel Economy", systemImage: "fuelpump.fill") {
                     jagValueRow("Instantaneous", model.instantaneousFuelEconomyText, icon: "gauge.with.dots.needle.50percent")
                     jagDivider
                     jagValueRow("Trip average", model.averageFuelEconomyText, icon: "chart.line.uptrend.xyaxis")
@@ -478,7 +452,7 @@ private struct JagDashboardView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                JagPanel(title: "Measurements", systemImage: "waveform.path.ecg") {
+                LinkLabeledPanel(title: "Measurements", systemImage: "waveform.path.ecg") {
                     LinkDashboardModePicker(selection: mode)
                     if model.dashboardParameters.isEmpty {
                         Text("Connect to the vehicle to populate dashboard measurements.")
@@ -497,7 +471,7 @@ private struct JagDashboardView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Dashboard")
+        .linkDiagnosticScreen("Dashboard")
     }
 }
 
@@ -507,7 +481,7 @@ private struct JagEvidenceView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
-                JagPanel(title: "Diagnostic Evidence", systemImage: "doc.text.magnifyingglass") {
+                LinkLabeledPanel(title: "Diagnostic Evidence", systemImage: "doc.text.magnifyingglass") {
                     jagValueRow("Fault scan", model.faultScanStatusText, icon: "exclamationmark.triangle")
                     jagDivider
                     jagValueRow("OBD transport", model.obdProtocolText, icon: "network")
@@ -538,7 +512,7 @@ private struct JagEvidenceView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Log")
+        .linkDiagnosticScreen("Log")
     }
 }
 
@@ -552,7 +526,7 @@ private struct JagTableView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
-                JagPanel(title: "Table", systemImage: "tablecells") {
+                LinkLabeledPanel(title: "Table", systemImage: "tablecells") {
                     if parameters.isEmpty {
                         Text(model.isActive
                              ? "Waiting for advertised standard parameters."
@@ -594,7 +568,7 @@ private struct JagTableView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Table")
+        .linkDiagnosticScreen("Table")
     }
 }
 
@@ -610,14 +584,14 @@ private struct JagGraphView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
                 if graphed.isEmpty {
-                    JagPanel(title: "Graph", systemImage: "chart.xyaxis.line") {
+                    LinkLabeledPanel(title: "Graph", systemImage: "chart.xyaxis.line") {
                         Text("Collect live samples to populate parameter history.")
                             .font(.subheadline)
                             .foregroundStyle(JagPalette.mutedIvory)
                     }
                 } else {
                     ForEach(graphed) { parameter in
-                        JagPanel(title: parameter.title, systemImage: "chart.xyaxis.line") {
+                        LinkLabeledPanel(title: parameter.title, systemImage: "chart.xyaxis.line") {
                             jagValueRow("Current", parameter.formattedValue, icon: "waveform.path.ecg")
                             jagDivider
                             jagValueRow("History", "\(parameter.history.count) samples", icon: "clock.arrow.circlepath")
@@ -630,7 +604,7 @@ private struct JagGraphView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Graph")
+        .linkDiagnosticScreen("Graph")
     }
 }
 
@@ -640,7 +614,7 @@ private struct JagTestsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
-                JagPanel(title: "Readiness", systemImage: "checkmark.square.fill") {
+                LinkLabeledPanel(title: "Readiness", systemImage: "checkmark.square.fill") {
                     jagValueRow("Status", model.readinessStatusText, icon: "checklist")
                     if model.readinessMonitorStatus.isEmpty {
                         Text("No readiness-monitor detail has been returned yet.")
@@ -655,7 +629,7 @@ private struct JagTestsView: View {
                     }
                 }
 
-                JagPanel(title: "Freeze-frame context", systemImage: "camera.metering.matrix") {
+                LinkLabeledPanel(title: "Freeze-frame context", systemImage: "camera.metering.matrix") {
                     if model.freezeFrameContext.isEmpty {
                         Text("No standard freeze-frame context captured.")
                             .font(.subheadline)
@@ -669,7 +643,7 @@ private struct JagTestsView: View {
                     }
                 }
 
-                JagPanel(title: "Additional tests", systemImage: "checkmark.seal") {
+                LinkLabeledPanel(title: "Additional tests", systemImage: "checkmark.seal") {
                     Text("Verified standard monitor results and Jaguar self-tests belong here as they are implemented. Unsupported tests are never fabricated.")
                         .font(.caption)
                         .foregroundStyle(JagPalette.mutedIvory)
@@ -677,7 +651,7 @@ private struct JagTestsView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Tests")
+        .linkDiagnosticScreen("Tests")
     }
 }
 
@@ -687,7 +661,7 @@ private struct JagServicesView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
-                JagPanel(title: "Services", systemImage: "wrench.and.screwdriver.fill") {
+                LinkLabeledPanel(title: "Services", systemImage: "wrench.and.screwdriver.fill") {
                     Text(model.isActive
                          ? "No verified service procedure is enabled for this session."
                          : "Connect to the vehicle to evaluate supported service procedures.")
@@ -701,7 +675,7 @@ private struct JagServicesView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Services")
+        .linkDiagnosticScreen("Services")
     }
 }
 
@@ -716,7 +690,7 @@ private struct JagSettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
-                JagPanel(title: "Adapter", systemImage: "cable.connector") {
+                LinkLabeledPanel(title: "Adapter", systemImage: "cable.connector") {
                     jagValueRow("Name", model.peripheralName, icon: "antenna.radiowaves.left.and.right")
                     jagDivider
                     jagValueRow("Identity", model.adapterIdentifier, icon: "cpu")
@@ -726,7 +700,7 @@ private struct JagSettingsView: View {
                     jagValueRow("Status", model.statusText, icon: "checkmark.seal")
                 }
 
-                JagPanel(title: "Language", systemImage: "globe") {
+                LinkLabeledPanel(title: "Language", systemImage: "globe") {
                     NavigationLink {
                         JagLanguageSelectionView(
                             tags: model.languageTags,
@@ -754,7 +728,7 @@ private struct JagSettingsView: View {
                     .buttonStyle(.plain)
                 }
 
-                JagPanel(title: "Unit system", systemImage: "ruler") {
+                LinkLabeledPanel(title: "Unit system", systemImage: "ruler") {
                     Picker(
                         "Unit system",
                         selection: Binding(
@@ -771,7 +745,7 @@ private struct JagSettingsView: View {
                     .pickerStyle(.menu)
                 }
 
-                JagPanel(title: "Application", systemImage: "gearshape.fill") {
+                LinkLabeledPanel(title: "Application", systemImage: "gearshape.fill") {
                     jagValueRow("Version", version, icon: "number")
                     jagDivider
                     jagValueRow("Shared engine", "LINK \(model.linkVersionText)", icon: "square.stack.3d.up")
@@ -783,7 +757,7 @@ private struct JagSettingsView: View {
             }
             .padding(16)
         }
-        .jagDiagnosticScreen("Settings")
+        .linkDiagnosticScreen("Settings")
     }
 
     private var languageName: String {
@@ -831,7 +805,7 @@ private struct JagLanguageSelectionView: View {
         }
         .scrollContentBackground(.hidden)
         .background(JagPalette.cockpit)
-        .jagDiagnosticScreen("Language")
+        .linkDiagnosticScreen("Language")
     }
 }
 

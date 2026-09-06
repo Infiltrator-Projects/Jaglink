@@ -44,7 +44,7 @@ final class ConnectionViewModel: LinkStandardProductViewModel,
 
     private let jaguarController: JagLinkDiagnosticsController
 
-    override init() {
+    init() {
         let controller = JagLinkDiagnosticsController()
         jaguarController = controller
         let version: String

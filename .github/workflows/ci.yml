@@ -53,9 +53,11 @@ jobs:
           grep -q 'LinkDiagnosticsController' platform/apple/JagLinkDiagnosticsController.m
           grep -Fq '#include "../link/platform/apple/LinkPortableCore.c"' src/core/jaglink.c
           grep -Fq '@property(nonatomic, copy, readonly) NSString *linkVersionText;' src/link/platform/apple/LinkDiagnosticsController.h
-          grep -Fq 'pollingSelectionStore.setGlobalStableKeys' app/ios/JAGLINK/ConnectionViewModel.swift
-          grep -Fq 'linkVersionText = controller.linkVersionText' app/ios/JAGLINK/ConnectionViewModel.swift
-          grep -Fq 'LinkConnectionPresentation.presentPicker' app/ios/JAGLINK/ConnectionViewModel.swift
+          grep -Fq 'final class ConnectionViewModel: LinkStandardProductViewModel' app/ios/JAGLINK/ConnectionViewModel.swift
+          grep -Fq 'configuration: LinkStandardProductConfiguration(' app/ios/JAGLINK/ConnectionViewModel.swift
+          grep -Fq 'pollingSelectionStore.setGlobalStableKeys' src/link/platform/apple/LinkDiagnosticUI.swift
+          grep -Fq 'linkVersionText = productController.linkVersionText' src/link/platform/apple/LinkDiagnosticUI.swift
+          grep -Fq 'LinkConnectionPresentation.presentPicker' src/link/platform/apple/LinkDiagnosticUI.swift
           ! grep -Fq 'presentingViewController()' app/ios/JAGLINK/ConnectionViewModel.swift
           grep -Fq 'title: "Vehicle setup"' app/ios/JAGLINK/ContentView.swift
           grep -Fq 'title: "More diagnostics"' app/ios/JAGLINK/ContentView.swift
@@ -77,7 +79,7 @@ jobs:
           test ! -e app/linux/about-dialog.c
           test ! -e app/linux/about-dialog.h
           ! grep -Fq 'JagHomeTile("OBD"' app/ios/JAGLINK/ContentView.swift
-          grep -Fq 'diagnosticCapabilityText = controller.diagnosticCapabilityText' app/ios/JAGLINK/ConnectionViewModel.swift
+          grep -Fq 'diagnosticCapabilityText = productController.diagnosticCapabilityText' src/link/platform/apple/LinkDiagnosticUI.swift
           grep -Fq '@interface JagLinkDiagnosticsController : LinkProductDiagnosticsController' platform/apple/JagLinkDiagnosticsController.h
           grep -Fq 'return _shared.standardLiveValueRows;' src/link/platform/apple/LinkDiagnosticsController.m
           grep -Fq '#include "../link/platform/apple/LinkPortableCore.c"' src/core/jaglink.c
@@ -361,7 +363,7 @@ jobs:
           grep -Fq "\"$link_gitlink\"" src/core/jaglink.c
           grep -Fq '.source_id = "Infiltrator-Projects/Jaglink"' src/core/jaglink.c
           grep -Fq '#include "../link/platform/apple/LinkPortableCore.c"' src/core/jaglink.c
-          grep -Fq 'linkVersionText = controller.linkVersionText' app/ios/JAGLINK/ConnectionViewModel.swift
+          grep -Fq 'linkVersionText = productController.linkVersionText' src/link/platform/apple/LinkDiagnosticUI.swift
           ! grep -Fq 'let favourites = values.filter' app/ios/JAGLINK/ContentView.swift
           ! grep -q 'LINK_APPLE_PORTABLE_CORE_EXTERNAL_' src/core/jaglink.c
           ! grep -q 'src/link/src/core/isotp.c' app/ios/JAGLINK.xcodeproj/project.pbxproj

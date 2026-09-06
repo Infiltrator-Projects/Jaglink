@@ -25,7 +25,7 @@
 
 /* Exact LINK revision consumed by the native Apple amalgamation. */
 #define JAGLINK_EMBEDDED_LINK_REVISION \
-    "cc3e76a319930dc87060eed8aeef95b6e33ad68b"
+    "93dc1052bb513a0fdcc069bc1365171ce4e617ff"
 
 /*
  * Normal CMake builds consume shared engines through LINK::Core. The current
@@ -64,9 +64,6 @@
 #undef read_u16_be
 #undef write_u16_be
 #include "../link/src/core/mercedes_me_diagnostic.c"
-#include "../link/src/core/mercedes_me_data_ids.c"
-#include "../link/src/core/mercedes_me_diaglogic.c"
-#include "../link/src/core/mercedes_me_whisper.c"
 #include "../link/src/core/transport.c"
 #include "../link/src/elm327/elm327.c"
 #include "../link/src/elm327/can.c"

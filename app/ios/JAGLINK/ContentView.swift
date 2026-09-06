@@ -86,96 +86,6 @@ private struct JagPanel<Content: View>: View {
     }
 }
 
-private struct JagHomeTile<Destination: View>: View {
-    let title: String
-    let subtitle: String
-    let symbol: String
-    let destination: () -> Destination
-
-    init(
-        _ title: String,
-        _ subtitle: String,
-        _ symbol: String,
-        @ViewBuilder destination: @escaping () -> Destination
-    ) {
-        self.title = title
-        self.subtitle = subtitle
-        self.symbol = symbol
-        self.destination = destination
-    }
-
-    var body: some View {
-        LinkHomeTile(title, subtitle, symbol, destination: destination)
-    }
-}
-
-private struct JagActionTile: View {
-    let title: String
-    let subtitle: String
-    let symbol: String
-    let action: () -> Void
-
-    var body: some View {
-        LinkActionTile(title: title, subtitle: subtitle, symbol: symbol, action: action)
-    }
-}
-
-private struct JagTileFace: View {
-    let title: String
-    let subtitle: String
-    let symbol: String
-
-    var body: some View {
-        LinkTileFace(title: title, subtitle: subtitle, symbol: symbol)
-    }
-}
-
-private struct JagMetricTile: View {
-    let parameter: DiagnosticParameter
-    let toggleFavourite: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            HStack(alignment: .top, spacing: 6) {
-                Text(LocalizedStringKey(parameter.title))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(JagPalette.ivory)
-                    .lineLimit(2)
-                Spacer(minLength: 2)
-                Button(action: toggleFavourite) {
-                    Image(systemName: parameter.favourite ? "star.fill" : "star")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(parameter.favourite ? JagPalette.warmMetal : JagPalette.chrome)
-                }
-                .buttonStyle(.plain)
-            }
-
-            Text(parameter.formattedValue)
-                .font(.system(size: 21, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .foregroundStyle(JagPalette.warmMetal)
-                .lineLimit(1)
-                .minimumScaleFactor(0.62)
-
-            Text(parameter.id)
-                .font(.caption2.monospaced())
-                .foregroundStyle(JagPalette.chrome.opacity(0.62))
-                .lineLimit(1)
-                .truncationMode(.middle)
-        }
-        .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
-        .padding(13)
-        .background(
-            RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .fill(JagPalette.cockpit.opacity(0.56))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 15, style: .continuous)
-                .stroke(JagPalette.warmMetal.opacity(0.28), lineWidth: 0.8)
-        )
-    }
-}
-
 private extension View {
     func jagDiagnosticScreen(_ title: String) -> some View {
         linkDiagnosticScreen(title)
@@ -444,7 +354,6 @@ private struct JagVehicleView: View {
                     }
                     .buttonStyle(.plain)
                 }
-
             }
             .padding(16)
         }
@@ -465,7 +374,6 @@ private struct JagModulesView: View {
                                 .font(.title3)
                                 .foregroundStyle(JagPalette.warmMetal)
                                 .frame(width: 28)
-
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack {
                                     Text(network.name)
@@ -488,7 +396,6 @@ private struct JagModulesView: View {
                             }
                         }
                         .padding(.vertical, 4)
-
                         if network.id != model.jaguarNetworks.last?.id { jagDivider }
                     }
                 }
@@ -530,45 +437,18 @@ private struct JagFaultsView: View {
     }
 }
 
-private struct JagLiveDataView: View {
-    @ObservedObject var model: ConnectionViewModel
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 15) {
-                if model.diagnosticParameters.isEmpty {
-                    JagPanel(title: "Live Data", systemImage: "waveform.path.ecg") {
-                        Text("Connect to the vehicle to populate live parameters.")
-                            .font(.subheadline)
-                            .foregroundStyle(JagPalette.mutedIvory)
-                    }
-                } else {
-                    LazyVGrid(columns: jagDashboardColumns, spacing: 12) {
-                        ForEach(model.diagnosticParameters) { parameter in
-                            JagMetricTile(parameter: parameter) {
-                                model.toggleFavourite(stableKey: parameter.id)
-                            }
-                        }
-                    }
-                }
-            }
-            .padding(16)
-        }
-        .jagDiagnosticScreen("Live Data")
-    }
-}
-
 private struct JagDashboardView: View {
     @ObservedObject var model: ConnectionViewModel
+    @AppStorage("link.dashboard.presentationMode") private var dashboardModeKey = LinkDashboardPresentationMode.combined.rawValue
 
     private var totalFaultCount: Int {
         model.storedDTCs.count + model.pendingDTCs.count + model.permanentDTCs.count
     }
 
-    private var displayed: [DiagnosticParameter] {
-        let favourites = model.diagnosticParameters.filter { $0.favourite }
-        if !favourites.isEmpty { return Array(favourites.prefix(6)) }
-        return Array(model.diagnosticParameters.prefix(6))
+    private var mode: Binding<LinkDashboardPresentationMode> {
+        Binding(
+            get: { LinkDashboardPresentationMode(rawValue: dashboardModeKey) ?? .combined },
+            set: { dashboardModeKey = $0.rawValue })
     }
 
     var body: some View {
@@ -598,17 +478,18 @@ private struct JagDashboardView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                if displayed.isEmpty {
-                    JagPanel(title: "Measurements", systemImage: "waveform.path.ecg") {
+                JagPanel(title: "Measurements", systemImage: "waveform.path.ecg") {
+                    LinkDashboardModePicker(selection: mode)
+                    if model.dashboardParameters.isEmpty {
                         Text("Connect to the vehicle to populate dashboard measurements.")
                             .font(.subheadline)
                             .foregroundStyle(JagPalette.mutedIvory)
-                    }
-                } else {
-                    LazyVGrid(columns: jagDashboardColumns, spacing: 12) {
-                        ForEach(displayed) { parameter in
-                            JagMetricTile(parameter: parameter) {
-                                model.toggleFavourite(stableKey: parameter.id)
+                    } else {
+                        LazyVGrid(columns: jagDashboardColumns, spacing: 12) {
+                            ForEach(model.dashboardParameters) { parameter in
+                                LinkDashboardMetric(
+                                    parameter: parameter,
+                                    mode: mode.wrappedValue)
                             }
                         }
                     }
@@ -636,11 +517,14 @@ private struct JagEvidenceView: View {
                     Button {
                         model.prepareCSVExport()
                     } label: {
-                        Label("Prepare diagnostic CSV", systemImage: "square.and.arrow.down")
+                        Label(
+                            model.isPreparingCSV ? "Preparing…" : "Prepare diagnostic CSV",
+                            systemImage: "square.and.arrow.down")
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .fontWeight(.semibold)
                             .foregroundStyle(JagPalette.warmMetal)
                     }
+                    .disabled(model.isPreparingCSV)
 
                     if let url = model.csvExportURL {
                         ShareLink(item: url) {
@@ -661,32 +545,49 @@ private struct JagEvidenceView: View {
 private struct JagTableView: View {
     @ObservedObject var model: ConnectionViewModel
 
+    private var parameters: [LinkDiagnosticParameter] {
+        model.diagnosticParameters.filter(\.vehicleSupported)
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 15) {
                 JagPanel(title: "Table", systemImage: "tablecells") {
-                    if model.diagnosticParameters.isEmpty {
-                        Text("Connect to populate supported diagnostic parameters.")
+                    if parameters.isEmpty {
+                        Text(model.isActive
+                             ? "Waiting for advertised standard parameters."
+                             : "Connect to populate supported diagnostic parameters.")
                             .font(.subheadline)
                             .foregroundStyle(JagPalette.mutedIvory)
                     } else {
-                        ForEach(model.diagnosticParameters) { parameter in
-                            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                                VStack(alignment: .leading, spacing: 2) {
+                        ForEach(parameters) { parameter in
+                            HStack(alignment: .top, spacing: 10) {
+                                VStack(alignment: .leading, spacing: 3) {
                                     Text(parameter.title)
                                         .font(.subheadline.weight(.semibold))
                                         .foregroundStyle(JagPalette.ivory)
-                                    Text("\(parameter.protocolName) · \(parameter.shortName)")
-                                        .font(.caption2)
+                                    Text("\(parameter.presentationValue) · \(parameter.sourceText)")
+                                        .font(.caption2.monospacedDigit())
                                         .foregroundStyle(JagPalette.mutedIvory)
                                 }
                                 Spacer()
-                                Text(parameter.formattedValue)
-                                    .font(.subheadline.monospacedDigit().weight(.semibold))
-                                    .foregroundStyle(parameter.isAvailable ? JagPalette.warmMetal : JagPalette.mutedIvory)
+                                Button {
+                                    model.toggleFavourite(stableKey: parameter.id)
+                                } label: {
+                                    Image(systemName: parameter.favourite ? "star.fill" : "star")
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(JagPalette.warmMetal)
+                                Button {
+                                    model.togglePolling(parameter)
+                                } label: {
+                                    Image(systemName: parameter.pollingEnabled ? "waveform.path.ecg" : "pause.circle")
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(parameter.pollingEnabled ? JagPalette.racingGreen : JagPalette.amber)
                             }
                             .padding(.vertical, 6)
-                            if parameter.id != model.diagnosticParameters.last?.id { jagDivider }
+                            if parameter.id != parameters.last?.id { jagDivider }
                         }
                     }
                 }
@@ -701,7 +602,7 @@ private struct JagGraphView: View {
     @ObservedObject var model: ConnectionViewModel
 
     private var graphed: [DiagnosticParameter] {
-        let values = model.diagnosticParameters.filter { !$0.history.isEmpty }
+        let values = model.diagnosticParameters.filter { $0.vehicleSupported && !$0.history.isEmpty }
         let favourites = values.filter { $0.favourite }
         return Array((favourites.isEmpty ? values : favourites).prefix(4))
     }
@@ -888,7 +789,10 @@ private struct JagSettingsView: View {
         guard let index = model.languageTags.firstIndex(
             of: model.selectedLanguageID),
               index < model.languageNames.count else {
-            return JagInterfaceLanguage.displayName(for: model.selectedLanguageID)
+            return LinkInterfaceLanguage.displayName(
+                for: model.selectedLanguageID,
+                aliases: ["en": "en-AU", "de": "de-DE", "pl": "pl-PL"],
+                fallback: "en-AU")
         }
         return model.languageNames[index]
     }

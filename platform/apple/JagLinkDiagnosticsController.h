@@ -88,7 +88,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (nullable NSData *)csvDataSnapshot;
 - (nullable NSString *)csvSnapshot;
 /** Borrowed pointer owned by the shared LINK controller. */
-- (const LinkDiagnosticFlow *)diagnosticFlow;
+- (const LinkDiagnosticFlow * _Nullable)diagnosticFlow;
 
 @end
 

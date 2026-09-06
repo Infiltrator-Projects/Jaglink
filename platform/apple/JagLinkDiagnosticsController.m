@@ -5,6 +5,7 @@
 #import "jaglink/jaguar.h"
 #import "jaglink/jaguar_vin.h"
 #import "link/fuel_economy.h"
+#import "link/units.h"
 
 @interface JagLinkDiagnosticsController () <LinkDiagnosticsControllerDelegate>
 @property(nonatomic, copy, readwrite, nullable) NSString *vehicleVINText;
@@ -14,6 +15,7 @@
 @property(nonatomic, copy, readwrite) NSString *vehicleBuildText;
 - (void)resetFuelEconomy;
 - (LinkFuelEconomySnapshot)fuelEconomySnapshot;
+- (LinkUnitPreferences)displayUnitPreferences;
 @end
 
 @implementation JagLinkDiagnosticsController {
@@ -74,13 +76,70 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
     return [rows copy];
 }
 
+static NSString *JagLinkFormatFuelEconomy(
+    double litres_per_100km,
+    const LinkUnitPreferences *preferences)
+{
+    double value = 0.0;
+    const char *unit = NULL;
+    if (preferences == NULL ||
+        !link_units_convert_fuel_economy(
+            litres_per_100km, preferences->fuel_economy, &value, &unit) ||
+        unit == NULL) {
+        return @"Unavailable";
+    }
+    return [NSString stringWithFormat:@"%.1f %@", value,
+        JagLinkStringFromCString(unit)];
+}
+
+static NSString *JagLinkFormatFuelRate(
+    double litres_per_hour,
+    const LinkUnitPreferences *preferences)
+{
+    double value = 0.0;
+    const char *unit = NULL;
+    if (preferences == NULL ||
+        !link_units_convert_fuel_rate(
+            litres_per_hour, preferences->fuel_rate, &value, &unit) ||
+        unit == NULL) {
+        return @"Unavailable";
+    }
+    return [NSString stringWithFormat:@"%.2f %@", value,
+        JagLinkStringFromCString(unit)];
+}
+
+static NSString *JagLinkFormatTrip(
+    double litres,
+    double kilometres,
+    const LinkUnitPreferences *preferences)
+{
+    double fuel_value = 0.0;
+    double distance_value = 0.0;
+    const char *fuel_unit = NULL;
+    const char *distance_unit = NULL;
+    if (preferences == NULL ||
+        !link_units_convert_fuel_volume(
+            litres, preferences->fuel_volume, &fuel_value, &fuel_unit) ||
+        !link_units_convert_distance(
+            kilometres, preferences->distance, &distance_value, &distance_unit) ||
+        fuel_unit == NULL || distance_unit == NULL) {
+        return @"Unavailable";
+    }
+    return [NSString stringWithFormat:@"%.2f %@ over %.1f %@",
+        fuel_value,
+        JagLinkStringFromCString(fuel_unit),
+        distance_value,
+        JagLinkStringFromCString(distance_unit)];
+}
+
 - (instancetype)init
 {
     self = [super init];
     if (self == nil) return nil;
 
     LinkDiagnosticFlowConfig flowConfig = LINK_DIAGNOSTIC_FLOW_CONFIG_INIT;
-    /* Keep live CAN responder IDs (for example 7E8/7E9) in evidence. */
+    /* Keep responder identities for profile caching and per-controller evidence. */
+    flowConfig.preserve_pid_discovery_response_headers = true;
     flowConfig.preserve_live_response_headers = true;
     _shared = [[LinkDiagnosticsController alloc]
         initWithProductSlug:@"jaglink"
@@ -127,6 +186,20 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
     const uint64_t now_ms = JagLinkMonotonicMilliseconds();
     link_fuel_economy_tick(&_fuelEconomy, now_ms);
     return link_fuel_economy_snapshot(&_fuelEconomy, now_ms);
+}
+
+- (LinkUnitPreferences)displayUnitPreferences
+{
+    LinkMeasurementSystem system = LINK_MEASUREMENT_SYSTEM_METRIC;
+    LinkUnitPreferences preferences;
+    const char *key = _shared.selectedMeasurementSystemKey.UTF8String;
+    if (key == NULL || !link_measurement_system_from_key(key, &system)) {
+        system = LINK_MEASUREMENT_SYSTEM_METRIC;
+    }
+    if (!link_unit_preferences_from_measurement_system(system, &preferences)) {
+        link_unit_preferences_metric(&preferences);
+    }
+    return preferences;
 }
 
 - (void)notifyDelegate
@@ -188,36 +261,6 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
 - (NSArray<NSString *> *)standardLiveValueRows
 {
     return _shared.standardLiveValueRows;
-}
-
-- (NSArray<NSDictionary *> *)standardResponderProfiles
-{
-    const LinkDiagnosticFlow *flow = _shared.diagnosticFlow;
-    if (flow == NULL || flow->supported_pid_responders.count == 0) {
-        return @[];
-    }
-
-    NSMutableArray<NSDictionary *> *profiles = [NSMutableArray arrayWithCapacity:
-        flow->supported_pid_responders.count];
-    for (size_t index = 0;
-         index < flow->supported_pid_responders.count;
-         ++index) {
-        const LinkObd2ResponderPidSet *entry =
-            &flow->supported_pid_responders.entries[index];
-        NSMutableArray<NSNumber *> *supportedPIDs = [NSMutableArray array];
-        for (NSUInteger pid = 0; pid < 256; ++pid) {
-            if (link_obd2_pid_set_contains(
-                    &entry->supported_pids, (uint8_t)pid)) {
-                [supportedPIDs addObject:@(pid)];
-            }
-        }
-        [profiles addObject:@{
-            @"responderID": @(entry->responder_id),
-            @"extendedID": @(entry->extended_id),
-            @"supportedPIDs": supportedPIDs.copy
-        }];
-    }
-    return profiles;
 }
 - (BOOL)isActive { return _shared.isActive; }
 - (BOOL)isReady { return _shared.isReady; }
@@ -284,6 +327,11 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
     return [_shared displayRangeForPID:pid];
 }
 
+- (BOOL)supportsPID:(uint8_t)pid
+{
+    return [_shared supportsPID:pid];
+}
+
 - (BOOL)favouriteForPID:(uint8_t)pid
 {
     return [_shared favouriteForPID:pid];
@@ -294,6 +342,16 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
     [_shared setFavourite:favourite forPID:pid];
 }
 
+- (BOOL)pollingEnabledForPID:(uint8_t)pid
+{
+    return [_shared pollingEnabledForPID:pid];
+}
+
+- (void)setPollingEnabled:(BOOL)enabled forPID:(uint8_t)pid
+{
+    [_shared setPollingEnabled:enabled forPID:pid];
+}
+
 - (nullable NSData *)csvDataSnapshot
 {
     return [_shared csvDataSnapshot];
@@ -302,6 +360,11 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
 - (nullable NSString *)csvSnapshot
 {
     return [_shared csvSnapshot];
+}
+
+- (const LinkDiagnosticFlow *)diagnosticFlow
+{
+    return [_shared diagnosticFlow];
 }
 
 - (void)linkDiagnosticsControllerDidUpdate:
@@ -453,6 +516,41 @@ static NSArray<NSString *> *JagLinkDTCDisplayRows(
 - (double)tripDistanceKilometres
 {
     return [self fuelEconomySnapshot].trip_distance_km;
+}
+
+- (NSString *)instantaneousFuelEconomyText
+{
+    const LinkFuelEconomySnapshot snapshot = [self fuelEconomySnapshot];
+    if (!snapshot.instantaneous_available) return @"Unavailable";
+    const LinkUnitPreferences preferences = [self displayUnitPreferences];
+    return JagLinkFormatFuelEconomy(
+        snapshot.instantaneous_l_per_100km, &preferences);
+}
+
+- (NSString *)averageFuelEconomyText
+{
+    const LinkFuelEconomySnapshot snapshot = [self fuelEconomySnapshot];
+    if (!snapshot.average_available) return @"Unavailable";
+    const LinkUnitPreferences preferences = [self displayUnitPreferences];
+    return JagLinkFormatFuelEconomy(snapshot.average_l_per_100km, &preferences);
+}
+
+- (NSString *)fuelRateText
+{
+    const LinkFuelEconomySnapshot snapshot = [self fuelEconomySnapshot];
+    if (!snapshot.fuel_rate_available) return @"Unavailable";
+    const LinkUnitPreferences preferences = [self displayUnitPreferences];
+    return JagLinkFormatFuelRate(snapshot.fuel_rate_l_per_hour, &preferences);
+}
+
+- (NSString *)fuelTripText
+{
+    const LinkFuelEconomySnapshot snapshot = [self fuelEconomySnapshot];
+    const LinkUnitPreferences preferences = [self displayUnitPreferences];
+    return JagLinkFormatTrip(
+        snapshot.trip_fuel_litres,
+        snapshot.trip_distance_km,
+        &preferences);
 }
 
 - (NSString *)fuelEconomySourceText

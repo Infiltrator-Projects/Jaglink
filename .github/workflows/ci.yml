@@ -50,7 +50,7 @@ jobs:
           grep -q 'link_telemetry_recorder_continue' src/link/platform/apple/LinkDiagnosticsController.m
           grep -Fq 'LinkProbeTimeoutSeconds = 5.0' src/link/platform/apple/LinkBLETransport.m
           grep -q 'LinkDiagnosticsController' platform/apple/JagLinkDiagnosticsController.m
-          grep -Fq '#include "../link/src/core/diagnostic_capability.c"' src/core/jaglink.c
+          grep -Fq '#include "../link/platform/apple/LinkPortableCore.c"' src/core/jaglink.c
           grep -Fq 'LinkTaskTile(.vehicle)' app/ios/JAGLINK/ContentView.swift
           grep -Fq 'LinkTaskTile(.errors)' app/ios/JAGLINK/ContentView.swift
           grep -Fq 'LinkTaskTile(.table)' app/ios/JAGLINK/ContentView.swift
@@ -65,7 +65,7 @@ jobs:
           ! grep -Fq 'JagHomeTile("OBD"' app/ios/JAGLINK/ContentView.swift
           grep -Fq 'diagnosticCapabilityText = controller.diagnosticCapabilityText' app/ios/JAGLINK/ConnectionViewModel.swift
           grep -Fq 'return _shared.standardLiveValueRows;' platform/apple/JagLinkDiagnosticsController.m
-          grep -q 'src/core/diagnostic_flow.c' src/core/jaglink.c
+          grep -Fq '#include "../link/platform/apple/LinkPortableCore.c"' src/core/jaglink.c
           ! grep -q 'JagLinkDiagnosticsPhase' platform/apple/JagLinkDiagnosticsController.m
           test "$(wc -c < src/obd2/obd2.c)" -lt 1024
           test "$(wc -c < src/uds/uds.c)" -lt 2048
@@ -344,9 +344,12 @@ jobs:
           test -n "$link_gitlink"
           grep -Fq "\"$link_gitlink\"" src/core/jaglink.c
           grep -Fq '.source_id = "Infiltrator-Projects/Jaglink"' src/core/jaglink.c
-          grep -Fq '#include "../link/src/core/diagnostic_request.c"' src/core/jaglink.c
-          grep -Fq '#include "../link/src/core/mercedes_me_diagnostic.c"' src/core/jaglink.c
-          grep -Fq '#include "../link/src/kwp2000/kwp2000.c"' src/core/jaglink.c
+          grep -Fq '#include "../link/platform/apple/LinkPortableCore.c"' src/core/jaglink.c
+          ! grep -q 'LINK_APPLE_PORTABLE_CORE_EXTERNAL_' src/core/jaglink.c
+          ! grep -q 'src/link/src/core/isotp.c' app/ios/JAGLINK.xcodeproj/project.pbxproj
+          ! grep -q 'src/link/src/core/i18n.c' app/ios/JAGLINK.xcodeproj/project.pbxproj
+          ! grep -q 'src/link/src/core/i18n_platform.c' app/ios/JAGLINK.xcodeproj/project.pbxproj
+          ! grep -q 'src/link/src/core/language_pack.c' app/ios/JAGLINK.xcodeproj/project.pbxproj
           grep -Fq '#include "link/version.h"' src/link/src/core/telemetry.c
           ! grep -Fq 'LINK_TELEMETRY_LINK_VERSION' src/link/src/core/telemetry.c
           ! grep -Fq '"0.14.26"' src/link/src/core/telemetry.c

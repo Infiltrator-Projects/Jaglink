@@ -209,6 +209,7 @@ static NSString *JagLinkFormatTrip(
         [delegate diagnosticsControllerDidUpdate:self];
 }
 
+- (NSString *)linkVersionText { return _shared.linkVersionText; }
 - (NSString *)statusText { return _shared.statusText; }
 - (nullable NSString *)peripheralName { return _shared.peripheralName; }
 - (nullable NSString *)adapterIdentifier { return _shared.adapterIdentifier; }

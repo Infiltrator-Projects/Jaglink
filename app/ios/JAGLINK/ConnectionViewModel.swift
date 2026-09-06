@@ -61,6 +61,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     @Published private(set) var selectedVehicleVIN: String?
     @Published private(set) var recordedSampleCount = 0
     @Published private(set) var versionText = "Unknown"
+    @Published private(set) var linkVersionText = "Unknown"
     @Published private(set) var csvExportURL: URL?
     @Published private(set) var isPreparingCSV = false
     @Published private(set) var languageTags = [String]()
@@ -82,8 +83,12 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         legacyProfileKey: nil,
         legacySelectedVINKey: nil,
         legacyAdapterMappingKey: nil)
-    private let pidSelectionStore = LinkPIDSelectionStore(
+    private let dashboardSelectionStore = LinkPIDSelectionStore(
         productNamespace: "jaglink",
+        legacyGlobalKey: nil,
+        legacyVehicleKey: nil)
+    private let pollingSelectionStore = LinkPIDSelectionStore(
+        productNamespace: "jaglink-polling",
         legacyGlobalKey: nil,
         legacyVehicleKey: nil)
     private let standardControllerIdentifier = "standard-obd2"
@@ -106,9 +111,11 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
     override init() {
         super.init()
         migrateLegacySharedSettings()
-        controller.delegate = self
         loadJaguarProfile()
         selectedVehicleVIN = vehicleProfileStore.selectedVehicleVIN
+        seedDefaultPollingSelection()
+        applyStoredPollingPolicy()
+        controller.delegate = self
         if let value = jaglink_version() { versionText = String(cString: value) }
         refresh()
     }
@@ -192,7 +199,15 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
 
     func togglePolling(_ parameter: LinkDiagnosticParameter) {
         guard let pid = UInt8(exactly: parameter.parameterIdentifier) else { return }
-        controller.setPollingEnabled(!controller.pollingEnabled(forPID: pid), forPID: pid)
+        let enabled = !controller.pollingEnabled(forPID: pid)
+        var enabledKeys = Set(pollingSelectionStore.globalStableKeys)
+        if enabled {
+            enabledKeys.insert(parameter.id)
+        } else {
+            enabledKeys.remove(parameter.id)
+        }
+        pollingSelectionStore.setGlobalStableKeys(Array(enabledKeys).sorted())
+        controller.setPollingEnabled(enabled, forPID: pid)
         refresh()
     }
 
@@ -481,33 +496,33 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         let supported = diagnosticParameters.filter(\.vehicleSupported)
         let defaults = preferredDashboardKeys(from: supported)
 
-        if !pidSelectionStore.hasGlobalSelection, !defaults.isEmpty {
-            pidSelectionStore.setGlobalStableKeys(defaults)
+        if !dashboardSelectionStore.hasGlobalSelection, !defaults.isEmpty {
+            dashboardSelectionStore.setGlobalStableKeys(defaults)
         }
 
         let selectedKeys: [String]
         if let vin = selectedVehicleVIN, vin.count == 17 {
-            if !pidSelectionStore.hasSelection(
+            if !dashboardSelectionStore.hasSelection(
                 forVIN: vin,
                 controllerIdentifier: standardControllerIdentifier),
                !defaults.isEmpty {
-                let seed = pidSelectionStore.hasGlobalSelection
-                    ? pidSelectionStore.globalStableKeys
+                let seed = dashboardSelectionStore.hasGlobalSelection
+                    ? dashboardSelectionStore.globalStableKeys
                     : defaults
-                pidSelectionStore.setStableKeys(
+                dashboardSelectionStore.setStableKeys(
                     seed,
                     forVIN: vin,
                     controllerIdentifier: standardControllerIdentifier)
             }
-            selectedKeys = pidSelectionStore.hasSelection(
+            selectedKeys = dashboardSelectionStore.hasSelection(
                 forVIN: vin,
                 controllerIdentifier: standardControllerIdentifier)
-                ? pidSelectionStore.stableKeys(
+                ? dashboardSelectionStore.stableKeys(
                     forVIN: vin,
                     controllerIdentifier: standardControllerIdentifier)
-                : pidSelectionStore.globalStableKeys
+                : dashboardSelectionStore.globalStableKeys
         } else {
-            selectedKeys = pidSelectionStore.globalStableKeys
+            selectedKeys = dashboardSelectionStore.globalStableKeys
         }
 
         let selected = Set(selectedKeys)
@@ -515,6 +530,48 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
             selected.contains($0.id) && $0.vehicleSupported
         }
         dashboardParameters = chosen.isEmpty ? Array(supported.prefix(6)) : chosen
+    }
+
+    private func allStandardPollingKeys() -> [String] {
+        let count = jaglink_parameter_obd2_definition_count()
+        guard count > 0 else { return [] }
+        return (0..<count).compactMap { index in
+            guard let definition = jaglink_parameter_obd2_definition_at(index) else {
+                return nil
+            }
+            let metadata = definition.pointee
+            guard let pid = UInt8(exactly: metadata.key.identifier),
+                  (pid & 0x1F) != 0 else {
+                return nil
+            }
+            let stableKey = string(from: metadata.stable_key)
+            return stableKey.isEmpty ? nil : stableKey
+        }
+    }
+
+    private func seedDefaultPollingSelection() {
+        guard !pollingSelectionStore.hasGlobalSelection else { return }
+        pollingSelectionStore.setGlobalStableKeys(allStandardPollingKeys())
+    }
+
+    private func applyStoredPollingPolicy() {
+        let enabledKeys = Set(pollingSelectionStore.globalStableKeys)
+        let count = jaglink_parameter_obd2_definition_count()
+        guard count > 0 else { return }
+        for index in 0..<count {
+            guard let definition = jaglink_parameter_obd2_definition_at(index) else {
+                continue
+            }
+            let metadata = definition.pointee
+            guard let pid = UInt8(exactly: metadata.key.identifier),
+                  (pid & 0x1F) != 0 else {
+                continue
+            }
+            let stableKey = string(from: metadata.stable_key)
+            controller.setPollingEnabled(
+                enabledKeys.contains(stableKey),
+                forPID: pid)
+        }
     }
 
     private func refreshFuelEconomy() {
@@ -609,6 +666,7 @@ final class ConnectionViewModel: NSObject, ObservableObject, @preconcurrency Jag
         measurementKeys = controller.availableMeasurementSystemKeys
         measurementNames = controller.availableMeasurementSystemNames
         selectedMeasurementID = controller.selectedMeasurementSystemKey
+        linkVersionText = controller.linkVersionText
         isActive = controller.isActive
         isReady = controller.isReady
         diagnosticParameters = loadDiagnosticParameters()

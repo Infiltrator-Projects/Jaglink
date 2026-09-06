@@ -603,8 +603,7 @@ private struct JagGraphView: View {
 
     private var graphed: [DiagnosticParameter] {
         let values = model.diagnosticParameters.filter { $0.vehicleSupported && !$0.history.isEmpty }
-        let favourites = values.filter { $0.favourite }
-        return Array((favourites.isEmpty ? values : favourites).prefix(4))
+        return Array(values.prefix(4))
     }
 
     var body: some View {
@@ -774,6 +773,8 @@ private struct JagSettingsView: View {
 
                 JagPanel(title: "Application", systemImage: "gearshape.fill") {
                     jagValueRow("Version", version, icon: "number")
+                    jagDivider
+                    jagValueRow("Shared engine", "LINK \(model.linkVersionText)", icon: "square.stack.3d.up")
                     jagDivider
                     jagValueRow("Profile", model.profileDisplayName, icon: "car.side.fill")
                     jagDivider

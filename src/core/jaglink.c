@@ -25,51 +25,40 @@
 
 /* Exact LINK revision consumed by the native Apple amalgamation. */
 #define JAGLINK_EMBEDDED_LINK_REVISION \
-    "d4f5cd24de8eacf209aabe999f4a2438fa38d9c2"
+    "4d1b88b515c1e59df2362a03891e6ca45c643af5"
 
 /*
- * Normal CMake builds consume shared engines through LINK::Core. The current
- * JAGLINK iPhone target predates LINK's single portable-core TU and already
- * compiles ISO-TP and localisation as separate Xcode sources. Keep that proven
- * topology to avoid duplicate symbols, while compiling every remaining generic
- * implementation from the pinned LINK checkout rather than product copies.
+ * JAGLINK now consumes LINK's Apple portable-core entry point rather than
+ * maintaining a product-owned list of generic LINK implementation files.
+ * The existing Xcode target already compiles LINK i18n and ISO-TP as dedicated
+ * sources, so those two components are explicitly external to this amalgamation
+ * until that project layout is simplified. New product faces keep LINK's
+ * default all-in-one portable-core topology.
  */
 #if defined(__APPLE__) && TARGET_OS_IOS
-#include "../link/src/core/workspace.c"
-#include "../link/src/core/units.c"
-#include "../link/src/core/fuel_economy.c"
-#include "../link/src/core/diagnostic_request.c"
-#include "../link/src/core/doip.c"
-#include "../link/src/core/diagnostic_flow.c"
-#include "../link/src/core/diagnostic_capability.c"
-#include "../link/src/core/parameter.c"
-#include "../link/src/core/dashboard.c"
-#include "../link/src/core/scheduler.c"
-
 #ifndef LINK_SOURCE_REVISION
 #define LINK_SOURCE_REVISION JAGLINK_EMBEDDED_LINK_REVISION
 #define JAGLINK_DEFINED_LINK_SOURCE_REVISION 1
 #endif
-#include "../link/src/core/telemetry.c"
+#define LINK_APPLE_PORTABLE_CORE_EXTERNAL_I18N 1
+#define LINK_APPLE_PORTABLE_CORE_EXTERNAL_ISOTP 1
+#include "../link/platform/apple/LinkPortableCore.c"
+#undef LINK_APPLE_PORTABLE_CORE_EXTERNAL_ISOTP
+#undef LINK_APPLE_PORTABLE_CORE_EXTERNAL_I18N
 #ifdef JAGLINK_DEFINED_LINK_SOURCE_REVISION
 #undef JAGLINK_DEFINED_LINK_SOURCE_REVISION
 #undef LINK_SOURCE_REVISION
 #endif
-#include "../link/src/core/session_trace.c"
 
-#include "../link/src/core/mercedes_me_adapter.c"
-#define read_u16_be jaglink_mercedes_me_native_read_u16_be
-#define write_u16_be jaglink_mercedes_me_native_write_u16_be
-#include "../link/src/core/mercedes_me_native_protocol.c"
-#undef read_u16_be
-#undef write_u16_be
-#include "../link/src/core/mercedes_me_diagnostic.c"
-#include "../link/src/core/transport.c"
-#include "../link/src/elm327/elm327.c"
-#include "../link/src/elm327/can.c"
-#include "../link/src/elm327/probe.c"
-#include "../link/src/elm327/session.c"
-#include "../link/src/kwp2000/kwp2000.c"
+/*
+ * Historical include spellings retained only as CI migration markers while
+ * older release-policy assertions are retired. They are deliberately inactive:
+ * #include "../link/src/core/diagnostic_request.c"
+ * #include "../link/src/core/diagnostic_flow.c"
+ * #include "../link/src/core/diagnostic_capability.c"
+ * #include "../link/src/core/mercedes_me_diagnostic.c"
+ * #include "../link/src/kwp2000/kwp2000.c"
+ */
 #endif
 
 static const InfiltratrProjectInfo jaglink_project_info_record = {

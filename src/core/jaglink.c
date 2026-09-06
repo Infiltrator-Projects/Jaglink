@@ -25,7 +25,7 @@
 
 /* Exact LINK revision consumed by the native Apple amalgamation. */
 #define JAGLINK_EMBEDDED_LINK_REVISION \
-    "93dc1052bb513a0fdcc069bc1365171ce4e617ff"
+    "d4f5cd24de8eacf209aabe999f4a2438fa38d9c2"
 
 /*
  * Normal CMake builds consume shared engines through LINK::Core. The current

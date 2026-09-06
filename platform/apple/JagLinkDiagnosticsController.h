@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #import <Foundation/Foundation.h>
 
+#import "../../src/link/platform/apple/LinkDiagnosticsController.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @class JagLinkDiagnosticsController;
@@ -39,8 +41,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy, readonly) NSString *supportedPIDSummary;
 @property(nonatomic, copy, readonly) NSString *standardVINText;
 @property(nonatomic, copy, readonly) NSArray<NSString *> *standardLiveValueRows;
-/** Generic standard OBD-II responder capability snapshots for vehicle profiles. */
-@property(nonatomic, copy, readonly) NSArray<NSDictionary *> *standardResponderProfiles;
 @property(nonatomic, readonly, getter=isActive) BOOL active;
 @property(nonatomic, readonly, getter=isReady) BOOL ready;
 @property(nonatomic, readonly) NSUInteger recordedSampleCount;
@@ -59,6 +59,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) double fuelRateLitresPerHour;
 @property(nonatomic, readonly) double tripFuelLitres;
 @property(nonatomic, readonly) double tripDistanceKilometres;
+@property(nonatomic, copy, readonly) NSString *instantaneousFuelEconomyText;
+@property(nonatomic, copy, readonly) NSString *averageFuelEconomyText;
+@property(nonatomic, copy, readonly) NSString *fuelRateText;
+@property(nonatomic, copy, readonly) NSString *fuelTripText;
 @property(nonatomic, copy, readonly) NSString *fuelEconomySourceText;
 @property(nonatomic, copy, readonly) NSString *factoryFuelSignalStatusText;
 
@@ -76,10 +80,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<NSNumber *> *)displayRecentValuesForPID:(uint8_t)pid limit:(NSUInteger)limit;
 - (NSString *)displayUnitForPID:(uint8_t)pid;
 - (NSArray<NSNumber *> *)displayRangeForPID:(uint8_t)pid;
+- (BOOL)supportsPID:(uint8_t)pid;
 - (BOOL)favouriteForPID:(uint8_t)pid;
 - (void)setFavourite:(BOOL)favourite forPID:(uint8_t)pid;
+- (BOOL)pollingEnabledForPID:(uint8_t)pid;
+- (void)setPollingEnabled:(BOOL)enabled forPID:(uint8_t)pid;
 - (nullable NSData *)csvDataSnapshot;
 - (nullable NSString *)csvSnapshot;
+/** Borrowed pointer owned by the shared LINK controller. */
+- (const LinkDiagnosticFlow *)diagnosticFlow;
 
 @end
 

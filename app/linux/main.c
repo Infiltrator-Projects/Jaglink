@@ -6,6 +6,7 @@
 #include "link-gtk-shell.h"
 #include "link-gtk-widgets.h"
 #include "link/fuel_economy.h"
+#include "link/i18n.h"
 #include "link/workspace.h"
 
 #include <gtk/gtk.h>
@@ -14,6 +15,51 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+typedef struct JaglinkLiteralTranslation {
+    const char *english;
+    const char *german;
+    const char *polish;
+} JaglinkLiteralTranslation;
+
+static const char *jaglink_translate_text(const char *text, void *context)
+{
+    static const JaglinkLiteralTranslation translations[] = {
+        {"Jaguar-specific topology remains in JAGLINK while the standard transport, fault and live-data engine is shared through LINK.",
+         "Die Jaguar-spezifische Topologie bleibt in JAGLINK, während Standardtransport, Fehler- und Live-Daten-Engine über LINK gemeinsam genutzt werden.",
+         "Topologia specyficzna dla Jaguara pozostaje w JAGLINK, a standardowy transport, obsługa usterek i dane na żywo są współdzielone przez LINK."},
+        {"Jaguar-specific module acquisition remains gated by verified X400 module addresses and safe read-only requests.",
+         "Die Jaguar-spezifische Modulerfassung bleibt auf verifizierte X400-Moduladressen und sichere Nur-Lese-Anfragen beschränkt.",
+         "Odczyt modułów specyficznych dla Jaguara pozostaje ograniczony do zweryfikowanych adresów modułów X400 i bezpiecznych żądań tylko do odczytu."},
+        {"LINK prefers a verified Jaguar factory value when available, otherwise uses measured SAE PID 0x5E fuel rate with PID 0x0D vehicle speed. Estimates are never presented as measured data.",
+         "LINK bevorzugt einen verifizierten Jaguar-Werkswert; andernfalls werden die gemessene SAE-Kraftstoffrate PID 0x5E und die Fahrzeuggeschwindigkeit PID 0x0D verwendet. Schätzwerte werden nie als Messwerte dargestellt.",
+         "LINK preferuje zweryfikowaną wartość fabryczną Jaguara; w przeciwnym razie używa zmierzonego przepływu paliwa SAE PID 0x5E z prędkością pojazdu PID 0x0D. Wartości szacowane nigdy nie są przedstawiane jako pomiary."},
+        {"Jaguar factory direct", "Jaguar-Werkswert direkt", "Bezpośrednia wartość fabryczna Jaguar"},
+        {"Jaguar factory counters", "Jaguar-Werkszähler", "Fabryczne liczniki Jaguar"},
+        {"Jaguar factory fuel rate", "Jaguar-Werks-Kraftstoffrate", "Fabryczny przepływ paliwa Jaguar"},
+        {"X400 factory signal", "X400-Werkssignal", "Sygnał fabryczny X400"},
+        {"Jaguar powertrain dashboard", "Jaguar-Antriebsstrang-Übersicht", "Panel układu napędowego Jaguar"},
+        {"Jaguar X-Type X400 diagnostics", "Jaguar-X-Type-X400-Diagnose", "Diagnostyka Jaguar X-Type X400"},
+        {"X400 NETWORK TOPOLOGY", "X400-NETZWERKTOPOLOGIE", "TOPOLOGIA SIECI X400"},
+        {"JAGUAR MODULES", "JAGUAR-MODULE", "MODUŁY JAGUAR"},
+        {"X400 PROFILE READY", "X400-PROFIL BEREIT", "PROFIL X400 GOTOWY"},
+        {"JAGUAR X-TYPE · X400", "JAGUAR X-TYPE · X400", "JAGUAR X-TYPE · X400"}
+    };
+    const char *locale = link_i18n_locale();
+    size_t index;
+    int language = 0;
+    (void)context;
+    if (text == NULL) return "";
+    if (locale != NULL && strncmp(locale, "de", 2U) == 0) language = 1;
+    else if (locale != NULL && strncmp(locale, "pl", 2U) == 0) language = 2;
+    if (language == 0) return text;
+    for (index = 0U; index < sizeof(translations) / sizeof(translations[0]); ++index) {
+        if (strcmp(text, translations[index].english) == 0)
+            return language == 1 ? translations[index].german
+                                 : translations[index].polish;
+    }
+    return text;
+}
 
 void jaglink_linux_resources_register_resource(void);
 void jaglink_linux_resources_unregister_resource(void);
@@ -676,6 +722,7 @@ int main(int argc, char **argv)
     descriptor.version = jaglink_version();
     descriptor.emblem_resource = "/com/github/Infiltrator-Projects/Jaglink/jaglink-emblem.png";
     descriptor.css = jaglink_css;
+    descriptor.translate_text = jaglink_translate_text;
     descriptor.render_section = render_section;
     descriptor.about = &about_info;
     descriptor.connection_changed = connection_changed;

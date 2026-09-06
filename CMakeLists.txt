@@ -83,11 +83,11 @@ add_subdirectory("${JAGLINK_LINK_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/link" EXCLUD
 # the same JAGLINK version/profile metadata as the direct-source Apple build.
 if(TARGET link-core)
     target_compile_definitions(link-core PRIVATE
-        JAGLINK_VERSION="${PROJECT_VERSION}"
-        JAGLINK_BUILD_PROFILE="${JAGLINK_BUILD_PROFILE}")
+        LINK_TELEMETRY_PRODUCT_VERSION="${PROJECT_VERSION}"
+        LINK_TELEMETRY_PRODUCT_BUILD_PROFILE="${JAGLINK_BUILD_PROFILE}")
     if(JAGLINK_SOURCE_REVISION)
         target_compile_definitions(link-core PRIVATE
-            JAGLINK_BUILD_REVISION="${JAGLINK_SOURCE_REVISION}")
+            LINK_TELEMETRY_PRODUCT_BUILD_REVISION="${JAGLINK_SOURCE_REVISION}")
     endif()
 endif()
 add_library(jaglink STATIC

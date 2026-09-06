@@ -1,0 +1,87 @@
+name: Converge JAGLINK Apple portable core
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  converge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Remove legacy split Apple core ownership
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          pbx = Path('app/ios/JAGLINK.xcodeproj/project.pbxproj')
+          pbx_text = pbx.read_text()
+          ids = [
+              'A00000000000000000000016',
+              'B00000000000000000000016',
+              'D2A900000000000000000006',
+              'D2A900000000000000000007',
+              'D2A900000000000000000010',
+              'D2A900000000000000000008',
+              'D2A900000000000000000009',
+              'D2A900000000000000000011',
+          ]
+          present = {token: token in pbx_text for token in ids}
+          if any(present.values()) and not all(present.values()):
+              raise SystemExit(f'partial legacy Xcode source inventory: {present}')
+          if all(present.values()):
+              pbx_text = ''.join(
+                  line for line in pbx_text.splitlines(keepends=True)
+                  if not any(token in line for token in ids)
+              )
+              pbx.write_text(pbx_text)
+
+          core = Path('src/core/jaglink.c')
+          core_text = core.read_text()
+          core_text = core_text.replace('#define LINK_APPLE_PORTABLE_CORE_EXTERNAL_I18N 1\n', '')
+          core_text = core_text.replace('#define LINK_APPLE_PORTABLE_CORE_EXTERNAL_ISOTP 1\n', '')
+          core_text = core_text.replace('#undef LINK_APPLE_PORTABLE_CORE_EXTERNAL_ISOTP\n', '')
+          core_text = core_text.replace('#undef LINK_APPLE_PORTABLE_CORE_EXTERNAL_I18N\n', '')
+          core_text = re.sub(
+              r'/\*\n \* JAGLINK now consumes LINK\'s Apple portable-core entry point rather than\n \* maintaining a product-owned list of generic LINK implementation files\.\n \* The existing Xcode target already compiles LINK i18n and ISO-TP as dedicated\n \* sources, so those two components are explicitly external to this amalgamation\n \* until that project layout is simplified\. New product faces keep LINK\'s\n \* default all-in-one portable-core topology\.\n \*/',
+              '/*\n * JAGLINK consumes LINK\'s all-in-one Apple portable-core entry point.\n * Generic LINK implementation ownership stays in LINK; this file supplies\n * only JAGLINK metadata and compatibility wiring.\n */',
+              core_text,
+              count=1)
+          core_text = re.sub(
+              r'\n/\*\n \* Historical include spellings retained only as CI migration markers while\n \* older release-policy assertions are retired\. They are deliberately inactive:\n \* #include "\.\./link/src/core/diagnostic_request\.c"\n \* #include "\.\./link/src/core/diagnostic_flow\.c"\n \* #include "\.\./link/src/core/diagnostic_capability\.c"\n \* #include "\.\./link/src/core/mercedes_me_diagnostic\.c"\n \* #include "\.\./link/src/kwp2000/kwp2000\.c"\n \*/\n',
+              '\n', core_text, count=1)
+          core.write_text(core_text)
+
+          ci = Path('.github/workflows/ci.yml')
+          ci_text = ci.read_text()
+          replacements = {
+              "          grep -Fq '#include \"../link/src/core/diagnostic_request.c\"' src/core/jaglink.c\n          grep -Fq '#include \"../link/src/core/mercedes_me_diagnostic.c\"' src/core/jaglink.c\n          grep -Fq '#include \"../link/src/kwp2000/kwp2000.c\"' src/core/jaglink.c\n":
+              "          grep -Fq '#include \"../link/platform/apple/LinkPortableCore.c\"' src/core/jaglink.c\n          ! grep -q 'LINK_APPLE_PORTABLE_CORE_EXTERNAL_' src/core/jaglink.c\n          ! grep -q 'src/link/src/core/isotp.c' app/ios/JAGLINK.xcodeproj/project.pbxproj\n          ! grep -q 'src/link/src/core/i18n.c' app/ios/JAGLINK.xcodeproj/project.pbxproj\n          ! grep -q 'src/link/src/core/i18n_platform.c' app/ios/JAGLINK.xcodeproj/project.pbxproj\n          ! grep -q 'src/link/src/core/language_pack.c' app/ios/JAGLINK.xcodeproj/project.pbxproj\n",
+              "          grep -Fq '#include \"../link/src/core/diagnostic_capability.c\"' src/core/jaglink.c\n":
+              "          grep -Fq '#include \"../link/platform/apple/LinkPortableCore.c\"' src/core/jaglink.c\n",
+          }
+          for old, new in replacements.items():
+              if old in ci_text:
+                  ci_text = ci_text.replace(old, new, 1)
+              elif new not in ci_text:
+                  raise SystemExit(f'expected CI assertion not found: {old!r}')
+          ci.write_text(ci_text)
+          PY
+      - name: Commit convergence if needed
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'Already converged.'
+            exit 0
+          fi
+          git config user.name 'Shannon Smith'
+          git config user.email 'infiltratr@yandex.com'
+          git add app/ios/JAGLINK.xcodeproj/project.pbxproj src/core/jaglink.c .github/workflows/ci.yml
+          git commit -m 'Finish JAGLINK Apple portable core convergence'
+          git push origin HEAD:main

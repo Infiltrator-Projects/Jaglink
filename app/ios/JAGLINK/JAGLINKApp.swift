@@ -2,34 +2,6 @@
 import Foundation
 import SwiftUI
 
-struct JagInterfaceLanguage: Identifiable, Hashable {
-    let id: String
-    let nativeName: String
-
-    static let all: [JagInterfaceLanguage] = {
-        let count = Int(link_i18n_supported_locale_count())
-        return (0..<count).compactMap { index in
-            guard let locale = link_i18n_supported_locale(index),
-                  let name = link_i18n_supported_locale_name(index) else { return nil }
-            return JagInterfaceLanguage(id: String(cString: locale), nativeName: String(cString: name))
-        }
-    }()
-
-    static func canonical(_ stored: String) -> String {
-        switch stored {
-        case "en": return "en-AU"
-        case "de": return "de-DE"
-        case "pl": return "pl-PL"
-        default: return all.contains(where: { $0.id == stored }) ? stored : "en-AU"
-        }
-    }
-
-    static func displayName(for stored: String) -> String {
-        let code = canonical(stored)
-        return all.first(where: { $0.id == code })?.nativeName ?? "English (Australia)"
-    }
-}
-
 private var jaglinkAboutInfo: LinkDiagnosticAboutInfo {
     LinkDiagnosticAboutInfo(
         productName: "JAGLINK",

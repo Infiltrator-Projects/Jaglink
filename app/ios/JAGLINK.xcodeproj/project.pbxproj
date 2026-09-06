@@ -21,7 +21,6 @@
 		A00000000000000000000013 /* ../../src/core/scheduler.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000013 /* ../../src/core/scheduler.c */; };
 		A00000000000000000000014 /* ../../src/core/telemetry_store.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000014 /* ../../src/core/telemetry_store.c */; };
 		A00000000000000000000015 /* ../../src/core/telemetry_csv.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000015 /* ../../src/core/telemetry_csv.c */; };
-		A00000000000000000000016 /* ../../src/link/src/core/isotp.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000016 /* ../../src/link/src/core/isotp.c */; };
 		A00000000000000000000017 /* ../../src/uds/uds.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000017 /* ../../src/uds/uds.c */; };
 		A00000000000000000000018 /* ../../src/elm327/elm327.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000018 /* ../../src/elm327/elm327.c */; };
 		A00000000000000000000019 /* ../../src/elm327/can.c in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000019 /* ../../src/elm327/can.c */; };
@@ -32,9 +31,6 @@
 		A00000000000000000000031 /* libInfiltratrCommonPortable.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C0A110000000000000000005 /* libInfiltratrCommonPortable.a */; };
 		A00000000000000000000032 /* JAGLINK/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000032 /* JAGLINK/Assets.xcassets */; };
 		D2A900000000000000000001 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = D2A900000000000000000005 /* Localizable.strings */; };
-		D2A900000000000000000006 /* link_i18n.c in Sources */ = {isa = PBXBuildFile; fileRef = D2A900000000000000000008 /* link_i18n.c */; };
-		D2A900000000000000000007 /* link_i18n_platform.c in Sources */ = {isa = PBXBuildFile; fileRef = D2A900000000000000000009 /* link_i18n_platform.c */; };
-		D2A900000000000000000010 /* language_pack.c in Sources */ = {isa = PBXBuildFile; fileRef = D2A900000000000000000011 /* language_pack.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,7 +69,6 @@
 		B00000000000000000000013 /* ../../src/core/scheduler.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/scheduler.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000014 /* ../../src/core/telemetry_store.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/telemetry_store.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000015 /* ../../src/core/telemetry_csv.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/core/telemetry_csv.c; sourceTree = SOURCE_ROOT; };
-		B00000000000000000000016 /* ../../src/link/src/core/isotp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/link/src/core/isotp.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000017 /* ../../src/uds/uds.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/uds/uds.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000018 /* ../../src/elm327/elm327.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/elm327/elm327.c; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000019 /* ../../src/elm327/can.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ../../src/elm327/can.c; sourceTree = SOURCE_ROOT; };
@@ -97,9 +92,6 @@
 		D2A900000000000000000032 /* ja-JP */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ja-JP"; path = "JAGLINK/ja-JP.lproj/Localizable.strings"; sourceTree = SOURCE_ROOT; };
 		D2A900000000000000000033 /* ko-KR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "ko-KR"; path = "JAGLINK/ko-KR.lproj/Localizable.strings"; sourceTree = SOURCE_ROOT; };
 		D2A900000000000000000034 /* id-ID */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "id-ID"; path = "JAGLINK/id-ID.lproj/Localizable.strings"; sourceTree = SOURCE_ROOT; };
-		D2A900000000000000000008 /* link_i18n.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = link_i18n.c; path = "../../src/link/src/core/i18n.c"; sourceTree = SOURCE_ROOT; };
-		D2A900000000000000000009 /* link_i18n_platform.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = link_i18n_platform.c; path = "../../src/link/src/core/i18n_platform.c"; sourceTree = SOURCE_ROOT; };
-		D2A900000000000000000011 /* language_pack.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = language_pack.c; path = "../../src/link/src/core/language_pack.c"; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000040 /* JAGLINK.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JAGLINK.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C0A110000000000000000004 /* InfiltratrCommon.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = InfiltratrCommon.xcodeproj; path = "../../src/link/src/infiltratr-common/apple/InfiltratrCommon.xcodeproj"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -166,7 +158,6 @@
 				B00000000000000000000013 /* ../../src/core/scheduler.c */,
 				B00000000000000000000014 /* ../../src/core/telemetry_store.c */,
 				B00000000000000000000015 /* ../../src/core/telemetry_csv.c */,
-				B00000000000000000000016 /* ../../src/link/src/core/isotp.c */,
 				B00000000000000000000017 /* ../../src/uds/uds.c */,
 				B00000000000000000000018 /* ../../src/elm327/elm327.c */,
 				B00000000000000000000019 /* ../../src/elm327/can.c */,
@@ -349,16 +340,12 @@
 				A00000000000000000000013 /* ../../src/core/scheduler.c in Sources */,
 				A00000000000000000000014 /* ../../src/core/telemetry_store.c in Sources */,
 				A00000000000000000000015 /* ../../src/core/telemetry_csv.c in Sources */,
-				A00000000000000000000016 /* ../../src/link/src/core/isotp.c in Sources */,
 				A00000000000000000000017 /* ../../src/uds/uds.c in Sources */,
 				A00000000000000000000018 /* ../../src/elm327/elm327.c in Sources */,
 				A00000000000000000000019 /* ../../src/elm327/can.c in Sources */,
 				A00000000000000000000020 /* ../../src/elm327/session.c in Sources */,
 				A00000000000000000000021 /* ../../src/elm327/probe.c in Sources */,
 				A00000000000000000000022 /* ../../src/obd2/obd2.c in Sources */,
-				D2A900000000000000000006 /* link_i18n.c in Sources */,
-				D2A900000000000000000007 /* link_i18n_platform.c in Sources */,
-				D2A900000000000000000010 /* language_pack.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

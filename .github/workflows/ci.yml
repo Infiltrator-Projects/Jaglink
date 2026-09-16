@@ -459,6 +459,18 @@ jobs:
         with:
           name: JAGLINK-${{ steps.release.outputs.version }}-windows-discover
           path: release-assets
+      - name: Package complete recursive source archive
+        shell: bash
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          staging="$RUNNER_TEMP/JAGLINK-${VERSION}"
+          mkdir -p "$staging" release-assets
+          rsync -a --exclude='.git' --exclude='/release-assets/' ./ "$staging/"
+          test -s "$staging/src/link/src/infiltratr-common/CMakeLists.txt"
+          (cd "$RUNNER_TEMP" && zip -qry "$GITHUB_WORKSPACE/release-assets/JAGLINK-${VERSION}-source.zip" "JAGLINK-${VERSION}")
+          unzip -tq "release-assets/JAGLINK-${VERSION}-source.zip"
       - name: Verify release artifacts and build checksums
         shell: bash
         env:
@@ -469,7 +481,8 @@ jobs:
             "JAGLINK-${VERSION}-unsigned.ipa" \
             "JAGLINK-${VERSION}-linux-amd64.deb" \
             "JAGLINK-${VERSION}-linux-native.run" \
-            "JAGLINK-${VERSION}-windows-discover.exe"; do
+            "JAGLINK-${VERSION}-windows-discover.exe" \
+            "JAGLINK-${VERSION}-source.zip"; do
             test -s "release-assets/$file"
           done
           (cd release-assets && sha256sum JAGLINK-* > SHA256SUMS.txt)
@@ -510,6 +523,7 @@ jobs:
             "JAGLINK-${VERSION}-linux-amd64.deb" \
             "JAGLINK-${VERSION}-linux-native.run" \
             "JAGLINK-${VERSION}-windows-discover.exe" \
+            "JAGLINK-${VERSION}-source.zip" \
             "SHA256SUMS.txt"; do
             grep -Fxq "$expected" <<<"$assets"
           done

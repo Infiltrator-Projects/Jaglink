@@ -216,6 +216,12 @@ static int test_telemetry(void)
     CHECK(jaglink_telemetry_export_csv(
               &store, &metadata, text_sink, &output));
     CHECK(strstr(output.data, "# jaglink_csv_version,1\n") != NULL);
+#ifdef TEST_EXPECTED_PRODUCT_REVISION
+    CHECK(strstr(output.data, "# jaglink_build_revision,\"" TEST_EXPECTED_PRODUCT_REVISION "\"\n") != NULL);
+#endif
+#ifdef TEST_EXPECTED_LINK_REVISION
+    CHECK(strstr(output.data, "# link_revision,\"" TEST_EXPECTED_LINK_REVISION "\"\n") != NULL);
+#endif
     {
         char expected_link_version[96];
         (void)snprintf(expected_link_version, sizeof(expected_link_version),

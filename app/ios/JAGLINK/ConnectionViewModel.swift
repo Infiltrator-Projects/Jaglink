@@ -77,11 +77,12 @@ final class ConnectionViewModel: LinkStandardProductViewModel,
         _ profile: inout [AnyHashable: Any],
         vin: String
     ) {
-        profile["displayName"] = profileDisplayName
-        profile["platform"] = vehiclePlatformText
-        profile["configuration"] = vehicleConfigurationText
-        profile["powertrain"] = vehiclePowertrainText
-        profile["build"] = vehicleBuildText
+        // LINK has loaded this VIN's saved name or supplied its VIN-specific
+        // default. Presentation state may still belong to the previous vehicle.
+        profile["platform"] = jaguarController.vehiclePlatformText
+        profile["configuration"] = jaguarController.vehicleConfigurationText
+        profile["powertrain"] = jaguarController.vehiclePowertrainText
+        profile["build"] = jaguarController.vehicleBuildText
         profile["storedDTCDisplayRows"] = jaguarController.storedDTCDisplayRows
         profile["pendingDTCDisplayRows"] = jaguarController.pendingDTCDisplayRows
         profile["permanentDTCDisplayRows"] = jaguarController.permanentDTCDisplayRows

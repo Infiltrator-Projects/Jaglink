@@ -25,7 +25,7 @@
 
 /* Exact LINK revision consumed by the native Apple amalgamation. */
 #define JAGLINK_EMBEDDED_LINK_REVISION \
-    "260352849beb7909f48b695ab98d247e11b214c2"
+    "2825e58e52170a2955da7ecc3ec0dbe477fa5586"
 
 /*
  * JAGLINK consumes LINK's all-in-one Apple portable-core entry point.
@@ -77,14 +77,4 @@ const char *jaglink_version(void)
 const char *jaglink_build_profile(void)
 {
     return JAGLINK_BUILD_PROFILE;
-}
-
-bool jaglink_self_check(void)
-{
-    return infiltratr_project_info_is_valid(jaglink_project_info());
-}
-
-bool jaglink_transport_is_valid(const JaglinkTransport *transport)
-{
-    return link_transport_is_valid(transport);
 }

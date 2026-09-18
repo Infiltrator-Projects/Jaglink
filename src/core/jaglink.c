@@ -78,3 +78,13 @@ const char *jaglink_build_profile(void)
 {
     return JAGLINK_BUILD_PROFILE;
 }
+
+bool jaglink_self_check(void)
+{
+    return infiltratr_project_info_is_valid(jaglink_project_info());
+}
+
+bool jaglink_transport_is_valid(const JaglinkTransport *transport)
+{
+    return link_transport_is_valid(transport);
+}

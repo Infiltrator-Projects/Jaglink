@@ -498,7 +498,7 @@ jobs:
           set -euo pipefail
           git fetch origin main --tags
           test "$GITHUB_SHA" = "$(git rev-parse origin/main)"
-          expected_assets="$(printf '%s\\n' \
+          expected_assets="$(printf '%s\n' \
             "JAGLINK-${VERSION}-unsigned.ipa" \
             "JAGLINK-${VERSION}-linux-amd64.deb" \
             "JAGLINK-${VERSION}-linux-native.run" \

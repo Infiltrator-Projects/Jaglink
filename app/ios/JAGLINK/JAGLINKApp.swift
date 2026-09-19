@@ -10,7 +10,7 @@ private var jaglinkAboutInfo: LinkDiagnosticAboutInfo {
             forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown",
         summary: "A C-first, open-source Jaguar diagnostics platform authored by Xavier Wheaton and Shannon Smith.",
         authors: ["Xavier Wheaton", "Shannon Smith"],
-        copyright: "Copyright © 2026 Xavier Wheaton and Shannon Smith",
+        copyright: "Copyright © 2026 Xavier Wheaton; © 2000-2026 Shannon Smith",
         website: URL(string: "https://github.com/Infiltrator-Projects/Jaglink"),
         licenseName: "GPL-3.0-or-later",
         licenseText: "JAGLINK is free software licensed under the GNU General Public License version 3 or, at your option, any later version (GPL-3.0-or-later).\n\nSee LICENSE in the source package for the complete licence text.",
@@ -33,7 +33,7 @@ struct JAGLINKApp: App {
                 .safeAreaInset(edge: .bottom, spacing: 0) {
                     LinkDiagnosticAboutButton(
                         productName: "JAGLINK",
-                        copyright: "© 2026 Xavier Wheaton & Shannon Smith") {
+                        copyright: "© 2026 Xavier Wheaton; © 2000-2026 Shannon Smith") {
                             showingAbout = true
                         }
                         .linkDiagnosticTheme(jagLinkTheme)

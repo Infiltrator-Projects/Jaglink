@@ -147,6 +147,6 @@ The committed gitlinks and `VERSION` files are the sole authorities for dependen
 
 ## Licence
 
-Copyright © 2026 Xavier Wheaton and Shannon Smith.
+Copyright © 2026 Xavier Wheaton; © 2000-2026 Shannon Smith.
 
 JAGLINK is free software licensed under the GNU General Public License version 3 or, at your option, any later version (`GPL-3.0-or-later`).

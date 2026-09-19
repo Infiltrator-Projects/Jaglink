@@ -2,7 +2,7 @@
 
 # JAGLINK
 
-**Project copyright:** © 2000–2026 Shannon Smith
+**Project copyright:** © 2000-2026 Shannon Smith
 
 [![JAGLINK CI](https://github.com/Infiltrator-Projects/Jaglink/actions/workflows/ci.yml/badge.svg)](https://github.com/Infiltrator-Projects/Jaglink/actions/workflows/ci.yml)
 

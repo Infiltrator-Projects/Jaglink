@@ -11,6 +11,14 @@ JAGLINK is the Jaguar X-Type X400 product face built on the shared LINK vehicle-
 **Platforms:** Linux, iPhone/iOS and Windows Discover  
 **Licence:** GPL-3.0-or-later
 
+## Engineering ethos
+
+What can a Jaguar diagnostic tool establish from standards and vehicle evidence without inventing the gaps? JAGLINK turns Jaguar-specific module, network and diagnostic evidence into product behaviour while leaving product-neutral mechanics in LINK.
+
+Standards, captures, documentation and established tools are reference evidence rather than runtime authorities. Generic transport, OBD, UDS, sequencing, safety and shared application behaviour stay in the exact pinned LINK dependency; Jaguar-specific identities, probes, topology and interpretation stay here. Unproved manufacturer behaviour is kept raw or unknown rather than guessed.
+
+The project prefers evidence and reproducibility over novelty. New mechanisms are adopted when they improve diagnostic fidelity, safety, coverage or maintainability, while proven approaches remain when they are still the stronger engineering choice.
+
 ## Role in the project family
 
 ```text

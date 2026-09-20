@@ -2,7 +2,7 @@
 
 # JAGLINK
 
-**Project copyright:** © 2000-2026 Shannon Smith
+**Project copyright:** © 1993-2026 Shannon Smith
 
 [![JAGLINK CI](https://github.com/Infiltrator-Projects/Jaglink/actions/workflows/ci.yml/badge.svg)](https://github.com/Infiltrator-Projects/Jaglink/actions/workflows/ci.yml)
 
@@ -147,6 +147,6 @@ The committed gitlinks and `VERSION` files are the sole authorities for dependen
 
 ## Licence
 
-Copyright © 2026 Xavier Wheaton; © 2000-2026 Shannon Smith.
+Copyright © 2026 Xavier Wheaton; © 1993-2026 Shannon Smith.
 
 JAGLINK is free software licensed under the GNU General Public License version 3 or, at your option, any later version (`GPL-3.0-or-later`).

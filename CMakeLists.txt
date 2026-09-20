@@ -141,7 +141,7 @@ if(JAGLINK_BUILD_WINDOWS_DISCOVER)
         message(FATAL_ERROR "JAGLINK_BUILD_WINDOWS_DISCOVER is supported on Windows only.")
     endif()
     link_add_windows_discover(jaglink-discover PRODUCT_NAME "JAGLINK" PRODUCT_SLUG "jaglink" WINDOW_CLASS "JAGLINKDiscoverWindow"
-        PRODUCT_VERSION "${PROJECT_VERSION}" PRODUCT_COPYRIGHT "Copyright (C) 2026 Xavier Wheaton; Copyright (C) 2000-2026 Shannon Smith"
+        PRODUCT_VERSION "${PROJECT_VERSION}" PRODUCT_COPYRIGHT "Copyright (C) 2026 Xavier Wheaton; Copyright (C) 1993-2026 Shannon Smith"
         PRODUCT_SUBTITLE "Jaguar Diagnostics"
         PRODUCT_DESCRIPTION "A C-first, open-source Jaguar diagnostics platform."
         PRODUCT_AUTHORS "Xavier Wheaton and Shannon Smith"

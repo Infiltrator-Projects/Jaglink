@@ -4,6 +4,8 @@ This file records user-visible, compatibility, diagnostic-knowledge and validati
 
 ## Unreleased
 
+- Advance the exact LINK dependency to released LINK 0.15.32, which carries Infiltratr Common 1.19.10 and the latest shared transport, evidence, selection and presentation contracts without changing this product's manufacturer-specific branding or icon identity.
+
 - Canonical documentation baseline aligned with the Infiltrator project family.
 
 ## Policy

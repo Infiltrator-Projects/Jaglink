@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.79 — 2026-09-21
+
+- Standardise Linux and iOS About presentation on the suite-wide System Monitor contract through LINK 0.15.38.
+- Separate build identity from descriptive text and preserve JAGLINK's two-author credits in the dedicated Credits surface.
+- Remove product-tagline duplication from About while retaining Jaguar branding in the application shell.
+
+
 This file records user-visible, compatibility, diagnostic-knowledge and validation changes for JAGLINK.
 
 ## Unreleased

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.81 — 2026-09-22
+
+- Advance JAGLINK to LINK 0.15.51, which pins Infiltratr Common 1.19.22, and synchronise the Apple embedded-LINK provenance with the exact gitlink.
+- Requalify the shared Windows Discover integration against LINK 0.15.51 so product copyright/authorship metadata is accepted by the current shared CMake contract.
+
 ## 0.2.80 — 2026-09-21
 
 - Advance the final release tree to LINK 0.15.50, which pins Infiltratr Common 1.19.22, and synchronise Windows/iOS dependency provenance with the exact gitlink.

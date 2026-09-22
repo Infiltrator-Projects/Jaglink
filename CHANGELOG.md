@@ -2,6 +2,7 @@
 
 ## 0.2.80 — 2026-09-21
 
+- Advance the final release tree to LINK 0.15.50, which pins Infiltratr Common 1.19.22, and synchronise Windows/iOS dependency provenance with the exact gitlink.
 - Advance to LINK 0.15.40 so JAGLINK's Linux, Windows where applicable, and iOS About surfaces share the completed suite-wide About contract.
 - Retain the previously separated build identity and product-specific credits while inheriting the corrected shared Windows and standard SwiftUI metadata handling.
 

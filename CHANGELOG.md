@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.82 — 2026-09-22
+
+- Advance JAGLINK to LINK 0.15.53 at 4bb9eb719d37, which now pins Infiltratr Common 1.19.23, and synchronise Apple embedded-LINK provenance with the exact gitlink.
+- Requalify all product shells against the latest shared LINK/Common stack without changing JAGLINK-specific diagnostic policy.
+
 ## 0.2.81 — 2026-09-22
 
 - Advance JAGLINK to LINK 0.15.51, which pins Infiltratr Common 1.19.22, and synchronise the Apple embedded-LINK provenance with the exact gitlink.

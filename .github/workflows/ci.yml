@@ -519,7 +519,89 @@ jobs:
             --json isDraft,targetCommitish --jq '[.isDraft, .targetCommitish] | @tsv' \
             2>/dev/null || true)"
           if [[ -n "$release_state" ]]; then
-            IFS=$'\\t' read -r is_draft target_commitish <<<"$release_state"
+            IFS= <<<"$release_state"
+            if [[ "$target_commitish" != "$GITHUB_SHA" ]]; then
+              echo "Release $TAG targets $target_commitish instead of $GITHUB_SHA." >&2
+              exit 1
+            fi
+            if [[ "$is_draft" == "false" ]]; then
+              published_assets="$(gh release view "$TAG" --json assets --jq '.assets[].name' | sort)"
+              if [[ "$published_assets" != "$expected_assets" ]]; then
+                echo "Release $TAG has an unexpected asset set." >&2
+                exit 1
+              fi
+              verify_dir="$(mktemp -d)"
+              gh release download "$TAG" --dir "$verify_dir"
+              for expected in \
+                "JAGLINK-${VERSION}-unsigned.ipa" \
+                "JAGLINK-${VERSION}-linux-amd64.deb" \
+                "JAGLINK-${VERSION}-linux-native.run" \
+                "JAGLINK-${VERSION}-windows-discover.exe" \
+                "JAGLINK-${VERSION}-source.zip" \
+                "SHA256SUMS.txt"; do
+                cmp -s "release-assets/$expected" "$verify_dir/$expected" || {
+                  echo "Published asset $expected differs from the verified rebuild." >&2
+                  exit 1
+                }
+              done
+              echo "Resuming exact existing immutable release $TAG."
+            else
+              gh release upload "$TAG" release-assets/* --clobber
+              gh release edit "$TAG" --draft=false
+            fi
+          else
+            gh release create "$TAG" --target "$GITHUB_SHA" --draft \
+              --title "JAGLINK $VERSION" \
+              --notes "JAGLINK $VERSION: complete launch-verified release on LINK $LINK_VERSION and Infiltratr Common $COMMON_VERSION, with the shared C11 diagnostic-flow controller, OBD-II/UDS/CAN-FD engines, deterministic Linux branding, static Windows runtime and shared Windows Discover shell."
+            gh release upload "$TAG" release-assets/* --clobber
+            gh release edit "$TAG" --draft=false
+          fi
+
+          published_assets="$(gh release view "$TAG" --json assets --jq '.assets[].name' | sort)"
+          if [[ "$published_assets" != "$expected_assets" ]]; then
+            echo "Release $TAG has an unexpected asset set." >&2
+            exit 1
+          fi
+          git fetch origin "refs/tags/$TAG:refs/tags/$TAG"
+          test "$(git rev-parse "refs/tags/$TAG^{commit}")" = "$GITHUB_SHA"
+
+      - name: Refresh and verify Infiltrator APT repository
+        env:
+          DISPATCH_TOKEN: ${{ secrets.APT_REPOSITORY_DISPATCH_TOKEN }}
+          RELEASE_SHA: ${{ github.sha }}
+          VERSION: ${{ steps.release.outputs.version }}
+          APP_ID: jaglink
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -n "${DISPATCH_TOKEN:-}" ]]; then
+            if ! GH_TOKEN="$DISPATCH_TOKEN" gh api --method POST \
+              repos/Infiltrator-Projects/Infiltrator-Repository/dispatches \
+              -f event_type='application-release' \
+              -F "client_payload[repository]=$GITHUB_REPOSITORY" \
+              -F "client_payload[sha]=$RELEASE_SHA" >/dev/null; then
+              echo "::warning::Immediate APT dispatch failed; waiting for the repository's five-minute safety refresh."
+            fi
+          else
+            echo "::warning::Immediate APT dispatch token is unavailable; waiting for the repository's five-minute safety refresh."
+          fi
+
+          catalogue='https://infiltrator-projects.github.io/Infiltrator-Repository/catalogue/apps.json'
+          for attempt in $(seq 1 72); do
+            if curl -fsS --retry 2 --retry-delay 1 "$catalogue?release=$RELEASE_SHA&attempt=$attempt" \
+              | python3 -c 'import json,sys; app_id,version=sys.argv[1:3]; apps=json.load(sys.stdin); raise SystemExit(0 if any(str(app.get("id")) == app_id and str(app.get("version")) == version for app in apps) else 1)' \
+                "$APP_ID" "$VERSION"; then
+              echo "APT repository advertises $APP_ID $VERSION."
+              exit 0
+            fi
+            echo "Waiting for APT publication of $APP_ID $VERSION ($attempt/72)..."
+            sleep 10
+          done
+
+          echo "::error::GitHub release was published, but the central APT repository did not advertise $APP_ID $VERSION within 12 minutes."
+          exit 1
+\t' read -r is_draft target_commitish <<<"$release_state"
             if [[ "$target_commitish" != "$GITHUB_SHA" ]]; then
               echo "Release $TAG targets $target_commitish instead of $GITHUB_SHA." >&2
               exit 1

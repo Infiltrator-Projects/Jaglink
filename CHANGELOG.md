@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.86 — 2026-09-23
+
+- Advance JAGLINK from LINK 0.15.61 to released LINK 0.15.62 at `0f2cc710fb8f211013cd5f55df390fe0911886da`, retaining the canonical nested Infiltratr Common 1.19.24 pin.
+- Consume LINK's guarded STM32 UDS RX fallback without changing Jaguar-specific diagnostic policy or broadening write/control permissions.
+- Publish the already-qualified asynchronous APT verification repair so a missing immediate repository dispatch no longer turns a valid release red while the central scheduled publisher is still pending.
+
+
 ## 0.2.85 — 2026-09-23
 
 - Advance JAGLINK from LINK 0.15.55 to released LINK 0.15.61 at `2e212f67e5a664330d432a6798350202be54eb10`, consuming the canonical Infiltratr Common 1.19.24 pin.

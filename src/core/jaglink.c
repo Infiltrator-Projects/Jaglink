@@ -25,7 +25,7 @@
 
 /* Exact LINK revision consumed by the native Apple amalgamation. */
 #define JAGLINK_EMBEDDED_LINK_REVISION \
-    "0caaf4026dcf807397649cd27a38f25ec3be2934"
+    "2e212f67e5a664330d432a6798350202be54eb10"
 
 /*
  * JAGLINK consumes LINK's all-in-one Apple portable-core entry point.

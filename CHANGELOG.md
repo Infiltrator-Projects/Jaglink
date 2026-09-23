@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.85 — 2026-09-23
+
+- Advance JAGLINK from LINK 0.15.55 to released LINK 0.15.61 at `2e212f67e5a664330d432a6798350202be54eb10`, consuming the canonical Infiltratr Common 1.19.24 pin.
+- Publish the already-qualified release-workflow correction that repairs existing-release identity parsing without changing diagnostic policy.
+- Correct release documentation to match the verified artifact set: JAGLINK intentionally publishes a recursive project-owned source ZIP containing the exact LINK/Common dependency tree.
+
 ## 0.2.84 — 2026-09-22
 
 - Advance JAGLINK to LINK 0.15.55 at 0caaf4026dcf, retaining the Infiltratr Common 1.19.23 pin and corrected dependency metadata.

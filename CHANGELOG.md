@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.87 — 2026-09-24
+
+- Remove JAGLINK's local generic-serif overrides so Linux brand and card titles inherit the shared LINK MB Corpo typography.
+- Preserve Jaguar colours, diagnostic policy, transport behaviour, dependencies and platform architecture unchanged.
+
+
 ## 0.2.86 — 2026-09-23
 
 - Advance JAGLINK from LINK 0.15.61 to released LINK 0.15.62 at `0f2cc710fb8f211013cd5f55df390fe0911886da`, retaining the canonical nested Infiltratr Common 1.19.24 pin.

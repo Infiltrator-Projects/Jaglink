@@ -12,7 +12,7 @@ permissions:
 jobs:
   portable-core:
     name: ${{ matrix.os }} / C11
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os == 'ubuntu-24.04' && (startsWith(github.event.head_commit.message, 'Release ') && 'ubuntu-24.04' || 'linux-native') || matrix.os }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -92,7 +92,7 @@ jobs:
 
   sanitizers:
     name: Linux / ASan + UBSan
-    runs-on: ubuntu-24.04
+    runs-on: ${{ startsWith(github.event.head_commit.message, 'Release ') && 'ubuntu-24.04' || 'linux-native' }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -107,7 +107,7 @@ jobs:
 
   linux-app:
     name: Linux / GTK4 + DEB + RUN
-    runs-on: ubuntu-24.04
+    runs-on: ${{ startsWith(github.event.head_commit.message, 'Release ') && 'ubuntu-24.04' || 'linux-native' }}
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

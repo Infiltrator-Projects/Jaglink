@@ -12,7 +12,7 @@ permissions:
 jobs:
   portable-core:
     name: ${{ matrix.os }} / C11
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ fromJSON(matrix.os == 'ubuntu-24.04' && '["self-hosted","Linux","X64","linux-native"]' || '["macos-latest"]') }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -92,7 +92,7 @@ jobs:
 
   sanitizers:
     name: Linux / ASan + UBSan
-    runs-on: ubuntu-24.04
+    runs-on: [self-hosted, Linux, X64, linux-native]
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -246,20 +246,23 @@ jobs:
 
   windows-discover:
     name: Windows / JAGLINK Discover launch-verified
-    runs-on: windows-latest
+    runs-on: [self-hosted, Windows, ARM64]
     timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
       - id: version
-        shell: pwsh
+        shell: powershell
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
           if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid VERSION: $version" }
           "version=$version" >> $env:GITHUB_OUTPUT
       - name: Verify shared modern Windows shell and canonical icon source
-        shell: pwsh
+        shell: powershell
         run: |
           $icon = 'app/ios/JAGLINK/Assets.xcassets/AppIcon.appiconset/AppIcon-60@3x.png'
           if (-not (Test-Path $icon)) { throw 'Canonical JAGLINK AppIcon PNG is missing' }
@@ -275,13 +278,13 @@ jobs:
           if (Test-Path 'app/windows/jaglink.ico') { throw 'Independent JAGLINK ICO must not be maintained' }
           if (Test-Path 'app/windows/jaglink.rc') { throw 'Independent JAGLINK RC must not be maintained' }
       - name: Configure Win32 build
-        shell: pwsh
+        shell: powershell
         run: cmake -S . -B build-win32 -A Win32 -DCMAKE_BUILD_TYPE=Release -DJAGLINK_BUILD_WINDOWS_DISCOVER=ON -DBUILD_TESTING=OFF
       - name: Build JAGLINK Discover
-        shell: pwsh
+        shell: powershell
         run: cmake --build build-win32 --config Release --target jaglink-discover --parallel
       - name: Reject dynamic Visual C++ runtime dependencies
-        shell: pwsh
+        shell: powershell
         run: |
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           if (-not (Test-Path $vswhere)) { throw 'vswhere.exe is unavailable' }
@@ -293,11 +296,11 @@ jobs:
             if ($deps -match [regex]::Escape($dll)) { throw "Unexpected dynamic runtime dependency: $dll" }
           }
       - name: Prove the EXE launches
-        shell: pwsh
+        shell: powershell
         run: |
           & 'src/link/platform/windows/smoke-launch.ps1' -Executable 'build-win32/Release/jaglink-discover.exe' -ExpectedTitle 'JAGLINK Discover'
       - name: Verify embedded version metadata and icon
-        shell: pwsh
+        shell: powershell
         run: |
           $exe = (Resolve-Path 'build-win32/Release/jaglink-discover.exe').Path
           $info = (Get-Item $exe).VersionInfo
@@ -307,7 +310,7 @@ jobs:
           if ($null -eq $icon) { throw 'Executable has no associated icon' }
           $icon.Dispose()
       - name: Stage Windows executable
-        shell: pwsh
+        shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path release-assets | Out-Null
           Copy-Item build-win32/Release/jaglink-discover.exe "release-assets/JAGLINK-${{ steps.version.outputs.version }}-windows-discover.exe"
@@ -571,3 +574,4 @@ jobs:
           set -euo pipefail
           echo "Central APT publication is pull-based."
           echo "Infiltrator-Repository will discover this immutable GitHub release on its own schedule."
+
